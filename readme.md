@@ -12,10 +12,9 @@ Listed in rough priority order
 * [ ] Module/table completion
 * [X] Diagnostics (luacheck integration)
 * [ ] Docstrings/Function signatures (ldoc integration)
-* [ ] Go to definition
+* [X] Go to definition
 * [ ] Workspace symbols
 * [ ] List references
 * [ ] Configurable transports (only stdio for now)
 * [ ] Async I/O (needed for higher level features)
 * [ ] Dynamic analysis (attach to running lua process)
-

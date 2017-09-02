@@ -192,7 +192,7 @@ local function tagC (tag, patt)
 end
 
 local function unaryOp (op, e)
-  return { tag = "Op", pos = e.pos, [1] = op, [2] = e }
+  return { tag = "Op", pos = e.pos, posEnd = e.posEnd, [1] = op, [2] = e }
 end
 
 local function binaryOp (e1, op, e2)
@@ -200,7 +200,7 @@ local function binaryOp (e1, op, e2)
     return e1
   end
 
-  local node = { tag = "Op", pos = e1.pos, [1] = op, [2] = e1, [3] = e2 }
+  local node = { tag = "Op", pos = e1.pos, posEnd = e1.posEnd, [1] = op, [2] = e1, [3] = e2 }
 
   if op == "ne" then
     node[1] = "eq"
@@ -248,25 +248,25 @@ local function addDots (params, dots)
 end
 
 local function insertIndex (t, index)
-  return { tag = "Index", pos = t.pos, [1] = t, [2] = index }
+  return { tag = "Index", pos = t.pos, posEnd = t.posEnd, [1] = t, [2] = index }
 end
 
 local function markMethod(t, method)
   if method then
-    return { tag = "Index", pos = t.pos, is_method = true, [1] = t, [2] = method }
+    return { tag = "Index", pos = t.pos, posEnd = t.posEnd, is_method = true, [1] = t, [2] = method }
   end
   return t
 end
 
 local function makeIndexOrCall (t1, t2)
   if t2.tag == "Call" or t2.tag == "Invoke" then
-    local t = { tag = t2.tag, pos = t1.pos, [1] = t1 }
+    local t = { tag = t2.tag, pos = t1.pos, posEnd = t1.posEnd, [1] = t1 }
     for k, v in ipairs(t2) do
       table.insert(t, v)
     end
     return t
   end
-  return { tag = "Index", pos = t1.pos, [1] = t1, [2] = t2[1] }
+  return { tag = "Index", pos = t1.pos, posEnd = t1.posEnd, [1] = t1, [2] = t2[1] }
 end
 
 -- grammar

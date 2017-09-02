@@ -20,6 +20,36 @@ local function respond(id, result)
 	io.flush()
 end
 
+local lsp_error_codes = {
+	-- Defined by json-rpc
+	ParseError           = -32700,
+	InvalidRequest       = -32600,
+	MethodNotFound       = -32601,
+	InvalidParams        = -32602,
+	InternalError        = -32603,
+	serverErrorStart     = -32099,
+	serverErrorEnd       = -32000,
+	ServerNotInitialized = -32002,
+	UnknownErrorCode     = -32001,
+	-- Defined by the protocol.
+	RequestCancelled     = -32800,
+}
+
+local function respondError(id, errorMsg, errorKey, data)
+	assert(errorMsg)
+	local msg = json.encode({
+		jsonrpc = "2.0",
+		id = id or json.null,
+		error = {
+			code = lsp_error_codes[errorKey] or -32001,
+			message = errorMsg,
+			data = data
+		}
+	})
+	io.write("Content-Length: ".. string.len(msg).."\r\n\r\n"..msg)
+	io.flush()
+end
+
 local function notify(method, params)
 	local msg = json.encode({
 		jsonrpc = "2.0",
@@ -154,18 +184,31 @@ local function slurp_locals(ast)
 
 	local dive_stat
 
+	local function save_local(a, symbol, node)
+		assert(type(symbol) == "string", require('inspect')(symbol))
+		assert(node.pos, require'inspect'(node))
+		assert(node.posEnd, require 'inspect'(node))
+		a[symbol] = node
+	end
+
 	local function dive_expr(node, a)
 		if node.tag == "Function" then
 			assert(node[2].tag == "Block")
-			dive_stat(node[2], a)
+			local namelist = node[1]
+			dive_stat(node[2], a, function(next_a)
+				for _, name in ipairs(namelist) do
+					if name.tag ~= "Dots" then
+						assert(name[1], require'inspect'(name))
+						save_local(next_a, name[1], name)
+					end
+				end
+			end)
 		elseif node.tag == "Call" then
 			for _, expr in ipairs(node) do
 				dive_expr(expr, a)
 			end
 		elseif node.tag == "Paren" then
 			dive_expr(node[1], a)
-		else
-			--log("WARN %s", node.tag)
 		end
 	end
 
@@ -220,7 +263,7 @@ local function slurp_locals(ast)
 		elseif node.tag == "Local" then
 			local namelist,exprlist = node[1], node[2]
 			for _, name in ipairs(namelist) do
-				a[name[1]] = name.pos
+				save_local(a, name[1], name)
 			end
 			if exprlist then
 				for _, expr in ipairs(exprlist) do
@@ -228,8 +271,8 @@ local function slurp_locals(ast)
 				end
 			end
 		elseif node.tag == "Localrec" then
-			local id = node[1][1] -- ident
-			a[id] = node[1].pos
+			local id = node[1][1][1] -- ident
+			save_local(a, id, node[1][1])
 
 			dive_expr(node[2][1], a)
 		elseif node.tag == "Fornum" then
@@ -237,18 +280,18 @@ local function slurp_locals(ast)
 				if n.tag == "Block" then
 					dive_stat(n, a, function(next_a)
 						local id = node[1][1] -- loop var
-						next_a[id] = node[1].pos
+						save_local(next_a, id, node[1])
 					end)
 				end
 			end
 		elseif node.tag == "Forin" then
-			local namelist, exprlist, block = node[2], node[2], node[3]
+			local namelist, exprlist, block = node[1], node[2], node[3]
 			for _, expr in ipairs(exprlist) do
 				dive_expr(expr, a)
 			end
 			dive_stat(block, a, function(next_a)
 				for _, name in ipairs(namelist) do
-					next_a[name[1]] = name.pos
+					save_local(next_a, name[1], name)
 				end
 			end)
 		elseif node.tag == "While" then
@@ -263,8 +306,17 @@ local function slurp_locals(ast)
 			for _, expr in ipairs(node) do
 				dive_expr(expr, a)
 			end
-		else
-			--log("WARN %s", node.tag)
+		elseif node.tag == "If" then
+			for i=1, #node, 2 do
+				if node[i+1] then
+					-- if/elseif block
+					dive_expr(node[i], a) -- test
+					dive_stat(node[i+1], a) -- body
+				else
+					-- else block
+					dive_stat(node[i], a)
+				end
+			end
 		end
 	end
 
@@ -448,8 +500,8 @@ method_handlers["textDocument/completion"] = function(params, id)
 		local realpos = line.start + char - 1
 		local scope = pick_scope(document.scopes, realpos)
 		while scope do
-			for k, v in pairs(scope) do
-				if not used[k] and v <= realpos then
+			for k, node in pairs(scope) do
+				if not used[k] and node.pos <= realpos then
 					used[k] = true
 					if k:sub(1, word:len()) == word then
 						table.insert(items, {label = k})
@@ -464,6 +516,69 @@ method_handlers["textDocument/completion"] = function(params, id)
 		isIncomplete = false,
 		items = items
 	})
+end
+
+local function make_linecol(document, pos)
+	local last_linepos = nil
+	for i, line in ipairs(document.lines) do
+		if line.start > pos then
+			return i-1-1, pos - last_linepos + 1
+		end
+		last_linepos = line.start
+	end
+	return nil
+end
+
+-- turn two realpos arguments into a range
+local function make_range(document, startpos, endpos)
+	local line1, char1 = make_linecol(document, startpos)
+	local line2, char2 = make_linecol(document, endpos)
+	return {
+		start   = {line = line1, character = char2},
+		["end"] = {line = line2, character = char1}
+	}
+end
+
+method_handlers["textDocument/definition"] = function(params, id)
+	local pos = params.position
+	local document = Documents[params.textDocument.uri]
+	if not document then
+		log("missing document %s", params.textDocument.uri)
+		return
+	end
+	local line = document.lines[pos.line+1]
+
+	local char = byte_index(line.text, pos.character+1)
+	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
+	-- FIXME: this looks for the parent local, which makes sense if you're
+	-- looking at a local variable, but if you want to find an actual function
+	-- definition this is inconvenient
+	local word = line.text:sub(word_s, -1):match("^([%a_][%w_]*)")
+	log("looking for %d, %s", word_s, word)
+
+	local used  = {}
+	if char then
+		local realpos = line.start + char - 1
+		local scope = pick_scope(document.scopes, realpos)
+		while scope do
+			for k, node in pairs(scope) do
+				log("%q", k)
+				if not used[k] and node.pos <= realpos then
+					if k == word then
+						respond(id, {
+							uri = params.textDocument.uri,
+							range = make_range(document, node.pos, node.pos+word:len())
+						})
+						return
+					end
+				end
+			end
+			scope = getmetatable(scope).__index
+			log("^^^")
+		end
+	end
+
+	respondError(id, string.format("symbol %q not found", word))
 end
 
 function method_handlers.shutdown(_, id)
