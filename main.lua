@@ -1,18 +1,86 @@
 local json   = require 'dkjson'
 local parser = require 'parser'
-local pp     = require 'lua-parser.pp'
+-- local pp     = require 'lua-parser.pp'
 
-local handle_request = {}
+local ok, luacheck = pcall(require, 'luacheck')
+if not ok then luacheck = nil end
 
-local function log(...)
-	io.stderr:write("\n"..string.format(...), "\n")
+local Documents = {}
+local Shutdown = false
+local Initialized = false
+local ClientCapabilities = false
+
+local function respond(id, result)
+	local msg = json.encode({
+		jsonrpc = "2.0",
+		id = id or json.null,
+		result = result
+	})
+	io.write("Content-Length: ".. string.len(msg).."\r\n\r\n"..msg)
+	io.flush()
 end
 
-function main(argv)
+local function notify(method, params)
+	local msg = json.encode({
+		jsonrpc = "2.0",
+		method = method,
+		params = params
+	})
+	io.write("Content-Length: ".. string.len(msg).."\r\n\r\n"..msg)
+	io.flush()
+end
+
+local open_rpc = {}
+local next_rpc_id = 0
+local function request(method, params, fn)
+	local msg = json.encode({
+		jsonrpc = "2.0",
+		id = next_rpc_id,
+		method = method,
+		params = params
+	})
+	open_rpc[next_rpc_id] = fn
+	next_rpc_id = next_rpc_id + 1
+	io.write("Content-Length: ".. string.len(msg).."\r\n\r\n"..msg)
+	io.flush()
+end
+
+local valid_traces = { messages = true, verbose = true}
+local message_types = { error = 1, warning = 2, info = 3, log = 4 }
+local function log(...)
+	local msg = string.format(...)
+	io.stderr:write(msg, "\n")
+	if valid_traces[ClientCapabilities.trace] then
+		notify("window/logMessage", {
+			message = msg,
+			type = message_types.log
+		})
+	end
+end
+
+local function verbose(...)
+	local msg = string.format(...)
+	io.stderr:write(msg, "\n")
+	if ClientCapabilities.trace == "verbose" then
+		notify("window/logMessage", {
+			message = msg,
+			type = message_types.log,
+		})
+	end
+end
+
+local method_handlers = {}
+
+local function main(_)
 	while not Shutdown do
 		-- header
 		local line = io.read("*l")
+		if line == nil then
+			-- EOF, shutdown
+			os.exit(0)
+		end
 		line = line:gsub("\13", "")
+		local content_length
 		while line ~= "" do
 			local key, val = line:match("^([^:]+): (.+)$")
 			assert(key, string.format("%q", tostring(line)))
@@ -37,49 +105,49 @@ function main(argv)
 		assert(data["jsonrpc"] == "2.0")
 		if data.method then
 			-- request
-			if not handle_request[data.method] then
+			if not method_handlers[data.method] then
 				log("WARNING: %s NYI", data.method)
 			else
-				handle_request[data.method](data.params, data.id)
+				method_handlers[data.method](data.params, data.id)
 			end
 		elseif data.result then
-			-- response
+			-- response to server request
+			local call = open_rpc[data.id]
+			if call then
+				call(data.result)
+			else
+				log("WARNING: Unmatched call %s", data.id)
+			end
 		elseif data.error then
-			-- error msg
+			log("client error:%s", data.error.message)
 		end
 	end
 end
 
-local function respond(id, result)
-	msg = json.encode({
-		jsonrpc = "2.0",
-		id = id or json.null,
-		result = result
-	})
-	io.write("Content-Length: ".. string.len(msg).."\r\n\r\n"..msg)
-	io.flush()
-end
-
-function handle_request.initialize(params, id)
+function method_handlers.initialize(params, id)
+	if Initialized then
+		error("already initialized!")
+	end
 	local root  = params.rootPath or params.rootUri
 	local trace = params.trace or "off"
-	if params.initializationOptions then
-	end
+	--if params.initializationOptions then
+	--	-- use for server-specific config?
+	--end
 	ClientCapabilities = params.capabilities
+	ClientCapabilities.trace = trace
 	Initialized = true
 
 	-- hopefully this is modest enough
 	respond(id, {
 		capabilities = {
 			completionProvider = {
-				triggerCharacters = {},
+				--triggerCharacters = {".",":"},
 				resolveProvider = false
 			}
 		}
 	})
 end
 
-Documents = {}
 
 local function slurp_locals(ast)
 	local scopes = {setmetatable({},{pos=0, posEnd=9999999999})}
@@ -101,7 +169,7 @@ local function slurp_locals(ast)
 		end
 	end
 
-	function dive_lhs(node, a, lhs)
+	local function dive_lhs(node, a, lhs)
 		lhs = lhs or {}
 		if node.tag == "Index" then
 			dive_lhs(node[1], a, lhs)
@@ -138,7 +206,6 @@ local function slurp_locals(ast)
 			for _, name in ipairs(namelist) do
 				local path = dive_lhs(name, a)
 				path = table.concat(path, ".")
-				log("found path %s", path)
 			end
 			for _, expr in ipairs(exprlist) do
 				dive_expr(expr, a)
@@ -170,7 +237,7 @@ local function slurp_locals(ast)
 				if n.tag == "Block" then
 					dive_stat(n, a, function(next_a)
 						local id = node[1][1] -- loop var
-						a[id] = node[1].pos
+						next_a[id] = node[1].pos
 					end)
 				end
 			end
@@ -220,25 +287,20 @@ local function split_doc(document)
 
 
 	local ast, err = parser.parse(document.text, document.uri)
-	if not ast then
-		log("%s", err)
-	else
+	if ast then
 		document.ast = ast
-		--log("%s", require'inspect'(ast))
-		log("%s", pp.tostring(ast))
-	end
-
-	if document.ast then
 		document.scopes = slurp_locals(document.ast)
+	else
+		verbose("error: %s", err)
 	end
 end
 
-handle_request["textDocument/didOpen"] = function(params)
+method_handlers["textDocument/didOpen"] = function(params)
 	Documents[params.textDocument.uri] = params.textDocument
 	split_doc(params.textDocument)
 end
 
-handle_request["textDocument/didChange"] = function(params)
+method_handlers["textDocument/didChange"] = function(params)
 	local uri = params.textDocument.uri
 	local document = Documents[uri]
 	if not document then
@@ -261,7 +323,42 @@ handle_request["textDocument/didChange"] = function(params)
 	end
 end
 
-handle_request["textDocument/didClose"] = function(params)
+method_handlers["textDocument/didSave"] = function(params)
+	local uri = params.textDocument.uri
+	local document = Documents[uri]
+	if not document then
+		Documents[uri] = params.textDocument
+		document = Documents[uri]
+		document.text  = ""
+		split_doc(params.textDocument)
+	end
+
+	if luacheck then
+		local reports = luacheck.check_strings({document.text}, {})
+		local diagnostics = {}
+		for _, issue in ipairs(reports[1]) do
+			-- FIXME: translate columns to characters
+			table.insert(diagnostics, {
+				code = issue.code,
+				range = {
+					start   = {line = issue.line-1, character = issue.column-1},
+					["end"] = {line = issue.line-1, character = issue.end_column-1}
+				},
+				 -- 1 == error, 2 == warning
+				severity = issue.code:find("^0") and 1 or 2,
+				source   = "luacheck",
+				message  = luacheck.get_message(issue)
+			})
+		end
+		notify("textDocument/publishDiagnostics", {
+			uri = uri,
+			diagnostics = diagnostics,
+		})
+		--log("%s", require'inspect'(diagnostics))
+	end
+end
+
+method_handlers["textDocument/didClose"] = function(params)
 	Documents[params.textDocument.uri] = nil
 end
 
@@ -333,17 +430,17 @@ local function pick_scope(scopes, pos)
 	return closest
 end
 
-handle_request["textDocument/completion"] = function(params, id)
+method_handlers["textDocument/completion"] = function(params, id)
 	local pos = params.position
 	local document = Documents[params.textDocument.uri]
-	if not document then 
+	if not document then
 		log("missing document %s", params.textDocument.uri)
 		return
 	end
 	local line = document.lines[pos.line+1]
 
 	local char = byte_index(line.text, pos.character+1)
-	word = line.text:sub(1, char):match("[%w.:]*$")
+	local word = line.text:sub(1, char):match("[%w.:]*$")
 
 	local items = {}
 	local used  = {}
@@ -369,12 +466,12 @@ handle_request["textDocument/completion"] = function(params, id)
 	})
 end
 
-function handle_request.shutdown(params, id)
+function method_handlers.shutdown(_, id)
 	Shutdown = true
 	respond(id, {})
 end
 
-function handle_request.exit(params)
+function method_handlers.exit(_)
 	if Shutdown then
 		os.exit(0)
 	else
