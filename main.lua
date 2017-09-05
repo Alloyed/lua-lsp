@@ -1,6 +1,5 @@
 local json   = require 'dkjson'
-local parser = require 'parser'
--- local pp     = require 'lua-parser.pp'
+local parser = require 'lua-parser.parser'
 
 local ok, luacheck = pcall(require, 'luacheck')
 if not ok then luacheck = nil end
@@ -89,9 +88,10 @@ local function log(...)
 end
 
 local function verbose(...)
-	local msg = string.format(...)
-	io.stderr:write(msg, "\n")
 	if ClientCapabilities.trace == "verbose" then
+		local msg = string.format(...)
+		io.stderr:write(msg, "\n")
+
 		notify("window/logMessage", {
 			message = msg,
 			type = message_types.log,
@@ -100,6 +100,11 @@ local function verbose(...)
 end
 
 local method_handlers = {}
+
+local valid_content_type = {
+	["application/vscode-jsonrpc; charset=utf-8"] = true,
+	["application/vscode-jsonrpc; charset=utf8"] = true
+}
 
 local function main(_)
 	while not Shutdown do
@@ -118,7 +123,7 @@ local function main(_)
 			if key == "Content-Length" then
 				content_length = tonumber(val)
 			elseif key == "Content-Type" then
-				-- discard
+				assert(valid_content_type[val], "Invalid Content-Type")
 			else
 				error("unexpected")
 			end
@@ -138,7 +143,13 @@ local function main(_)
 			if not method_handlers[data.method] then
 				log("WARNING: %s NYI", data.method)
 			else
-				method_handlers[data.method](data.params, data.id)
+				local err
+				ok, err = xpcall(function()
+					method_handlers[data.method](data.params, data.id)
+				end, debug.traceback)
+				if not ok then
+					respondError(data.id, err, "InternalError")
+				end
 			end
 		elseif data.result then
 			-- response to server request
@@ -171,9 +182,24 @@ function method_handlers.initialize(params, id)
 	respond(id, {
 		capabilities = {
 			completionProvider = {
-				--triggerCharacters = {".",":"},
+				triggerCharacters = {},
 				resolveProvider = false
-			}
+			},
+			definitionProvider = true,
+			--textDocumentSync = {
+			--	openClose = true,
+			--	change = 2, -- incremental
+			--	save = { includeText = false },
+			--},
+			--hoverProvider = false,
+			--referencesProvider = false,
+			--documentHighlightProvider = false,
+			--documentSymbolProvider = false,
+			--workspaceSymbolProvider = false,
+			--codeActionProvider = false,
+			--documentFormattingProvider = false,
+			--documentRangeFormattingProvider = false,
+			--renameProvider = false,
 		}
 	})
 end
@@ -324,6 +350,31 @@ local function slurp_locals(ast)
 	return scopes
 end
 
+local function try_luacheck(document)
+	if luacheck then
+		local reports = luacheck.check_strings({document.text}, {})
+		local diagnostics = {}
+		for _, issue in ipairs(reports[1]) do
+			-- FIXME: translate columns to characters
+			table.insert(diagnostics, {
+				code = issue.code,
+				range = {
+					start   = {line = issue.line-1, character = issue.column-1},
+					["end"] = {line = issue.line-1, character = issue.end_column-1}
+				},
+				-- 1 == error, 2 == warning
+				severity = issue.code:find("^0") and 1 or 2,
+				source   = "luacheck",
+				message  = luacheck.get_message(issue)
+			})
+		end
+		notify("textDocument/publishDiagnostics", {
+			uri = document.uri,
+			diagnostics = diagnostics,
+		})
+	end
+end
+
 local function split_doc(document)
 	local text = document.text
 
@@ -337,14 +388,47 @@ local function split_doc(document)
 	end
 	document.lines=lines
 
-
 	local ast, err = parser.parse(document.text, document.uri)
 	if ast then
 		document.ast = ast
 		document.scopes = slurp_locals(document.ast)
+		try_luacheck(document)
 	else
-		verbose("error: %s", err)
+		verbose("%d:%d:error: %s", err.line, err.column, err.message)
+		local line, column = err.line, err.column
+		notify("textDocument/publishDiagnostics", {
+			uri = document.uri,
+			diagnostics = { {
+				--code = issue.code,
+				range = {
+					start   = {line = line-1, character = column-1},
+					["end"] = {line = line-1, character = column}
+				},
+				-- 1 == error, 2 == warning
+				severity = 1,
+				source   = "parser",
+				message  = err.message,
+			} }
+		})
 	end
+end
+
+local function document_for(uri)
+	if Documents[uri] then
+		return Documents[uri]
+	end
+	local document = {}
+	document.uri = uri
+
+	local f = assert(io.open(uri:gsub("^[^:]://", ""), "r"))
+	document.text  = f:read("*a")
+	f:close()
+
+	split_doc(document)
+
+	Documents[uri] = document
+
+	return document
 end
 
 method_handlers["textDocument/didOpen"] = function(params)
@@ -354,18 +438,11 @@ end
 
 method_handlers["textDocument/didChange"] = function(params)
 	local uri = params.textDocument.uri
-	local document = Documents[uri]
-	if not document then
-		Documents[uri] = params.textDocument
-		document = Documents[uri]
-		document.text  = ""
-		split_doc(params.textDocument)
-	end
+	local document = document_for(uri)
 
 	for _, patch in ipairs(params.contentChanges) do
 		if (patch.range == nil and patch.rangeLength == nil) then
 			document.text = patch.text
-			split_doc(document)
 		else
 			error("NYI")
 			-- remove text from patch.range.start -> patch.range["end"]
@@ -373,41 +450,15 @@ method_handlers["textDocument/didChange"] = function(params)
 			-- then insert patch.text at origin point
 		end
 	end
+
+	split_doc(document)
 end
 
 method_handlers["textDocument/didSave"] = function(params)
 	local uri = params.textDocument.uri
-	local document = Documents[uri]
-	if not document then
-		Documents[uri] = params.textDocument
-		document = Documents[uri]
-		document.text  = ""
-		split_doc(params.textDocument)
-	end
-
-	if luacheck then
-		local reports = luacheck.check_strings({document.text}, {})
-		local diagnostics = {}
-		for _, issue in ipairs(reports[1]) do
-			-- FIXME: translate columns to characters
-			table.insert(diagnostics, {
-				code = issue.code,
-				range = {
-					start   = {line = issue.line-1, character = issue.column-1},
-					["end"] = {line = issue.line-1, character = issue.end_column-1}
-				},
-				 -- 1 == error, 2 == warning
-				severity = issue.code:find("^0") and 1 or 2,
-				source   = "luacheck",
-				message  = luacheck.get_message(issue)
-			})
-		end
-		notify("textDocument/publishDiagnostics", {
-			uri = uri,
-			diagnostics = diagnostics,
-		})
-		--log("%s", require'inspect'(diagnostics))
-	end
+	local document = document_for(uri)
+	-- FIXME: merge in details from params.textDocument
+	split_doc(document)
 end
 
 method_handlers["textDocument/didClose"] = function(params)
@@ -484,10 +535,12 @@ end
 
 method_handlers["textDocument/completion"] = function(params, id)
 	local pos = params.position
-	local document = Documents[params.textDocument.uri]
-	if not document then
-		log("missing document %s", params.textDocument.uri)
-		return
+	local document = document_for(params.textDocument.uri)
+	if not document.scopes then
+		respond(id, {
+			isIncomplete = false,
+			items = {}
+		})
 	end
 	local line = document.lines[pos.line+1]
 
@@ -522,7 +575,7 @@ local function make_linecol(document, pos)
 	local last_linepos = nil
 	for i, line in ipairs(document.lines) do
 		if line.start > pos then
-			return i-1-1, pos - last_linepos + 1
+			return i-1-1, pos - last_linepos
 		end
 		last_linepos = line.start
 	end
@@ -534,8 +587,8 @@ local function make_range(document, startpos, endpos)
 	local line1, char1 = make_linecol(document, startpos)
 	local line2, char2 = make_linecol(document, endpos)
 	return {
-		start   = {line = line1, character = char2},
-		["end"] = {line = line2, character = char1}
+		start   = {line = line1, character = char1},
+		["end"] = {line = line2, character = char2}
 	}
 end
 
@@ -554,7 +607,7 @@ method_handlers["textDocument/definition"] = function(params, id)
 	-- looking at a local variable, but if you want to find an actual function
 	-- definition this is inconvenient
 	local word = line.text:sub(word_s, -1):match("^([%a_][%w_]*)")
-	log("looking for %d, %s", word_s, word)
+	log("looking for %q", word_s, word)
 
 	local used  = {}
 	if char then
@@ -562,12 +615,15 @@ method_handlers["textDocument/definition"] = function(params, id)
 		local scope = pick_scope(document.scopes, realpos)
 		while scope do
 			for k, node in pairs(scope) do
-				log("%q", k)
 				if not used[k] and node.pos <= realpos then
 					if k == word then
+						local sub = document.text:sub(node.pos, node.posEnd)
+						local a, b = string.find(sub, k, 1, true)
+						a, b = a + node.pos - 1, b + node.pos - 1
+						log("found %q", document.text:sub(a, b))
 						respond(id, {
 							uri = params.textDocument.uri,
-							range = make_range(document, node.pos, node.pos+word:len())
+							range = make_range(document, a, b)
 						})
 						return
 					end
