@@ -1,2 +1,8 @@
-local function jeff()
-end
+local a
+------^
+	local b
+-------^
+b = "😬" local c = nil
+-----------------^
+
+a() b() c()

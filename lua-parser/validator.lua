@@ -12,8 +12,14 @@ local insideloop = scope.insideloop
 -- creates an error message for the input string
 local function syntaxerror (errorinfo, pos, msg)
   local l, c = lineno(errorinfo.subject, pos)
-  local error_msg = "%s:%d:%d: syntax error, %s"
-  return string.format(error_msg, errorinfo.filename, l, c, msg)
+  --local error_msg = "%s:%d:%d: syntax error, %s"
+  --return string.format(error_msg, errorinfo.filename, l, c, msg)
+  return {
+	  file = errorinfo.filename,
+	  line = l,
+	  column = c,
+	  message = msg
+  }
 end
 
 local function exist_label (env, scope, stm)
