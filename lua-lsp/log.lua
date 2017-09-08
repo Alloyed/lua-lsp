@@ -2,7 +2,9 @@ local rpc = require 'lua-lsp.rpc'
 
 local log = {}
 
-log.enabled = { default = true, verbose = false }
+log.file = io.stderr
+
+log.enabled = { default = false, verbose = false }
 
 function log.setTraceLevel(trace)
 	if trace == "off" then
@@ -18,7 +20,8 @@ local message_types = { error = 1, warning = 2, info = 3, log = 4 }
 function log.default(...)
 	local msg = string.format(...)
 	local info = debug.getinfo(2, 'lS')
-	io.stderr:write(info.short_src..":"..info.currentline..": "..msg, "\n")
+	log.file:write(msg, "\n")
+	--log.file:write(info.short_src..":"..info.currentline..": "..msg, "\n")
 	if log.enabled.default then
 		rpc.notify("window/logMessage", {
 			message = msg,
@@ -30,7 +33,7 @@ end
 function log.verbose(...)
 	if log.enabled.verbose then
 		local msg = string.format(...)
-		io.stderr:write(msg, "\n")
+		log.file:write(msg, "\n")
 
 		rpc.notify("window/logMessage", {
 			message = msg,

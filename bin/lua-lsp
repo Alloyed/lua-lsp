@@ -1,0 +1,3 @@
+#!/usr/bin/env lua
+local main = require 'lua-lsp.loop'
+main(...)

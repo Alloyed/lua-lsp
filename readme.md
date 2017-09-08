@@ -18,3 +18,18 @@ Listed in rough priority order
 * [ ] Configurable transports (only stdio for now)
 * [ ] Async I/O (needed for higher level features)
 * [ ] Dynamic analysis (attach to running lua process)
+
+### Installation/Usage
+
+lua-lsp can be installed using luarocks:
+```
+$ luarocks install <rockspec>
+```
+This will install the `lua-lsp` command. Language clients can then communicate
+with this process using stdio as a transport. To do this in neovim, for
+example, install <> and add this to your `init.vim`:
+```
+let g:LanguageClient_serverCommands = {
+	\ 'lua':  ['lua-lsp'],
+	\ }
+```

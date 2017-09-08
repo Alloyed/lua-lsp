@@ -1,4 +1,3 @@
-local json    = require 'lua-lsp.dkjson'
 local analyze = require 'lua-lsp.analyze'
 local rpc     = require 'lua-lsp.rpc'
 local log     = require 'lua-lsp.log'
@@ -10,44 +9,11 @@ local Initialized = false
 
 local method_handlers = {}
 
-local valid_content_type = {
-	["application/vscode-jsonrpc; charset=utf-8"] = true,
-	-- the spec says to be lenient in this case
-	["application/vscode-jsonrpc; charset=utf8"] = true
-}
-
 local function main(_)
-	io.stderr:write("starting server...\n")
+	log("hi mom!")
 	while not Shutdown do
 		-- header
-		local line = io.read("*l")
-		if line == nil then
-			-- EOF, shutdown
-			os.exit(0)
-		end
-		line = line:gsub("\13", "")
-		local content_length
-		while line ~= "" do
-			local key, val = line:match("^([^:]+): (.+)$")
-			assert(key, string.format("%q", tostring(line)))
-			assert(val)
-			if key == "Content-Length" then
-				content_length = tonumber(val)
-			elseif key == "Content-Type" then
-				assert(valid_content_type[val], "Invalid Content-Type")
-			else
-				error("unexpected")
-			end
-			line = io.read("*l")
-			line = line:gsub("\13", "")
-		end
-
-		-- body
-		assert(content_length)
-		local data = io.read(content_length)
-		data = data:gsub("\13", "")
-		data = assert(json.decode(data))
-		assert(data["jsonrpc"] == "2.0")
+		local data = assert(rpc.decode())
 		if data.method then
 			-- request
 			if not method_handlers[data.method] then
@@ -87,7 +53,7 @@ function method_handlers.initialize(params, id)
 	rpc.respond(id, {
 		capabilities = {
 			completionProvider = {
-				triggerCharacters = {},
+				triggerCharacters = {".",":"},
 				resolveProvider = false
 			},
 			definitionProvider = true,
@@ -293,7 +259,6 @@ method_handlers["textDocument/completion"] = function(params, id)
 				if not used[iname] and node.pos <= realpos then
 					used[iname] = true
 					if iname == iword and val.tag == "Table" then
-						log("follow_path")
 						follow_path(path_ids, 2, val.scope)
 					end
 				end
@@ -357,19 +322,25 @@ method_handlers["textDocument/definition"] = function(params, id)
 	if char then
 		local realpos = line.start + char - 1
 		local scope = pick_scope(document.scopes, realpos)
+		local word_start = word:match("^([^.:]+)")
+		log("word_start: %q", word_start)
 		for k, symbol in iter_scope(scope) do
 			if not used[k] and symbol.pos <= realpos then
-				if k == word then
-					local sub = document.text:sub(symbol.pos, symbol.posEnd)
-					local a, b = string.find(sub, k, 1, true)
-					a, b = a + symbol.pos - 1, b + symbol.pos - 1
+				if k == word_start then
+					if word:find("[:.]") then
+						log("membre!")
+					else
+						local sub = document.text:sub(symbol.pos, symbol.posEnd)
+						local a, b = string.find(sub, k, 1, true)
+						a, b = a + symbol.pos - 1, b + symbol.pos - 1
 
-					local range = make_range(document, a, b)
-					rpc.respond(id, {
-						uri = params.textDocument.uri,
-						range = range
-					})
-					return
+						local range = make_range(document, a, b)
+						rpc.respond(id, {
+							uri = params.textDocument.uri,
+							range = range
+						})
+						return
+					end
 				end
 			end
 		end
@@ -391,5 +362,5 @@ function method_handlers.exit(_)
 	end
 end
 
-main(arg)
+return main
 --https://code.visualstudio.com/blogs/2016/06/27/common-language-protocol
