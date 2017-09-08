@@ -466,7 +466,7 @@ local G = { V"Lua",
 
 local parser = {}
 
-local validator = require("lua-parser.validator")
+local validator = require("lua-lsp.lua-parser.validator")
 local validate = validator.validate
 local syntaxerror = validator.syntaxerror
 

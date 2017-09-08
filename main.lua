@@ -1,8 +1,8 @@
-local analyze = require 'analyze'
-local rpc     = require 'rpc'
-local json    = require 'dkjson'
-local log     = require 'log'
-local utf     = require 'unicode'
+local json    = require 'lua-lsp.dkjson'
+local analyze = require 'lua-lsp.analyze'
+local rpc     = require 'lua-lsp.rpc'
+local log     = require 'lua-lsp.log'
+local utf     = require 'lua-lsp.unicode'
 
 local Documents = {}
 local Shutdown = false
@@ -12,6 +12,7 @@ local method_handlers = {}
 
 local valid_content_type = {
 	["application/vscode-jsonrpc; charset=utf-8"] = true,
+	-- the spec says to be lenient in this case
 	["application/vscode-jsonrpc; charset=utf8"] = true
 }
 
@@ -56,8 +57,10 @@ local function main(_)
 					method_handlers[data.method](data.params, data.id)
 				end, debug.traceback)
 				if not ok then
+					log("---------------------")
 					log("%s", err)
-					rpc.respondError(data.id, err, "InternalError")
+					log("---------------------")
+					--rpc.respondError(data.id, err, "InternalError")
 				end
 			end
 		elseif data.result then
@@ -160,6 +163,7 @@ method_handlers["textDocument/didClose"] = function(params)
 end
 
 local function pick_scope(scopes, pos)
+	assert(scopes ~= nil)
 	local closest = nil
 	local size = math.huge
 	for _, scope in ipairs(scopes) do
@@ -174,10 +178,80 @@ local function pick_scope(scopes, pos)
 	return closest
 end
 
+local completionKinds = {
+	Text = 1,
+	Method = 2,
+	Function = 3,
+	Constructor = 4,
+	Field = 5,
+	Variable = 6,
+	Class = 7,
+	Interface = 8,
+	Module = 9,
+	Property = 10,
+	Unit = 11,
+	Value = 12,
+	Enum = 13,
+	Keyword = 14,
+	Snippet = 15,
+	Color = 16,
+	File = 17,
+	Reference = 18,
+}
+
+local function make_item(k, node, val)
+	local item = { label = k }
+	--log("compl %s = %s", k, require'inspect'(val))
+
+	if val then
+		item.kind = completionKinds.Variable
+		if val.tag == "Call" then
+			if val[1][1] == "require" then
+				-- this is a module
+				item.kind = completionKinds.Module
+			end
+		elseif val.tag == "Function" then
+			item.kind = completionKinds.Function
+
+			-- generate function signature
+			local sig = {}
+			for _, name in ipairs(val[1]) do
+				if name.tag == "Dots" then
+					table.insert(sig, "...")
+				else
+					table.insert(sig, name[1])
+				end
+			end
+			item.detail = ("%s(%s)"):format(k, table.concat(sig, ", "))
+		elseif val.tag == "Table" then
+			item.detail = "<table>"
+		elseif val.tag == "String" then
+			item.detail = string.format("%q", val[1])
+		elseif val.tag == "Number" then
+			item.detail = tostring(val[1])
+		end
+	end
+
+	item.kind = nil
+	return item
+end
+
+local function iter_scope(scope)
+	return coroutine.wrap(function()
+		while scope do
+			for key, nodes in pairs(scope) do
+				local symbol, value = unpack(nodes)
+				coroutine.yield(key, symbol, value)
+			end
+			scope = getmetatable(scope).__index
+		end
+	end)
+end
+
 method_handlers["textDocument/completion"] = function(params, id)
 	local pos = params.position
 	local document = document_for(params.textDocument.uri)
-	if not document.scopes then
+	if document.scopes == nil then
 		rpc.respond(id, {
 			isIncomplete = false,
 			items = {}
@@ -186,24 +260,54 @@ method_handlers["textDocument/completion"] = function(params, id)
 	local line = document.lines[pos.line+1]
 
 	local char = utf.to_bytes(line.text, pos.character)
-	local word = line.text:sub(1, char):match("[%w.:]*$")
+	local word = line.text:sub(1, char):match("[A-Za-z][%w_.:]*$") or ""
 
 	local items = {}
 	local used  = {}
 	if char then
+		local function follow_path(path_ids, ii, scope)
+			local iword = path_ids[ii]
+			local last = ii == #path_ids
+			for iname, nodes in pairs(scope) do
+				local node, val = unpack(nodes)
+				if last then
+					if iname:sub(1, iword:len()) == iword then
+						table.insert(items, make_item(iname, node, val))
+					end
+				elseif iname == iword and val.tag == "Table" then
+					follow_path(path_ids, ii+1, val.scope)
+				end
+			end
+		end
+
 		local realpos = line.start + char - 1
 		local scope = pick_scope(document.scopes, realpos)
-		while scope do
-			for k, nodes in pairs(scope) do
-				local node, val = unpack(nodes)
-				if not used[k] and node.pos <= realpos then
-					used[k] = true
-					if k:sub(1, word:len()) == word then
-						table.insert(items, {label = k})
+
+		if word:find("[:.]") then
+			-- path scope
+			local path_ids = {}
+			for s in word:gmatch("[^:.]*") do table.insert(path_ids, s) end
+
+			local iword = path_ids[1]
+			for iname, node, val in iter_scope(scope) do
+				if not used[iname] and node.pos <= realpos then
+					used[iname] = true
+					if iname == iword and val.tag == "Table" then
+						log("follow_path")
+						follow_path(path_ids, 2, val.scope)
 					end
 				end
 			end
-			scope = getmetatable(scope).__index
+		else
+			-- local scope
+			for iname, node, val in iter_scope(scope) do
+				if not used[iname] and node.pos <= realpos then
+					used[iname] = true
+					if iname:sub(1, word:len()) == word then
+						table.insert(items, make_item(iname, node, val))
+					end
+				end
+			end
 		end
 	end
 
@@ -240,41 +344,34 @@ method_handlers["textDocument/definition"] = function(params, id)
 	local document = document_for(params.textDocument.uri)
 	local line = document.lines[pos.line+1]
 
-	log("tobytes %q:%d", line.text, pos.character)
 	local char = utf.to_bytes(line.text, pos.character)
 	assert(char)
 	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
 	-- FIXME: this looks for the parent local, which makes sense if you're
 	-- looking at a local variable, but if you want to find an actual function
 	-- definition this is inconvenient
-	local word = line.text:sub(word_s, -1):match("^([%a_][%w_]*)")
-	log("looking for %d:%q in %q", word_s, word, line.text:sub(word_s, -1))
+	local word = line.text:sub(word_s, -1):match("^([%a_][%w_.:]*)")
+	log("Looking for %q", word)
 
 	local used  = {}
 	if char then
 		local realpos = line.start + char - 1
 		local scope = pick_scope(document.scopes, realpos)
-		while scope do
-			for k, nodes in pairs(scope) do
-				local node, _ = unpack(nodes)
-				if not used[k] and node.pos <= realpos then
-					if k == word then
-						local sub = document.text:sub(node.pos, node.posEnd)
-						local a, b = string.find(sub, k, 1, true)
-						a, b = a + node.pos - 1, b + node.pos - 1
+		for k, symbol in iter_scope(scope) do
+			if not used[k] and symbol.pos <= realpos then
+				if k == word then
+					local sub = document.text:sub(symbol.pos, symbol.posEnd)
+					local a, b = string.find(sub, k, 1, true)
+					a, b = a + symbol.pos - 1, b + symbol.pos - 1
 
-						local range = make_range(document, a, b)
-						log("found %d:%d:%q", range.start.line, range.start.character,document.text:sub(a, b))
-						rpc.respond(id, {
-							uri = params.textDocument.uri,
-							range = range
-						})
-						return
-					end
+					local range = make_range(document, a, b)
+					rpc.respond(id, {
+						uri = params.textDocument.uri,
+						range = range
+					})
+					return
 				end
 			end
-			scope = getmetatable(scope).__index
-			log("^^^")
 		end
 	end
 

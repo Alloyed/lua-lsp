@@ -59,7 +59,7 @@ function unicode.to_bytes(str, utf16)
 	if codeunit_i == utf16 then
 		return byte_i
 	end
-	error("invalid index")
+	error("invalid index %d for %q", utf16, str)
 end
 
 -- note: byte_index is 1-indexed, return value is 0-indexed

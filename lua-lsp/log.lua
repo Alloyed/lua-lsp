@@ -1,4 +1,4 @@
-local rpc = require 'rpc'
+local rpc = require 'lua-lsp.rpc'
 
 local log = {}
 

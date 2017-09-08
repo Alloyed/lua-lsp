@@ -1,7 +1,7 @@
 -- Analysis engine
-local log = require 'log'
-local rpc = require 'rpc'
-local parser = require 'lua-parser.parser'
+local log          = require 'lua-lsp.log'
+local rpc          = require 'lua-lsp.rpc'
+local parser       = require 'lua-lsp.lua-parser.parser'
 local ok, luacheck = pcall(require, 'luacheck')
 if not ok then luacheck = nil end
 
@@ -12,11 +12,91 @@ local function slurp_locals(ast)
 
 	local dive_stat
 
+	local function clean_value(value)
+		if value == nil then
+			return {tag = "Unknown"}
+		elseif value.tag == "Function" then
+			return {
+				tag = value.tag,
+				pos = value.pos,
+				posEnd = value.posEnd,
+				[1] = value[1]
+			}
+		end
+		return value
+	end
+
 	local function save_local(a, key, value)
-		assert(type(key[1]) == "string")
-		assert(key.pos)
-		assert(key.posEnd)
-		a[key[1]] = {key, value}
+		if key.tag == "Id" then
+			assert(type(key[1]) == "string")
+			assert(key.pos)
+			assert(key.posEnd)
+			a[key[1]] = {key, clean_value(value)}
+		end
+	end
+
+	local function is_valid_path(path)
+		for i, p in ipairs(path) do
+			if p.tag ~= "String" and not (p.tag == "Id" and i == 1) then
+				return false
+			end
+		end
+		return true
+	end
+
+	local function make_path(key)
+		local a  = {}
+		local function recur(node)
+			if node.tag == "Index" then
+				recur(node[1])
+				recur(node[2])
+			else
+				table.insert(a, node)
+			end
+		end
+		recur(key)
+		return a
+	end
+
+	local function save_path(a, path, value)
+		local t = a
+		for i=1, #path-1 do
+			local idx = path[i]
+			if t[idx[1]] then
+				local v = t[idx[1]][2]
+				if v == nil then
+					return
+				elseif v.tag == "Table" then
+					v.scope = v.scope or {}
+					t = v.scope
+				end
+			end
+		end
+		local key = path[#path]
+		t[key[1]] = {key, clean_value(value)}
+	end
+
+	local function save_set(a, key, value)
+		local k = key[1]
+		if key.tag == "Index" then
+			local path = make_path(key)
+			if is_valid_path(path) then
+				save_path(a, path, value)
+			end
+			return
+		end
+
+		if a[k] then
+			-- this makes it much more likely that a local is going to go into
+			-- unknown states during runtime
+			-- NOTE: mutating like this means we change the original node
+			-- instead of creating a new node. this is actually exactly what we
+			-- want (dirty the old node) but it's counterintuitive
+			a[k][2] = {tag = "Unknown"}
+		else
+			-- this is a new global var
+			scopes[1][k] = {key, clean_value(value)}
+		end
 	end
 
 	local function dive_expr(node, a)
@@ -73,12 +153,21 @@ local function slurp_locals(ast)
 			end
 		elseif node.tag == "Set" then
 			local namelist,exprlist = node[1], node[2]
-			for _, name in ipairs(namelist) do
-				local path = dive_lhs(name, a)
-				path = table.concat(path, ".")
-			end
-			for _, expr in ipairs(exprlist) do
-				dive_expr(expr, a)
+			for i=1, math.max(#namelist, #exprlist) do
+				local name, expr = namelist[i], exprlist[i]
+				if expr then
+					dive_expr(expr, a)
+				end
+
+				if name then
+					--local path = dive_lhs(name, a)
+					--path = table.concat(path, ".")
+					if expr then
+						save_set(a, name, expr)
+					else
+						save_set(a, name, {tag="Unknown"}) -- probably a vararg
+					end
+				end
 			end
 		elseif node.tag == "Return" then
 			local exprlist = node[1]
@@ -195,8 +284,8 @@ function analyze.document(document)
 		document.scopes = slurp_locals(document.ast)
 		try_luacheck(document)
 	else
-		log.verbose("%d:%d:error: %s", err.line, err.column, err.message)
 		local line, column = err.line, err.column
+		assert(err.line, require'inspect'(err))
 		rpc.notify("textDocument/publishDiagnostics", {
 			uri = document.uri,
 			diagnostics = { {
