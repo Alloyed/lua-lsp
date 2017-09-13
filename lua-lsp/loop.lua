@@ -2,6 +2,7 @@ local analyze = require 'lua-lsp.analyze'
 local rpc     = require 'lua-lsp.rpc'
 local log     = require 'lua-lsp.log'
 local utf     = require 'lua-lsp.unicode'
+local parser  = require 'lua-lsp.lua-parser.parser'
 
 local Documents = {}
 local Shutdown = false
@@ -10,7 +11,6 @@ local Initialized = false
 local method_handlers = {}
 
 local function main(_)
-	log("hi mom!")
 	while not Shutdown do
 		-- header
 		local data = assert(rpc.decode())
@@ -165,9 +165,9 @@ local completionKinds = {
 	Reference = 18,
 }
 
-local function make_item(k, node, val)
+local function make_item(k, _, val)
 	local item = { label = k }
-	--log("compl %s = %s", k, require'inspect'(val))
+	--log("compl %s = %s", k, require'inspect'(val)
 
 	if val then
 		item.kind = completionKinds.Variable
@@ -187,6 +187,10 @@ local function make_item(k, node, val)
 				else
 					table.insert(sig, name[1])
 				end
+			end
+			if val.scope then
+				local ret = getmetatable(val.scope)
+				log("fn_ret(%s[%d]) -> %s", tostring(k), ret.id or -1, require'inspect'(ret._return))
 			end
 			item.detail = ("%s(%s)"):format(k, table.concat(sig, ", "))
 		elseif val.tag == "Table" then
@@ -209,7 +213,8 @@ local function iter_scope(scope)
 				local symbol, value = unpack(nodes)
 				coroutine.yield(key, symbol, value)
 			end
-			scope = getmetatable(scope).__index
+			local mt = getmetatable(scope)
+			scope = mt and mt.__index
 		end
 	end)
 end
@@ -231,17 +236,21 @@ method_handlers["textDocument/completion"] = function(params, id)
 	local items = {}
 	local used  = {}
 	if char then
+		log("Complete %q", word)
 		local function follow_path(path_ids, ii, scope)
+			log("follow_path %s, %d", require'inspect'(path_ids), ii)
+			assert(scope)
 			local iword = path_ids[ii]
 			local last = ii == #path_ids
-			for iname, nodes in pairs(scope) do
-				local node, val = unpack(nodes)
+			for iname, node, val in iter_scope(scope) do
 				if last then
 					if iname:sub(1, iword:len()) == iword then
 						table.insert(items, make_item(iname, node, val))
 					end
 				elseif iname == iword and val.tag == "Table" then
-					follow_path(path_ids, ii+1, val.scope)
+					if val.scope then
+						follow_path(path_ids, ii+1, val.scope)
+					end
 				end
 			end
 		end
@@ -252,14 +261,19 @@ method_handlers["textDocument/completion"] = function(params, id)
 		if word:find("[:.]") then
 			-- path scope
 			local path_ids = {}
+
 			for s in word:gmatch("[^:.]*") do table.insert(path_ids, s) end
+			for i=#path_ids, 2, -2 do table.remove(path_ids, i) end
 
 			local iword = path_ids[1]
 			for iname, node, val in iter_scope(scope) do
 				if not used[iname] and node.pos <= realpos then
 					used[iname] = true
 					if iname == iword and val.tag == "Table" then
-						follow_path(path_ids, 2, val.scope)
+						log("found iword %q = %s", iname, parser.pp(val))
+						if val.scope then
+							follow_path(path_ids, 2, val.scope)
+						end
 					end
 				end
 			end

@@ -482,4 +482,19 @@ function parser.parse (subject, filename)
   return validate(ast, errorinfo)
 end
 
+function parser.pp(expr)
+	if type(expr) ~= "table" then return expr end
+	if expr.tag == "Number"  then return tostring(expr[1]) end
+	if expr.tag == "String"  then return ("%q"):format(expr[1]) end
+	if expr.tag == "Id"      then return ("%s"):format(expr[1]) end
+
+	local spit = {}
+	for _, e in ipairs(expr) do
+		table.insert(spit, parser.pp(e))
+	end
+	spit = table.concat(spit, ", ")
+
+	return string.format("`%s { %s }", expr.tag, spit)
+end
+
 return parser

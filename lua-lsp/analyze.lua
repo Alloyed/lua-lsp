@@ -8,22 +8,40 @@ if not ok then luacheck = nil end
 local analyze = {}
 
 local function slurp_locals(ast)
-	local scopes = {setmetatable({},{pos=0, posEnd=9999999999})}
+	local scopes = {setmetatable({},{pos=0, posEnd=9999999999, origin="file"})}
 
 	local dive_stat
 
 	local function clean_value(value)
 		if value == nil then
 			return {tag = "Unknown"}
+		elseif value.tag == "Number" then
+			return value
+		elseif value.tag == "String" then
+			return value
+		elseif value.tag == "Table" then
+			return value
+		elseif value.tag == "Call" then
+			-- find require(), maybe
+			if value[1].tag == "Id" then
+				if value[1][1] == "require" then
+					assert(value[2].tag == "string")
+					return {
+						tag = "Require",
+						module = value[2][1]
+					}
+				end
+			end
 		elseif value.tag == "Function" then
 			return {
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
+				scope = value.scope,
 				[1] = value[1]
 			}
 		end
-		return value
+		return {tag = "Unknown"}
 	end
 
 	local function save_local(a, key, value)
@@ -58,22 +76,30 @@ local function slurp_locals(ast)
 		return a
 	end
 
+	local function save_pair(scope, key, value)
+		assert(scope)
+		assert(key)
+		assert(key[1], require'inspect'(key))
+		assert(value)
+		scope[key[1]] = {key, clean_value(value)}
+	end
+
 	local function save_path(a, path, value)
-		local t = a
+		local ia = a
 		for i=1, #path-1 do
 			local idx = path[i]
-			if t[idx[1]] then
-				local v = t[idx[1]][2]
+			if ia[idx[1]] then
+				local v = ia[idx[1]][2]
 				if v == nil then
 					return
 				elseif v.tag == "Table" then
 					v.scope = v.scope or {}
-					t = v.scope
+					ia = v.scope
 				end
 			end
 		end
 		local key = path[#path]
-		t[key[1]] = {key, clean_value(value)}
+		save_pair(ia, key, value)
 	end
 
 	local function save_set(a, key, value)
@@ -92,11 +118,25 @@ local function slurp_locals(ast)
 			-- NOTE: mutating like this means we change the original node
 			-- instead of creating a new node. this is actually exactly what we
 			-- want (dirty the old node) but it's counterintuitive
-			a[k][2] = {tag = "Unknown"}
+			a[k][2] = clean_value(nil)
 		else
 			-- this is a new global var
 			scopes[1][k] = {key, clean_value(value)}
 		end
+	end
+
+	local function save_return(a, expr)
+		--log("save_return [%d]\t%s", getmetatable(a).id, parser.pp(expr))
+		-- move the return value up to the closest enclosing scope
+		local mt
+		repeat
+			if mt then a = mt.__index end
+			if a == nil then return end
+			mt = getmetatable(a) or {}
+			setmetatable(a, mt)
+		until mt.origin
+		mt._return = mt._return or {}
+		table.insert(mt._return, expr)
 	end
 
 	local function dive_expr(node, a)
@@ -104,6 +144,8 @@ local function slurp_locals(ast)
 			assert(node[2].tag == "Block")
 			local namelist = node[1]
 			dive_stat(node[2], a, function(next_a)
+				getmetatable(next_a).origin = node
+				node.scope = next_a
 				for _, name in ipairs(namelist) do
 					if name.tag ~= "Dots" then
 						save_local(next_a, name, {Tag = "Arg"})
@@ -114,35 +156,36 @@ local function slurp_locals(ast)
 			for _, expr in ipairs(node) do
 				dive_expr(expr, a)
 			end
+		elseif node.tag == "Invoke" then
+			log("Invoke NYI")
 		elseif node.tag == "Paren" then
 			dive_expr(node[1], a)
-		end
-	end
-
-	local function dive_lhs(node, a, lhs)
-		lhs = lhs or {}
-		if node.tag == "Index" then
-			dive_lhs(node[1], a, lhs)
-			dive_lhs(node[2], a, lhs)
-		elseif node.tag == "Id" then
-			if #lhs == 0 then
-				table.insert(lhs, node[1])
+		elseif node.tag == "Table" then
+			node.scope = node.scope or {}
+			local idx = 1
+			for _, inode in ipairs(node) do
+				if inode.tag == "Pair" then
+					local key, value = inode[1], inode[2]
+					dive_expr(key, a)
+					dive_expr(value, a)
+					save_pair(node.scope, key, value)
+				else
+					local key, value = {Tag="Number", idx}, inode
+					idx = idx + 1
+					dive_expr(value, a)
+					save_pair(node.scope, key, value)
+				end
 			end
-		elseif node.tag == "String" then
-			if #lhs ~= 0 then
-				table.insert(lhs, node[1])
-			end
 		end
-
-		return lhs
 	end
 
 	function dive_stat(node, a, fn)
-		assert(node.pos,require'inspect'(node))
+		assert(node.pos)
 		assert(node.tag)
 		if node.tag == "Block" or node.tag == "Do" then
 			local scope = setmetatable({}, {
 				__index = a,
+				id = #scopes+1,
 				pos = node.pos,
 				posEnd = node.posEnd
 			})
@@ -160,8 +203,6 @@ local function slurp_locals(ast)
 				end
 
 				if name then
-					--local path = dive_lhs(name, a)
-					--path = table.concat(path, ".")
 					if expr then
 						save_set(a, name, expr)
 					else
@@ -171,9 +212,14 @@ local function slurp_locals(ast)
 			end
 		elseif node.tag == "Return" then
 			local exprlist = node[1]
-			if exprlist then
+			if exprlist and exprlist.tag then
+				local expr = exprlist
+				dive_expr(expr, a)
+				save_return(a, expr)
+			elseif exprlist then
 				for _, expr in ipairs(exprlist) do
 					dive_expr(expr, a)
+					save_return(a, expr)
 				end
 			end
 		elseif node.tag == "Local" then
