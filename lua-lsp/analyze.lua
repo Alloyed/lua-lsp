@@ -24,8 +24,7 @@ local function slurp_locals(ast)
 		elseif value.tag == "Call" then
 			-- find require(), maybe
 			if value[1].tag == "Id" then
-				if value[1][1] == "require" then
-					assert(value[2].tag == "string")
+				if value[1][1] == "require" and value[2].tag == "String" then
 					return {
 						tag = "Require",
 						module = value[2][1]
@@ -157,7 +156,9 @@ local function slurp_locals(ast)
 				dive_expr(expr, a)
 			end
 		elseif node.tag == "Invoke" then
-			log("Invoke NYI")
+			for _, expr in ipairs(node) do
+				dive_expr(expr, a)
+			end
 		elseif node.tag == "Paren" then
 			dive_expr(node[1], a)
 		elseif node.tag == "Table" then
@@ -285,9 +286,11 @@ local function slurp_locals(ast)
 	return scopes
 end
 
+local luacheck_opts
 local function try_luacheck(document)
+	local opts = {}
 	if luacheck then
-		local reports = luacheck.check_strings({document.text}, {})
+		local reports = luacheck.check_strings({document.text}, {opts})
 		local diagnostics = {}
 		for _, issue in ipairs(reports[1]) do
 			-- FIXME: translate columns to characters
@@ -319,7 +322,8 @@ function analyze.document(document)
 	local len = text:len()
 	while ii < len do
 		local pos_s, pos_e = string.find(document.text, "([^\n]*)\n?", ii)
-		table.insert(lines, {text = text:sub(pos_s, pos_e-1), start = pos_s})
+		local line = text:sub(pos_s, pos_e):gsub("\n$", "")
+		table.insert(lines, {text = line, start = pos_s})
 		ii = pos_e + 1
 	end
 	document.lines=lines

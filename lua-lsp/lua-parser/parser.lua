@@ -48,6 +48,17 @@ opid:  -- includes additional operators from Lua 5.3
   | 'band' | 'bor' | 'bxor' | 'shl' | 'shr'
   | 'eq'   | 'lt'  | 'le'   | 'and' | 'or'
   | 'unm'  | 'len' | 'bnot' | 'not'
+
+  ALLOYED'S NOTES:
+  for IDE use we want a "partial" parser. this can mean either returning the
+  ast as-is after errors or trying to parser around the error. probably number
+  1 is fine.
+
+  pos and posEnd seem pretty goofed up when it comes to Id nodes (which are the
+  only ones I looked into), should probably be fixed
+
+  We need to support lua 5.2/luajit and 5.1 ideally. this means erroring when
+  5.1 uses goto, and when non-5.3 uses bitops
 ]]
 
 local lpeg = require "lpeglabel"
