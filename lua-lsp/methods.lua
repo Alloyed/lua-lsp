@@ -3,6 +3,7 @@ local analyze = require 'lua-lsp.analyze'
 local rpc     = require 'lua-lsp.rpc'
 local log     = require 'lua-lsp.log'
 local utf     = require 'lua-lsp.unicode'
+local json    = require 'dkjson'
 
 local method_handlers = {}
 
@@ -34,10 +35,10 @@ function method_handlers.initialize(params, id)
 				change = 1, -- 1 is non-incremental, 2 is incremental
 				save = { includeText = true },
 			},
-			--hoverProvider = false,
+			hoverProvider = true,
+			documentSymbolProvider = false,
 			--referencesProvider = false,
 			--documentHighlightProvider = false,
-			--documentSymbolProvider = false,
 			--workspaceSymbolProvider = false,
 			--codeActionProvider = false,
 			--documentFormattingProvider = false,
@@ -309,33 +310,58 @@ method_handlers["textDocument/completion"] = function(params, id)
 	})
 end
 
-local function make_linecol(document, pos)
+local function make_position(document, pos)
 	local last_linepos = nil
 	for i, line in ipairs(document.lines) do
 		if line.start > pos then
 			local text = document.lines[i-1].text
-			return i-1-1, utf.to_codeunits(text, pos - last_linepos + 1)
+			return {
+				line = i-1-1, 
+				character = utf.to_codeunits(text, pos - last_linepos + 1)
+			}
 		end
 		last_linepos = line.start
 	end
 	return nil
 end
 
--- turn two realpos arguments into a range
-local function make_range(document, startpos, endpos)
-	local line1, char1 = make_linecol(document, startpos)
-	local line2, char2 = make_linecol(document, endpos)
+-- turn two index arguments into a range
+local function make_range(document, startidx, endidx)
 	return {
-		start   = {line = line1, character = char1},
-		["end"] = {line = line2, character = char2}
+		start   = make_position(document, startidx),
+		["end"] = make_position(document, endidx)
 	}
 end
+
+local function make_location(document, symbol)
+	return {
+		uri = document.uri,
+		range = make_range(document, symbol.pos, symbol.posEnd)
+	}
+end
+
+--- Returns line and index for an LSP position. index is relative to line, not
+--  the document, and is measured in bytes.
+local function line_for(document, pos)
+	local line = document.lines[pos.line+1]
+	local char = utf.to_bytes(line.text, pos.character)
+
+	return line, char
+end
+
+--- Returns a document index for an LSP position. Indexes are measured in bytes.
+local function index_for(document, pos)
+	local line, char = line_for(document, pos)
+
+	return line.start + char - 1
+end
+
 
 method_handlers["textDocument/definition"] = function(params, id)
 	local pos = params.position
 	local document = document_for(params.textDocument.uri)
-	local line = document.lines[pos.line+1]
 
+	local line = document.lines[pos.line+1]
 	local char = utf.to_bytes(line.text, pos.character)
 	assert(char)
 	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
@@ -374,9 +400,29 @@ method_handlers["textDocument/definition"] = function(params, id)
 	rpc.respondError(id, string.format("symbol %q not found", word))
 end
 
+method_handlers["textDocument/documentSymbol"] = function(params, id)
+	local document = document_for(params.textDocument.uri)
+	local symbols = {}
+
+	for _, scope in ipairs(document.scopes) do
+		for _, pair in pairs(scope) do
+			local symbol, _ = unpack(pair)
+			if symbol.canGoto ~= false then
+				table.insert(symbols, {
+					name = symbol[1],
+					kind = 13,
+					location = make_location(document, symbol),
+					containerName = nil -- use for fields
+				})
+			end
+		end
+	end
+	return rpc.respond(id, symbols)
+end
+
 function method_handlers.shutdown(_, id)
 	Shutdown = true
-	rpc.respond(id, {})
+	rpc.respond(id, json.null)
 end
 
 function method_handlers.exit(_)

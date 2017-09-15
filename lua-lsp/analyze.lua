@@ -45,9 +45,6 @@ local function add_builtins(_scope, version)
 	
 
 	dive_type(info.global, _scope)
-	for k, v in pairs(_scope) do
-		--log("%s: %s", tostring(k), require'inspect'(v))
-	end
 end
 
 local function slurp_locals(ast)
@@ -376,6 +373,7 @@ function analyze.document(document)
 	end
 	document.lines=lines
 
+	local start_time = os.clock()
 	local ast, err = parser.parse(document.text, document.uri)
 	if ast then
 		document.ast = ast
@@ -404,6 +402,7 @@ function analyze.document(document)
 		-- FIXME: in this state (aka broken) the position numbers of the old
 		-- AST are out of sync with the new text object.
 	end
+	log.verbose("analyze took %f s", os.clock() - start_time)
 end
 
 return analyze
