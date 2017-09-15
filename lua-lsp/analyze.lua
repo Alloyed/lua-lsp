@@ -7,18 +7,66 @@ if not ok then luacheck = nil end
 
 local analyze = {}
 
+local function add_builtins(_scope, version)
+	local info = require('lua-lsp.data.'..version)
+	local function dive_type(node, scope)
+		if node.type == "table" then
+			for key, value in pairs(node.fields) do
+				if value.type == "string" then
+					scope[key] = {
+						{tag = "Id", key, pos=getmetatable(scope).pos, canGoto = false},
+						{
+							tag = "String",
+							description = value.description,
+							link = value.link
+						}
+					}
+				elseif value.type == "function" then
+					scope[key] = {
+						{
+							tag = "Id",
+							key,
+							pos=getmetatable(scope).pos,
+							canGoto = false
+						},
+						{
+							tag = "Function",
+							description = value.description,
+							arguments = value.args,
+							signature = value.argsDisplay,
+							returns   = value.returnTypes
+						}
+					}
+
+				end
+			end
+		end
+	end
+	
+
+	dive_type(info.global, _scope)
+	for k, v in pairs(_scope) do
+		--log("%s: %s", tostring(k), require'inspect'(v))
+	end
+end
+
 local function slurp_locals(ast)
 	local scopes = {setmetatable({},{pos=0, posEnd=9999999999, origin="file"})}
+	add_builtins(scopes[1], "5_1")
 
 	local dive_stat
 
 	local function clean_value(value)
+		local literals = {"Number", "String"}
 		if value == nil then
 			return {tag = "Unknown"}
-		elseif value.tag == "Number" then
-			return value
-		elseif value.tag == "String" then
-			return value
+		elseif literals[value.tag] then
+			return {
+				tag = value.tag,
+				pos = value.pos,
+				posEnd = value.posEnd,
+				value = value[1]
+			}
 		elseif value.tag == "Table" then
 			return value
 		elseif value.tag == "Call" then
@@ -37,7 +85,8 @@ local function slurp_locals(ast)
 				pos = value.pos,
 				posEnd = value.posEnd,
 				scope = value.scope,
-				[1] = value[1]
+				arguments = value[1],
+				signature = nil
 			}
 		end
 		return {tag = "Unknown"}
@@ -286,7 +335,6 @@ local function slurp_locals(ast)
 	return scopes
 end
 
-local luacheck_opts
 local function try_luacheck(document)
 	local opts = {}
 	if luacheck then
@@ -332,6 +380,7 @@ function analyze.document(document)
 	if ast then
 		document.ast = ast
 		document.scopes = slurp_locals(document.ast)
+		document.last_text = document.text
 		try_luacheck(document)
 	else
 		local line, column = err.line, err.column
@@ -352,6 +401,8 @@ function analyze.document(document)
 				message  = err.message,
 			} }
 		})
+		-- FIXME: in this state (aka broken) the position numbers of the old
+		-- AST are out of sync with the new text object.
 	end
 end
 

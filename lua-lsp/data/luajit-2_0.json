@@ -1,0 +1,2072 @@
+{
+  "global": {
+    "type": "table",
+    "fields": {
+      "_VERSION": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-_VERSION",
+        "description": "A global variable (not a function) that holds a string containing the current interpreter version. The current contents of this variable is \"Lua 5.1\".",
+        "type": "string"
+      },
+      "assert": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-assert",
+        "description": "Issues an error when the value of its argument v is false (i.e., nil or false); otherwise, returns all its arguments. message is an error message; when absent, it defaults to \"assertion failed!\"",
+        "type": "function",
+        "args": [
+          {
+            "name": "v"
+          }
+        ],
+        "argsDisplay": "v [, message]"
+      },
+      "collectgarbage": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-collectgarbage",
+        "description": "This function is a generic interface to the garbage collector. It performs different functions according to its first argument, opt:",
+        "type": "function",
+        "args": [],
+        "argsDisplay": "[opt [, arg]]"
+      },
+      "dofile": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-dofile",
+        "description": "Opens the named file and executes its contents as a Lua chunk. When called without arguments, dofile executes the contents of the standard input (stdin). Returns all values returned by the chunk. In case of errors, dofile propagates the error to its caller (that is, dofile does not run in protected mode).",
+        "type": "function",
+        "args": [],
+        "argsDisplay": "[filename]"
+      },
+      "error": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-error",
+        "description": "Terminates the last protected function called and returns message as the error message. Function error never returns.",
+        "type": "function",
+        "args": [
+          {
+            "name": "message"
+          }
+        ],
+        "argsDisplay": "message [, level]"
+      },
+      "getfenv": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-getfenv",
+        "description": "Returns the current environment in use by the function. f can be a Lua function or a number that specifies the function at that stack level: Level 1 is the function calling getfenv. If the given function is not a Lua function, or if f is 0, getfenv returns the global environment. The default for f is 1.",
+        "type": "function",
+        "args": [],
+        "argsDisplay": "[f]"
+      },
+      "getmetatable": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-getmetatable",
+        "description": "If object does not have a metatable, returns nil. Otherwise, if the object's metatable has a \"__metatable\" field, returns the associated value. Otherwise, returns the metatable of the given object.",
+        "type": "function",
+        "args": [
+          {
+            "name": "object"
+          }
+        ],
+        "argsDisplay": "object"
+      },
+      "ipairs": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-ipairs",
+        "description": "Returns three values: an iterator function, the table t, and 0, so that the construction",
+        "type": "function",
+        "args": [
+          {
+            "name": "t"
+          }
+        ],
+        "argsDisplay": "t"
+      },
+      "load": {
+        "link": "https://www.lua.org/manual/5.2/manual.html#pdf-load",
+        "description": "Loads a chunk.",
+        "type": "function",
+        "args": [
+          {
+            "name": "ld"
+          }
+        ],
+        "argsDisplay": "ld [, source [, mode [, env]]]"
+      },
+      "loadfile": {
+        "link": "https://www.lua.org/manual/5.2/manual.html#pdf-loadfile",
+        "description": "Similar to load, but gets the chunk from file filename or from the standard input, if no file name is given.",
+        "type": "function",
+        "args": [],
+        "argsDisplay": "[filename [, mode [, env]]]"
+      },
+      "loadstring": {
+        "link": "https://www.lua.org/manual/5.2/manual.html#pdf-load",
+        "description": "An alias for string.",
+        "type": "function",
+        "args": [
+          {
+            "name": "ld"
+          }
+        ],
+        "argsDisplay": "ld [, source [, mode [, env]]]"
+      },
+      "module": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-module",
+        "description": "Creates a module. If there is a table in package.loaded[name], this table is the module. Otherwise, if there is a global table t with the given name, this table is the module. Otherwise creates a new table t and sets it as the value of the global name and the value of package.loaded[name]. This function also initializes t._NAME with the given name, t._M with the module (t itself), and t._PACKAGE with the package name (the full module name minus last component; see below). Finally, module sets t as the new environment of the current function and the new value of package.loaded[name], so that require returns t.",
+        "type": "function",
+        "args": [
+          {
+            "name": "name"
+          }
+        ],
+        "argsDisplay": "name [, ···]"
+      },
+      "next": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-next",
+        "description": "Allows a program to traverse all fields of a table. Its first argument is a table and its second argument is an index in this table. next returns the next index of the table and its associated value. When called with nil as its second argument, next returns an initial index and its associated value. When called with the last index, or with nil in an empty table, next returns nil. If the second argument is absent, then it is interpreted as nil. In particular, you can use next(t) to check whether a table is empty.",
+        "type": "function",
+        "args": [
+          {
+            "name": "table"
+          }
+        ],
+        "argsDisplay": "table [, index]"
+      },
+      "pairs": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-pairs",
+        "description": "Returns three values: the next function, the table t, and nil, so that the construction",
+        "type": "function",
+        "args": [
+          {
+            "name": "t"
+          }
+        ],
+        "argsDisplay": "t"
+      },
+      "pcall": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-pcall",
+        "description": "Calls function f with the given arguments in protected mode. This means that any error inside f is not propagated; instead, pcall catches the error and returns a status code. Its first result is the status code (a boolean), which is true if the call succeeds without errors. In such case, pcall also returns all results from the call, after this first result. In case of any error, pcall returns false plus the error message.",
+        "type": "function",
+        "args": [
+          {
+            "name": "f"
+          }
+        ],
+        "argsDisplay": "f [, arg1, ···]"
+      },
+      "print": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-print",
+        "description": "Receives any number of arguments, and prints their values to stdout, using the tostring function to convert them to strings. print is not intended for formatted output, but only as a quick way to show a value, typically for debugging. For formatted output, use string.format.",
+        "type": "function",
+        "args": [],
+        "argsDisplay": "···"
+      },
+      "rawequal": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-rawequal",
+        "description": "Checks whether v1 is equal to v2, without invoking any metamethod. Returns a boolean.",
+        "type": "function",
+        "args": [
+          {
+            "name": "v1"
+          },
+          {
+            "name": "v2"
+          }
+        ],
+        "argsDisplay": "v1, v2"
+      },
+      "rawget": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-rawget",
+        "description": "Gets the real value of table[index], without invoking any metamethod. table must be a table; index may be any value.",
+        "type": "function",
+        "args": [
+          {
+            "name": "table"
+          },
+          {
+            "name": "index"
+          }
+        ],
+        "argsDisplay": "table, index"
+      },
+      "rawset": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-rawset",
+        "description": "Sets the real value of table[index] to value, without invoking any metamethod. table must be a table, index any value different from nil, and value any Lua value.",
+        "type": "function",
+        "args": [
+          {
+            "name": "table"
+          },
+          {
+            "name": "index"
+          },
+          {
+            "name": "value"
+          }
+        ],
+        "argsDisplay": "table, index, value"
+      },
+      "require": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-require",
+        "description": "Loads the given module. The function starts by looking into the package.loaded table to determine whether modname is already loaded. If it is, then require returns the value stored at package.loaded[modname]. Otherwise, it tries to find a loader for the module.",
+        "type": "function",
+        "args": [
+          {
+            "name": "modname"
+          }
+        ],
+        "argsDisplay": "modname"
+      },
+      "select": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-select",
+        "description": "If index is a number, returns all arguments after argument number index. Otherwise, index must be the string \"#\", and select returns the total number of extra arguments it received.",
+        "type": "function",
+        "args": [
+          {
+            "name": "index"
+          }
+        ],
+        "argsDisplay": "index, ···"
+      },
+      "setfenv": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-setfenv",
+        "description": "Sets the environment to be used by the given function. f can be a Lua function or a number that specifies the function at that stack level: Level 1 is the function calling setfenv. setfenv returns the given function.",
+        "type": "function",
+        "args": [
+          {
+            "name": "f"
+          },
+          {
+            "name": "table"
+          }
+        ],
+        "argsDisplay": "f, table"
+      },
+      "setmetatable": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-setmetatable",
+        "description": "Sets the metatable for the given table. (You cannot change the metatable of other types from Lua, only from C.) If metatable is nil, removes the metatable of the given table. If the original metatable has a \"__metatable\" field, raises an error.",
+        "type": "function",
+        "args": [
+          {
+            "name": "table"
+          },
+          {
+            "name": "metatable"
+          }
+        ],
+        "argsDisplay": "table, metatable"
+      },
+      "tonumber": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-tonumber",
+        "description": "Tries to convert its argument to a number. If the argument is already a number or a string convertible to a number, then tonumber returns this number; otherwise, it returns nil.",
+        "type": "function",
+        "args": [
+          {
+            "name": "e"
+          }
+        ],
+        "argsDisplay": "e [, base]"
+      },
+      "tostring": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-tostring",
+        "description": "Receives an argument of any type and converts it to a string in a reasonable format. For complete control of how numbers are converted, use string.format.",
+        "type": "function",
+        "args": [
+          {
+            "name": "e"
+          }
+        ],
+        "argsDisplay": "e"
+      },
+      "type": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-type",
+        "description": "Returns the type of its only argument, coded as a string. The possible results of this function are \"nil\" (a string, not the value nil), \"number\", \"string\", \"boolean\", \"table\", \"function\", \"thread\", and \"userdata\".",
+        "type": "function",
+        "args": [
+          {
+            "name": "v"
+          }
+        ],
+        "argsDisplay": "v"
+      },
+      "unpack": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-unpack",
+        "description": "Returns the elements from the given table. This function is equivalent to  return list[i], list[i+1], ···, list[j]",
+        "type": "function",
+        "args": [
+          {
+            "name": "list"
+          }
+        ],
+        "argsDisplay": "list [, i [, j]]"
+      },
+      "xpcall": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#pdf-xpcall",
+        "description": "This function is similar to pcall, except that you can set a new error handler.",
+        "type": "function",
+        "args": [
+          {
+            "name": "f"
+          },
+          {
+            "name": "err"
+          }
+        ],
+        "argsDisplay": "f, err [, arg1, ···]"
+      },
+      "bit": {
+        "link": "https://bitop.luajit.org/",
+        "description": "This library provides bitwise operations. It provides all its functions inside the table bit.",
+        "type": "table",
+        "fields": {
+          "arshift": {
+            "link": "https://bitop.luajit.org/api.html#lshift",
+            "description": "Returns the bitwise arithmetic right-shift of its first argument by the number of bits given by the second argument.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              },
+              {
+                "name": "n"
+              }
+            ],
+            "argsDisplay": "x, n"
+          },
+          "band": {
+            "link": "https://bitop.luajit.org/api.html#bor",
+            "description": "Returns the bitwise and of all of its arguments.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x1"
+              }
+            ],
+            "argsDisplay": "x1, [, x2, ...]"
+          },
+          "bnot": {
+            "link": "https://bitop.luajit.org/api.html#bnot",
+            "description": "Returns the bitwise not of its argument.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "bor": {
+            "link": "https://bitop.luajit.org/api.html#bor",
+            "description": "Returns the bitwise or of all of its arguments.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x1"
+              }
+            ],
+            "argsDisplay": "x1, [, x2, ...]"
+          },
+          "bswap": {
+            "link": "https://bitop.luajit.org/api.html#bswap",
+            "description": "Swaps the bytes of its argument and returns it.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "bxor": {
+            "link": "https://bitop.luajit.org/api.html#bor",
+            "description": "Returns the bitwise xor of all of its arguments.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x1"
+              }
+            ],
+            "argsDisplay": "x1, [, x2, ...]"
+          },
+          "lshift": {
+            "link": "https://bitop.luajit.org/api.html#lshift",
+            "description": "Returns the bitwise logical left-shift of its first argument by the number of bits given by the second argument.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              },
+              {
+                "name": "n"
+              }
+            ],
+            "argsDisplay": "x, n"
+          },
+          "rol": {
+            "link": "https://bitop.luajit.org/api.html#rol",
+            "description": "Returns either the bitwise left rotation of its first argument by the number of bits given by the second argument. Bits shifted out on one side are shifted back in on the other side.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              },
+              {
+                "name": "n"
+              }
+            ],
+            "argsDisplay": "x, n"
+          },
+          "ror": {
+            "link": "https://bitop.luajit.org/api.html#rol",
+            "description": "Returns either the bitwise right rotation of its first argument by the number of bits given by the second argument. Bits shifted out on one side are shifted back in on the other side.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              },
+              {
+                "name": "n"
+              }
+            ],
+            "argsDisplay": "x, n"
+          },
+          "rshift": {
+            "link": "https://bitop.luajit.org/api.html#lshift",
+            "description": "Returns the bitwise logical right-shift of its first argument by the number of bits given by the second argument.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              },
+              {
+                "name": "n"
+              }
+            ],
+            "argsDisplay": "x, n"
+          },
+          "tobit": {
+            "link": "https://bitop.luajit.org/api.html#tobit",
+            "description": "Normalizes a number to the numeric range for bit operations and returns it.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "tohex": {
+            "link": "https://bitop.luajit.org/api.html#tohex",
+            "description": "Converts its first argument to a hex string.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x [, n]"
+          }
+        }
+      },
+      "coroutine": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#5.2",
+        "description": "The operations related to coroutines comprise a sub-library of the basic library and come inside the table coroutine. See §2.11 for a general description of coroutines.",
+        "type": "table",
+        "fields": {
+          "create": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-coroutine.create",
+            "description": "Creates a new coroutine, with body f. f must be a Lua function. Returns this new coroutine, an object with type \"thread\".",
+            "type": "function",
+            "args": [
+              {
+                "name": "f"
+              }
+            ],
+            "argsDisplay": "f"
+          },
+          "resume": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-coroutine.resume",
+            "description": "Starts or continues the execution of coroutine co. The first time you resume a coroutine, it starts running its body. The values val1, ··· are passed as the arguments to the body function. If the coroutine has yielded, resume restarts it; the values val1, ··· are passed as the results from the yield.",
+            "type": "function",
+            "args": [
+              {
+                "name": "co"
+              }
+            ],
+            "argsDisplay": "co [, val1, ···]"
+          },
+          "running": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-coroutine.running",
+            "description": "Returns the running coroutine, or nil when called by the main thread.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": ""
+          },
+          "status": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-coroutine.status",
+            "description": "Returns the status of coroutine co, as a string: \"running\", if the coroutine is running (that is, it called status); \"suspended\", if the coroutine is suspended in a call to yield, or if it has not started running yet; \"normal\" if the coroutine is active but not running (that is, it has resumed another coroutine); and \"dead\" if the coroutine has finished its body function, or if it has stopped with an error.",
+            "type": "function",
+            "args": [
+              {
+                "name": "co"
+              }
+            ],
+            "argsDisplay": "co"
+          },
+          "wrap": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-coroutine.wrap",
+            "description": "Creates a new coroutine, with body f. f must be a Lua function. Returns a function that resumes the coroutine each time it is called. Any arguments passed to the function behave as the extra arguments to resume. Returns the same values returned by resume, except the first boolean. In case of error, propagates the error.",
+            "type": "function",
+            "args": [
+              {
+                "name": "f"
+              }
+            ],
+            "argsDisplay": "f"
+          },
+          "yield": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-coroutine.yield",
+            "description": "Suspends the execution of the calling coroutine. The coroutine cannot be running a C function, a metamethod, or an iterator. Any arguments to yield are passed as extra results to resume.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "···"
+          }
+        }
+      },
+      "debug": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#5.9",
+        "description": "This library provides the functionality of the debug interface to Lua programs. You should exert care when using this library. The functions provided here should be used exclusively for debugging and similar tasks, such as profiling. Please resist the temptation to use them as a usual programming tool: they can be very slow. Moreover, several of these functions violate some assumptions about Lua code (e.g., that variables local to a function cannot be accessed from outside or that userdata metatables cannot be changed by Lua code) and therefore can compromise otherwise secure code.",
+        "type": "table",
+        "fields": {
+          "debug": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-debug.debug",
+            "description": "Enters an interactive mode with the user, running each string that the user enters. Using simple commands and other debug facilities, the user can inspect global and local variables, change their values, evaluate expressions, and so on. A line containing only the word cont finishes this function, so that the caller continues its execution.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": ""
+          },
+          "getfenv": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-debug.getfenv",
+            "description": "Returns the environment of object o.",
+            "type": "function",
+            "args": [
+              {
+                "name": "o"
+              }
+            ],
+            "argsDisplay": "o"
+          },
+          "gethook": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-debug.gethook",
+            "description": "Returns the current hook settings of the thread, as three values: the current hook function, the current hook mask, and the current hook count (as set by the debug.sethook function).",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[thread]"
+          },
+          "getinfo": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-debug.getinfo",
+            "description": "Returns a table with information about a function. You can give the function directly or you can give a number as the value of f, which means the function running at level f of the call stack of the given thread: level 0 is the current function (getinfo itself); level 1 is the function that called getinfo (except for tail calls, which do not count on the stack); and so on. If f is a number larger than the number of active functions, then getinfo returns nil.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[thread,] f [, what]"
+          },
+          "getlocal": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-debug.getlocal",
+            "description": "This function returns the name and the value of the local variable with index local of the function at level f of the stack. This function accesses not only explicit local variables, but also parameters, temporaries, etc.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[thread,] f, local"
+          },
+          "getmetatable": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-debug.getmetatable",
+            "description": "Returns the metatable of the given object or nil if it does not have a metatable.",
+            "type": "function",
+            "args": [
+              {
+                "name": "object"
+              }
+            ],
+            "argsDisplay": "object"
+          },
+          "getregistry": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-debug.getregistry",
+            "description": "Returns the registry table (see §3.5).",
+            "type": "function",
+            "args": [],
+            "argsDisplay": ""
+          },
+          "getupvalue": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-debug.getupvalue",
+            "description": "This function returns the name and the value of the upvalue with index up of the function f. The function returns nil if there is no upvalue with the given index.",
+            "type": "function",
+            "args": [
+              {
+                "name": "f"
+              },
+              {
+                "name": "up"
+              }
+            ],
+            "argsDisplay": "f, up"
+          },
+          "setfenv": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-debug.setfenv",
+            "description": "Sets the environment of the given object to the given table. Returns object.",
+            "type": "function",
+            "args": [
+              {
+                "name": "object"
+              },
+              {
+                "name": "table"
+              }
+            ],
+            "argsDisplay": "object, table"
+          },
+          "sethook": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-debug.sethook",
+            "description": "Sets the given function as a hook. The string mask and the number count describe when the hook will be called. The string mask may have the following characters, with the given meaning:",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[thread,] hook, mask [, count]"
+          },
+          "setlocal": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-debug.setlocal",
+            "description": "This function assigns the value value to the local variable with index local of the function at level level of the stack. The function returns nil if there is no local variable with the given index, and raises an error when called with a level out of range. (You can call getinfo to check whether the level is valid.) Otherwise, it returns the name of the local variable.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[thread,] level, local, value"
+          },
+          "setmetatable": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-debug.setmetatable",
+            "description": "Sets the metatable for the given object to the given table (which can be nil).",
+            "type": "function",
+            "args": [
+              {
+                "name": "object"
+              },
+              {
+                "name": "table"
+              }
+            ],
+            "argsDisplay": "object, table"
+          },
+          "setupvalue": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-debug.setupvalue",
+            "description": "This function assigns the value value to the upvalue with index up of the function func. The function returns nil if there is no upvalue with the given index. Otherwise, it returns the name of the upvalue.",
+            "type": "function",
+            "args": [
+              {
+                "name": "func"
+              },
+              {
+                "name": "up"
+              },
+              {
+                "name": "value"
+              }
+            ],
+            "argsDisplay": "func, up, value"
+          },
+          "traceback": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-debug.traceback",
+            "description": "Returns a string with a traceback of the call stack. An optional message string is appended at the beginning of the traceback. An optional level number tells at which level to start the traceback (default is 1, the function calling traceback).",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[thread,] [message [, level]]"
+          },
+          "upvalueid": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-debug.upvalueid",
+            "description": "Returns an unique identifier (as a light userdata) for the upvalue numbered n from the given function.",
+            "type": "function",
+            "args": [
+              {
+                "name": "f"
+              },
+              {
+                "name": "n"
+              }
+            ],
+            "argsDisplay": "f, n"
+          },
+          "upvaluejoin": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-debug.upvaluejoin",
+            "description": "Make the n1-th upvalue of the Lua closure f1 refer to the n2-th upvalue of the Lua closure f2.",
+            "type": "function",
+            "args": [
+              {
+                "name": "f1"
+              },
+              {
+                "name": "n1"
+              },
+              {
+                "name": "f2"
+              },
+              {
+                "name": "n2"
+              }
+            ],
+            "argsDisplay": "f1, n1, f2, n2"
+          }
+        }
+      },
+      "ffi": {
+        "link": "https://luajit.org/ext_ffi_api.html",
+        "description": "The FFI library allows calling external C functions and using C data structures from pure Lua code.",
+        "type": "table",
+        "fields": {
+          "abi": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_abi",
+            "description": "Returns true if param (a Lua string) applies for the target ABI (Application Binary Interface). Returns false otherwise.",
+            "args": [
+              {
+                "name": "param"
+              }
+            ],
+            "argsDisplay": "param"
+          },
+          "alignof": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_alignof",
+            "description": "Returns the minimum required alignment for ct in bytes.",
+            "args": [
+              {
+                "name": "ct"
+              }
+            ],
+            "argsDisplay": "ct"
+          },
+          "arch": {
+            "type": "string",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_arch",
+            "description": "Contains the target architecture name. Same contents as jit.arch."
+          },
+          "cast": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_cast",
+            "description": "Creates a scalar cdata object for the given ct. The cdata object is initialized with init using the 'cast' variant of the C type conversion rules.",
+            "args": [
+              {
+                "name": "ct"
+              },
+              {
+                "name": "init"
+              }
+            ],
+            "argsDisplay": "ct, init"
+          },
+          "cdef": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_cdef",
+            "description": "Adds multiple C declarations for types or external symbols (named variables or functions).",
+            "args": [
+              {
+                "name": "def"
+              }
+            ],
+            "argsDisplay": "def"
+          },
+          "copy": {
+            "type": "function",
+            "variants": [
+              {
+                "link": "https://luajit.org/ext_ffi_api.html#ffi_copy",
+                "description": "Copies the data pointed to by src to dst. dst is converted to a 'void *' and src is converted to a 'const void *'. The number of bytes to copy is given by len.",
+                "args": [
+                  {
+                    "name": "dst"
+                  },
+                  {
+                    "name": "src"
+                  },
+                  {
+                    "name": "len"
+                  }
+                ],
+                "argsDisplay": "dst, src, len"
+              },
+              {
+                "link": "https://luajit.org/ext_ffi_api.html#ffi_copy",
+                "description": "Copies the data pointed to by src to dst. dst is converted to a 'void *' and src is converted to a 'const void *'. The source of the copy must be a Lua string. All bytes of the string plus a zero-terminator are copied to dst.",
+                "args": [
+                  {
+                    "name": "dst"
+                  },
+                  {
+                    "name": "src"
+                  }
+                ],
+                "argsDisplay": "dst, src"
+              }
+            ]
+          },
+          "errno": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_errno",
+            "description": "Returns the error number set by the last C function call which indicated an error condition. If the optional newerr argument is present, the error number is set to the new value and the previous value is returned.",
+            "args": [],
+            "argsDisplay": "[newerr]"
+          },
+          "fill": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_fill",
+            "description": "Fills the data pointed to by dst with len constant bytes, given by c. If c is omitted, the data is zero-filled.",
+            "args": [
+              {
+                "name": "dst"
+              },
+              {
+                "name": "len"
+              }
+            ],
+            "argsDisplay": "dst, len, [, c]"
+          },
+          "gc": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_gc",
+            "description": "Associates a finalizer with a pointer or aggregate cdata object. The cdata object is returned unchanged.",
+            "args": [
+              {
+                "name": "cdata"
+              },
+              {
+                "name": "finalizer"
+              }
+            ],
+            "argsDisplay": "cdata, finalizer"
+          },
+          "istype": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_istype",
+            "description": "Returns true if obj has the C type given by ct. Returns false otherwise.",
+            "args": [
+              {
+                "name": "ct"
+              },
+              {
+                "name": "obj"
+              }
+            ],
+            "argsDisplay": "ct, obj"
+          },
+          "load": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_load",
+            "description": "Loads the dynamic library given by name and returns a new C library namespace which binds to its symbols. On POSIX systems, if global is true, the library symbols are loaded into the global namespace, too.",
+            "args": [
+              {
+                "name": "name"
+              }
+            ],
+            "argsDisplay": "name [, global]"
+          },
+          "metatype": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_metatype",
+            "description": "Creates a ctype object for the given ct and associates it with a metatable. Only struct/union types, complex numbers and vectors are allowed.",
+            "args": [
+              {
+                "name": "ct"
+              },
+              {
+                "name": "metatable"
+              }
+            ],
+            "argsDisplay": "ct, metatable"
+          },
+          "new": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_new",
+            "description": "Creates a cdata object for the given C type.",
+            "args": [
+              {
+                "name": "ct"
+              }
+            ],
+            "argsDisplay": "ct [, nelem [, init, ...]]"
+          },
+          "offsetof": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_offsetof",
+            "description": "Returns the offset (in bytes) of field relative to the start of ct, which must be a struct. Additionally returns the position and the field size (in bits) for bit fields.",
+            "args": [
+              {
+                "name": "ct"
+              },
+              {
+                "name": "field"
+              }
+            ],
+            "argsDisplay": "ct, field"
+          },
+          "os": {
+            "type": "string",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_os",
+            "description": "Contains the target OS name. Same contents as jit.os."
+          },
+          "sizeof": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_sizeof",
+            "description": "Returns the size of ct in bytes. Returns nil if the size is not known (e.g. for 'void' or function types). Requires nelem for VLA/VLS types, except for cdata objects.",
+            "args": [
+              {
+                "name": "ct"
+              }
+            ],
+            "argsDisplay": "ct [, nelem]"
+          },
+          "string": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_string",
+            "description": "Creates an interned Lua string from the data pointed to by ptr. If the optional argument len is missing, ptr is converted to a 'char *' and the data is assumed to be zero-terminated.",
+            "args": [
+              {
+                "name": "ptr"
+              }
+            ],
+            "argsDisplay": "ct [, len]"
+          },
+          "typeof": {
+            "type": "function",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_typeof",
+            "description": "Creates a ctype object for the given ct.",
+            "args": [
+              {
+                "name": "ct"
+              }
+            ],
+            "argsDisplay": "ct"
+          },
+          "C": {
+            "type": "unknown",
+            "link": "https://luajit.org/ext_ffi_api.html#ffi_C",
+            "description": "The default C library namespace. It binds to the default set of symbols or libraries on the target system."
+          }
+        }
+      },
+      "io": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#5.7",
+        "description": "The I/O library provides two different styles for file manipulation. The first one uses implicit file descriptors; that is, there are operations to set a default input file and a default output file, and all input/output operations are over these default files. The second style uses explicit file descriptors.",
+        "type": "table",
+        "fields": {
+          "close": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-io.close",
+            "description": "Equivalent to file:close(). Without a file, closes the default output file.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[file]"
+          },
+          "flush": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-io.flush",
+            "description": "Equivalent to file:flush over the default output file.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": ""
+          },
+          "input": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-io.input",
+            "description": "When called with a file name, it opens the named file (in text mode), and sets its handle as the default input file. When called with a file handle, it simply sets this file handle as the default input file. When called without parameters, it returns the current default input file.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[file]"
+          },
+          "lines": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-io.lines",
+            "description": "Opens the given file name in read mode and returns an iterator function that works like file:lines(···) over the opened file. When the iterator function detects the end of file, it returns nil (to finish the loop) and automatically closes the file.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[filename ···]"
+          },
+          "open": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-io.open",
+            "description": "This function opens a file, in the mode specified in the string mode. It returns a new file handle, or, in case of errors, nil plus an error message.",
+            "type": "function",
+            "args": [
+              {
+                "name": "filename"
+              }
+            ],
+            "argsDisplay": "filename [, mode]",
+            "returnTypes": [
+              {
+                "type": "ref",
+                "name": "file"
+              }
+            ]
+          },
+          "output": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-io.output",
+            "description": "Similar to io.input, but operates over the default output file.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[file]"
+          },
+          "popen": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-io.popen",
+            "description": "Starts program prog in a separated process and returns a file handle that you can use to read data from this program (if mode is \"r\", the default) or to write data to this program (if mode is \"w\").",
+            "type": "function",
+            "args": [
+              {
+                "name": "prog"
+              }
+            ],
+            "argsDisplay": "prog [, mode]",
+            "returnTypes": [
+              {
+                "type": "ref",
+                "name": "file"
+              }
+            ]
+          },
+          "read": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-io.read",
+            "description": "Equivalent to io.input():read(···).",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "···"
+          },
+          "stderr": {
+            "type": "ref",
+            "name": "file"
+          },
+          "stdin": {
+            "type": "ref",
+            "name": "file"
+          },
+          "stdout": {
+            "type": "ref",
+            "name": "file"
+          },
+          "tmpfile": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-io.tmpfile",
+            "description": "Returns a handle for a temporary file. This file is opened in update mode and it is automatically removed when the program ends.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "",
+            "returnTypes": [
+              {
+                "type": "ref",
+                "name": "file"
+              }
+            ]
+          },
+          "type": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-io.type",
+            "description": "Checks whether obj is a valid file handle. Returns the string \"file\" if obj is an open file handle, \"closed file\" if obj is a closed file handle, or nil if obj is not a file handle.",
+            "type": "function",
+            "args": [
+              {
+                "name": "obj"
+              }
+            ],
+            "argsDisplay": "obj"
+          },
+          "write": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-io.write",
+            "description": "Equivalent to io.output():write.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "···"
+          }
+        }
+      },
+      "jit": {
+        "link": "https://luajit.org/ext_jit.html",
+        "description": "The functions in this built-in module control the behavior of the JIT compiler engine.",
+        "type": "table",
+        "fields": {
+          "arch": {
+            "type": "string",
+            "link": "https://luajit.org/ext_jit.html#jit_arch",
+            "description": "Contains the target architecture name."
+          },
+          "flush": {
+            "type": "function",
+            "variants": [
+              {
+                "link": "https://luajit.org/ext_jit.html#jit_flush",
+                "description": "Flushes the whole cache of compiled code.",
+                "args": []
+              },
+              {
+                "link": "https://luajit.org/ext_jit.html#jit_onoff_func",
+                "description": "Flushes the code, but doesn't affect the enable/disable status.",
+                "args": [],
+                "argsDisplay": "[func [, b]]"
+              },
+              {
+                "link": "https://luajit.org/ext_jit.html#jit_flush_tr",
+                "description": "Flushes the root trace, specified by its number, and all of its side traces from the cache. The code for the trace will be retained as long as there are any other traces which link to it.",
+                "args": [
+                  {
+                    "name": "tr"
+                  }
+                ],
+                "argsDisplay": "tr"
+              }
+            ]
+          },
+          "off": {
+            "type": "function",
+            "variants": [
+              {
+                "link": "https://luajit.org/ext_jit.html#jit_onoff",
+                "description": "Turns the whole JIT compiler off.",
+                "args": []
+              },
+              {
+                "link": "https://luajit.org/ext_jit.html#jit_onoff_func",
+                "description": "Disables JIT compilation for a Lua function and flushes any already compiled code from the code cache.",
+                "args": [],
+                "argsDisplay": "[func [, b]]"
+              }
+            ]
+          },
+          "on": {
+            "type": "function",
+            "variants": [
+              {
+                "link": "https://luajit.org/ext_jit.html#jit_onoff",
+                "description": "Turns the whole JIT compiler on (default).",
+                "args": []
+              },
+              {
+                "link": "https://luajit.org/ext_jit.html#jit_onoff_func",
+                "description": "Enables JIT compilation for a Lua function.",
+                "args": [],
+                "argsDisplay": "[func [, b]]"
+              }
+            ]
+          },
+          "opt": {
+            "link": "https://luajit.org/ext_jit.html#jit_opt",
+            "description": "This sub-module provides the backend for the -O command line option.",
+            "type": "table",
+            "fields": {
+              "start": {
+                "type": "function",
+                "args": []
+              }
+            }
+          },
+          "os": {
+            "type": "string",
+            "link": "https://luajit.org/ext_jit.html#jit_os",
+            "description": "Contains the target OS name."
+          },
+          "status": {
+            "type": "string",
+            "link": "https://luajit.org/ext_jit.html#jit_version",
+            "description": "Contains the LuaJIT version string."
+          },
+          "util": {
+            "link": "https://luajit.org/ext_jit.html#jit_util",
+            "description": "This sub-module holds functions to introspect the bytecode, generated traces, the IR and the generated machine code.",
+            "type": "table",
+            "fields": {
+              "funcbc": {
+                "type": "function",
+                "args": []
+              },
+              "funcinfo": {
+                "type": "function",
+                "args": []
+              },
+              "funck": {
+                "type": "function",
+                "args": []
+              },
+              "funcuvname": {
+                "type": "function",
+                "args": []
+              },
+              "ircalladdr": {
+                "type": "function",
+                "args": []
+              },
+              "traceexitstub": {
+                "type": "function",
+                "args": []
+              },
+              "traceinfo": {
+                "type": "function",
+                "args": []
+              },
+              "traceir": {
+                "type": "function",
+                "args": []
+              },
+              "tracek": {
+                "type": "function",
+                "args": []
+              },
+              "tracemc": {
+                "type": "function",
+                "args": []
+              },
+              "tracesnap": {
+                "type": "function",
+                "args": []
+              }
+            }
+          },
+          "version_num": {
+            "type": "number",
+            "link": "https://luajit.org/ext_jit.html#jit_version_num",
+            "description": "Contains the version number of the LuaJIT core."
+          }
+        }
+      },
+      "math": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#5.6",
+        "description": "This library is an interface to the standard C math library. It provides all its functions inside the table math.",
+        "type": "table",
+        "fields": {
+          "abs": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.abs",
+            "description": "Returns the absolute value of x.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "acos": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.acos",
+            "description": "Returns the arc cosine of x (in radians).",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "asin": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.asin",
+            "description": "Returns the arc sine of x (in radians).",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "atan": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.atan",
+            "description": "Returns the arc tangent of x (in radians).",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "atan2": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.atan2",
+            "description": "Returns the arc tangent of y/x (in radians), but uses the signs of both parameters to find the quadrant of the result. (It also handles correctly the case of x being zero.)",
+            "type": "function",
+            "args": [
+              {
+                "name": "y"
+              },
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "y, x"
+          },
+          "ceil": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.ceil",
+            "description": "Returns the smallest integer larger than or equal to x.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "cos": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.cos",
+            "description": "Returns the cosine of x (assumed to be in radians).",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "cosh": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.cosh",
+            "description": "Returns the hyperbolic cosine of x.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "deg": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.deg",
+            "description": "Returns the angle x (given in radians) in degrees.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "exp": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.exp",
+            "description": "Returns the value ex.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "floor": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.floor",
+            "description": "Returns the largest integer smaller than or equal to x.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "fmod": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.fmod",
+            "description": "Returns the remainder of the division of x by y that rounds the quotient towards zero.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              },
+              {
+                "name": "y"
+              }
+            ],
+            "argsDisplay": "x, y"
+          },
+          "frexp": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.frexp",
+            "description": "Returns m and e such that x = m2e, e is an integer and the absolute value of m is in the range [0.5, 1) (or zero when x is zero).",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "huge": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.huge",
+            "description": "The value HUGE_VAL, a value larger than or equal to any other numerical value.",
+            "type": "unknown"
+          },
+          "ldexp": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.ldexp",
+            "description": "Returns m2e (e should be an integer).",
+            "type": "function",
+            "args": [
+              {
+                "name": "m"
+              },
+              {
+                "name": "e"
+              }
+            ],
+            "argsDisplay": "m, e"
+          },
+          "log": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-math.log",
+            "description": "Returns the logarithm of x in the given base. The default for base is e (so that the function returns the natural logarithm of x).",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x [, base]"
+          },
+          "log10": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.log10",
+            "description": "Returns the base-10 logarithm of x.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "max": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.max",
+            "description": "Returns the maximum value among its arguments.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x, ···"
+          },
+          "min": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.min",
+            "description": "Returns the minimum value among its arguments.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x, ···"
+          },
+          "modf": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.modf",
+            "description": "Returns two numbers, the integral part of x and the fractional part of x.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "pi": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.pi",
+            "description": "The value of pi.",
+            "type": "number"
+          },
+          "pow": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.pow",
+            "description": "Returns xy. (You can also use the expression x^y to compute this value.)",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              },
+              {
+                "name": "y"
+              }
+            ],
+            "argsDisplay": "x, y"
+          },
+          "rad": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.rad",
+            "description": "Returns the angle x (given in degrees) in radians.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "random": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.random",
+            "description": "This function is an interface to the simple pseudo-random generator function rand provided by ANSI C. (No guarantees can be given for its statistical properties.)",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[m [, n]]"
+          },
+          "randomseed": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.randomseed",
+            "description": "Sets x as the \"seed\" for the pseudo-random generator: equal seeds produce equal sequences of numbers.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "sin": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.sin",
+            "description": "Returns the sine of x (assumed to be in radians).",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "sinh": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.sinh",
+            "description": "Returns the hyperbolic sine of x.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "sqrt": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.sqrt",
+            "description": "Returns the square root of x. (You can also use the expression x^0.5 to compute this value.)",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "tan": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.tan",
+            "description": "Returns the tangent of x (assumed to be in radians).",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          },
+          "tanh": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-math.tanh",
+            "description": "Returns the hyperbolic tangent of x.",
+            "type": "function",
+            "args": [
+              {
+                "name": "x"
+              }
+            ],
+            "argsDisplay": "x"
+          }
+        }
+      },
+      "os": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#5.8",
+        "description": "This library is implemented through table os.",
+        "type": "table",
+        "fields": {
+          "clock": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-os.clock",
+            "description": "Returns an approximation of the amount in seconds of CPU time used by the program.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": ""
+          },
+          "date": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-os.date",
+            "description": "Returns a string or a table containing date and time, formatted according to the given string format.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[format [, time]]"
+          },
+          "difftime": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-os.difftime",
+            "description": "Returns the number of seconds from time t1 to time t2. In POSIX, Windows, and some other systems, this value is exactly t2-t1.",
+            "type": "function",
+            "args": [
+              {
+                "name": "t2"
+              },
+              {
+                "name": "t1"
+              }
+            ],
+            "argsDisplay": "t2, t1"
+          },
+          "execute": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-os.execute",
+            "description": "This function is equivalent to the C function system. It passes command to be executed by an operating system shell. It returns a status code, which is system-dependent. If command is absent, then it returns nonzero if a shell is available and zero otherwise.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[command]"
+          },
+          "exit": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-os.exit",
+            "description": "Calls the ISO C function exit to terminate the host program. If code is true, the returned status is EXIT_SUCCESS; if code is false, the returned status is EXIT_FAILURE; if code is a number, the returned status is this number. The default value for code is true.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[code [, close]"
+          },
+          "getenv": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-os.getenv",
+            "description": "Returns the value of the process environment variable varname, or nil if the variable is not defined.",
+            "type": "function",
+            "args": [
+              {
+                "name": "varname"
+              }
+            ],
+            "argsDisplay": "varname"
+          },
+          "remove": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-os.remove",
+            "description": "Deletes the file or directory with the given name. Directories must be empty to be removed. If this function fails, it returns nil, plus a string describing the error.",
+            "type": "function",
+            "args": [
+              {
+                "name": "filename"
+              }
+            ],
+            "argsDisplay": "filename"
+          },
+          "rename": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-os.rename",
+            "description": "Renames file or directory named oldname to newname. If this function fails, it returns nil, plus a string describing the error.",
+            "type": "function",
+            "args": [
+              {
+                "name": "oldname"
+              },
+              {
+                "name": "newname"
+              }
+            ],
+            "argsDisplay": "oldname, newname"
+          },
+          "setlocale": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-os.setlocale",
+            "description": "Sets the current locale of the program. locale is a string specifying a locale; category is an optional string describing which category to change: \"all\", \"collate\", \"ctype\", \"monetary\", \"numeric\", or \"time\"; the default category is \"all\". The function returns the name of the new locale, or nil if the request cannot be honored.",
+            "type": "function",
+            "args": [
+              {
+                "name": "locale"
+              }
+            ],
+            "argsDisplay": "locale [, category]"
+          },
+          "time": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-os.time",
+            "description": "Returns the current time when called without arguments, or a time representing the date and time specified by the given table. This table must have fields year, month, and day, and may have fields hour, min, sec, and isdst (for a description of these fields, see the os.date function).",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "[table]"
+          },
+          "tmpname": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-os.tmpname",
+            "description": "Returns a string with a file name that can be used for a temporary file. The file must be explicitly opened before its use and explicitly removed when no longer needed.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": ""
+          }
+        }
+      },
+      "package": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#5.3",
+        "description": "The package library provides basic facilities for loading and building modules in Lua. It exports two of its functions directly in the global environment: require and module. Everything else is exported in a table package.",
+        "type": "table",
+        "fields": {
+          "cpath": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-package.cpath",
+            "description": "The path used by require to search for a C loader.",
+            "type": "unknown"
+          },
+          "loaded": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-package.loaded",
+            "description": "A table used by require to control which modules are already loaded. When you require a module modname and package.loaded[modname] is not false, require simply returns the value stored there.",
+            "type": "unknown"
+          },
+          "loaders": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-package.loaders",
+            "description": "A table used by require to control how to load modules.",
+            "type": "unknown"
+          },
+          "loadlib": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-package.loadlib",
+            "description": "Dynamically links the host program with the C library libname.",
+            "type": "function",
+            "args": [
+              {
+                "name": "libname"
+              },
+              {
+                "name": "funcname"
+              }
+            ],
+            "argsDisplay": "libname, funcname"
+          },
+          "path": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-package.path",
+            "description": "The path used by require to search for a Lua loader.",
+            "type": "unknown"
+          },
+          "preload": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-package.preload",
+            "description": "A table to store loaders for specific modules (see require).",
+            "type": "unknown"
+          },
+          "searchpath": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-package.searchpath",
+            "description": "Searches for the given name in the given path.",
+            "type": "function",
+            "args": [
+              {
+                "name": "name"
+              },
+              {
+                "name": "path"
+              }
+            ],
+            "argsDisplay": "name, path [, sep [, rep]]"
+          },
+          "seeall": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-package.seeall",
+            "description": "Sets a metatable for module with its __index field referring to the global environment, so that this module inherits values from the global environment. To be used as an option to function module.",
+            "type": "function",
+            "args": [
+              {
+                "name": "module"
+              }
+            ],
+            "argsDisplay": "module"
+          }
+        }
+      },
+      "string": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#5.4",
+        "description": "This library provides generic functions for string manipulation, such as finding and extracting substrings, and pattern matching. When indexing a string in Lua, the first character is at position 1 (not at 0, as in C). Indices are allowed to be negative and are interpreted as indexing backwards, from the end of the string. Thus, the last character is at position -1, and so on.",
+        "type": "table",
+        "fields": {
+          "byte": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.byte",
+            "description": "Returns the internal numerical codes of the characters s[i], s[i+1], ···, s[j]. The default value for i is 1; the default value for j is i.",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              }
+            ],
+            "argsDisplay": "s [, i [, j]]"
+          },
+          "char": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.char",
+            "description": "Receives zero or more integers. Returns a string with length equal to the number of arguments, in which each character has the internal numerical code equal to its corresponding argument.",
+            "type": "function",
+            "args": [],
+            "argsDisplay": "···"
+          },
+          "dump": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.dump",
+            "description": "Returns a string containing a binary representation of the given function, so that a later loadstring on this string returns a copy of the function. function must be a Lua function without upvalues.",
+            "type": "function",
+            "args": [
+              {
+                "name": "function"
+              }
+            ],
+            "argsDisplay": "function [, strip]"
+          },
+          "find": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.find",
+            "description": "Looks for the first match of pattern in the string s. If it finds a match, then find returns the indices of s where this occurrence starts and ends; otherwise, it returns nil. A third, optional numerical argument init specifies where to start the search; its default value is 1 and can be negative. A value of true as a fourth, optional argument plain turns off the pattern matching facilities, so the function does a plain \"find substring\" operation, with no characters in pattern being considered \"magic\". Note that if plain is given, then init must be given as well.",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              },
+              {
+                "name": "pattern"
+              }
+            ],
+            "argsDisplay": "s, pattern [, init [, plain]]"
+          },
+          "format": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-string.format",
+            "description": "Returns a formatted version of its variable number of arguments following the description given in its first argument (which must be a string). The format string follows the same rules as the ISO C function sprintf. The only differences are that the options/modifiers *, h, L, l, n, and p are not supported and that there is an extra option, q. The q option formats a string between double quotes, using escape sequences when necessary to ensure that it can safely be read back by the Lua interpreter. For instance, the call",
+            "type": "function",
+            "args": [
+              {
+                "name": "formatstring"
+              }
+            ],
+            "argsDisplay": "formatstring, ···"
+          },
+          "gmatch": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.gmatch",
+            "description": "Returns an iterator function that, each time it is called, returns the next captures from pattern over string s. If pattern specifies no captures, then the whole match is produced in each call.",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              },
+              {
+                "name": "pattern"
+              }
+            ],
+            "argsDisplay": "s, pattern"
+          },
+          "gsub": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.gsub",
+            "description": "Returns a copy of s in which all (or the first n, if given) occurrences of the pattern have been replaced by a replacement string specified by repl, which can be a string, a table, or a function. gsub also returns, as its second value, the total number of matches that occurred.",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              },
+              {
+                "name": "pattern"
+              },
+              {
+                "name": "repl"
+              }
+            ],
+            "argsDisplay": "s, pattern, repl [, n]"
+          },
+          "len": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.len",
+            "description": "Receives a string and returns its length. The empty string \"\" has length 0. Embedded zeros are counted, so \"a\\000bc\\000\" has length 5.",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              }
+            ],
+            "argsDisplay": "s"
+          },
+          "lower": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.lower",
+            "description": "Receives a string and returns a copy of this string with all uppercase letters changed to lowercase. All other characters are left unchanged. The definition of what an uppercase letter is depends on the current locale.",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              }
+            ],
+            "argsDisplay": "s"
+          },
+          "match": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.match",
+            "description": "Looks for the first match of pattern in the string s. If it finds one, then match returns the captures from the pattern; otherwise it returns nil. If pattern specifies no captures, then the whole match is returned. A third, optional numerical argument init specifies where to start the search; its default value is 1 and can be negative.",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              },
+              {
+                "name": "pattern"
+              }
+            ],
+            "argsDisplay": "s, pattern [, init]"
+          },
+          "rep": {
+            "link": "https://www.lua.org/manual/5.2/manual.html#pdf-string.rep",
+            "description": "Returns a string that is the concatenation of n copies of the string s separated by the string sep. The default value for sep is the empty string (that is, no separator).",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              },
+              {
+                "name": "n"
+              }
+            ],
+            "argsDisplay": "s, n [, sep]"
+          },
+          "reverse": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.reverse",
+            "description": "Returns a string that is the string s reversed.",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              }
+            ],
+            "argsDisplay": "s"
+          },
+          "sub": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.sub",
+            "description": "Returns the substring of s that starts at i and continues until j; i and j can be negative. If j is absent, then it is assumed to be equal to -1 (which is the same as the string length). In particular, the call string.sub(s,1,j) returns a prefix of s with length j, and string.sub(s, -i) returns a suffix of s with length i.",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              },
+              {
+                "name": "i"
+              }
+            ],
+            "argsDisplay": "s, i [, j]"
+          },
+          "upper": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-string.upper",
+            "description": "Receives a string and returns a copy of this string with all lowercase letters changed to uppercase. All other characters are left unchanged. The definition of what a lowercase letter is depends on the current locale.",
+            "type": "function",
+            "args": [
+              {
+                "name": "s"
+              }
+            ],
+            "argsDisplay": "s"
+          }
+        }
+      },
+      "table": {
+        "link": "https://www.lua.org/manual/5.1/manual.html#5.5",
+        "description": "This library provides generic functions for table manipulation. It provides all its functions inside the table table.",
+        "type": "table",
+        "fields": {
+          "concat": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-table.concat",
+            "description": "Given an array where all elements are strings or numbers, returns table[i]..sep..table[i+1] ··· sep..table[j]. The default value for sep is the empty string, the default for i is 1, and the default for j is the length of the table. If i is greater than j, returns the empty string.",
+            "type": "function",
+            "args": [
+              {
+                "name": "table"
+              }
+            ],
+            "argsDisplay": "table [, sep [, i [, j]]]"
+          },
+          "insert": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-table.insert",
+            "description": "Inserts element value at position pos in table, shifting up other elements to open space, if necessary. The default value for pos is n+1, where n is the length of the table (see §2.5.5), so that a call table.insert(t,x) inserts x at the end of table t.",
+            "type": "function",
+            "args": [
+              {
+                "name": "table"
+              }
+            ],
+            "argsDisplay": "table, [pos,] value"
+          },
+          "maxn": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-table.maxn",
+            "description": "Returns the largest positive numerical index of the given table, or zero if the table has no positive numerical indices. (To do its job this function does a linear traversal of the whole table.)",
+            "type": "function",
+            "args": [
+              {
+                "name": "table"
+              }
+            ],
+            "argsDisplay": "table"
+          },
+          "remove": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-table.remove",
+            "description": "Removes from table the element at position pos, shifting down other elements to close the space, if necessary. Returns the value of the removed element. The default value for pos is n, where n is the length of the table, so that a call table.remove(t) removes the last element of table t.",
+            "type": "function",
+            "args": [
+              {
+                "name": "table"
+              }
+            ],
+            "argsDisplay": "table [, pos]"
+          },
+          "sort": {
+            "link": "https://www.lua.org/manual/5.1/manual.html#pdf-table.sort",
+            "description": "Sorts table elements in a given order, in-place, from table[1] to table[n], where n is the length of the table. If comp is given, then it must be a function that receives two table elements, and returns true when the first is less than the second (so that not comp(a[i+1],a[i]) will be true after the sort). If comp is not given, then the standard Lua operator < is used instead.",
+            "type": "function",
+            "args": [
+              {
+                "name": "table"
+              }
+            ],
+            "argsDisplay": "table [, comp]"
+          }
+        }
+      }
+    }
+  },
+  "namedTypes": {
+    "file": {
+      "type": "table",
+      "fields": {},
+      "metatable": {
+        "type": "table",
+        "fields": {
+          "__index": {
+            "type": "table",
+            "fields": {
+              "close": {
+                "link": "https://www.lua.org/manual/5.1/manual.html#pdf-file:close",
+                "description": "Closes file. Note that files are automatically closed when their handles are garbage collected, but that takes an unpredictable amount of time to happen.",
+                "type": "function",
+                "args": [
+                  {
+                    "name": "self"
+                  }
+                ],
+                "argsDisplay": "self",
+                "argsDisplayOmitSelf": ""
+              },
+              "flush": {
+                "link": "https://www.lua.org/manual/5.1/manual.html#pdf-file:flush",
+                "description": "Saves any written data to file.",
+                "type": "function",
+                "args": [
+                  {
+                    "name": "self"
+                  }
+                ],
+                "argsDisplay": "self",
+                "argsDisplayOmitSelf": ""
+              },
+              "lines": {
+                "link": "https://www.lua.org/manual/5.2/manual.html#pdf-file:lines",
+                "description": "Returns an iterator function that, each time it is called, reads the file according to the given formats. When no format is given, uses \"*l\" as a default. As an example, the construction",
+                "type": "function",
+                "args": [
+                  {
+                    "name": "self"
+                  }
+                ],
+                "argsDisplay": "self, ···",
+                "argsDisplayOmitSelf": "···"
+              },
+              "read": {
+                "link": "https://www.lua.org/manual/5.1/manual.html#pdf-file:read",
+                "description": "Reads the file file, according to the given formats, which specify what to read. For each format, the function returns a string (or a number) with the characters read, or nil if it cannot read data with the specified format. When called without formats, it uses a default format that reads the entire next line (see below).",
+                "type": "function",
+                "args": [
+                  {
+                    "name": "self"
+                  }
+                ],
+                "argsDisplay": "self, ···",
+                "argsDisplayOmitSelf": "···"
+              },
+              "seek": {
+                "link": "https://www.lua.org/manual/5.1/manual.html#pdf-file:seek",
+                "description": "Sets and gets the file position, measured from the beginning of the file, to the position given by offset plus a base specified by the string whence, as follows:",
+                "type": "function",
+                "args": [
+                  {
+                    "name": "self"
+                  }
+                ],
+                "argsDisplay": "self, [whence] [, offset]",
+                "argsDisplayOmitSelf": "[whence] [, offset]"
+              },
+              "setvbuf": {
+                "link": "https://www.lua.org/manual/5.1/manual.html#pdf-file:setvbuf",
+                "description": "Sets the buffering mode for an output file. There are three available modes:",
+                "type": "function",
+                "args": [
+                  {
+                    "name": "self"
+                  },
+                  {
+                    "name": "mode"
+                  }
+                ],
+                "argsDisplay": "self, mode [, size]",
+                "argsDisplayOmitSelf": "mode [, size]"
+              },
+              "write": {
+                "link": "https://www.lua.org/manual/5.1/manual.html#pdf-file:write",
+                "description": "Writes the value of each of its arguments to the file. The arguments must be strings or numbers. To write other values, use tostring or string.format before write.",
+                "type": "function",
+                "args": [
+                  {
+                    "name": "self"
+                  }
+                ],
+                "argsDisplay": "self, ···",
+                "argsDisplayOmitSelf": "···"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

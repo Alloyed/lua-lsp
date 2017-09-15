@@ -3,9 +3,10 @@ local analyze = require 'lua-lsp.analyze'
 local rpc     = require 'lua-lsp.rpc'
 local log     = require 'lua-lsp.log'
 local utf     = require 'lua-lsp.unicode'
-local parser  = require 'lua-lsp.lua-parser.parser'
 
 local method_handlers = {}
+
+-- luacheck: globals Initialized Documents Root Shutdown
 
 function method_handlers.initialize(params, id)
 	if Initialized then
@@ -53,7 +54,6 @@ local function document_for(uri)
 	local document = {}
 	document.uri = uri
 
-	log("opening %q", uri)
 	local f = assert(io.open(uri:gsub("^[^:]+://", ""), "r"))
 	document.text  = f:read("*a")
 	f:close()
@@ -138,7 +138,6 @@ local completionKinds = {
 
 local function make_item(k, _, val)
 	local item = { label = k }
-	--log("compl %s = %s", k, require'inspect'(val)
 
 	if val then
 		item.kind = completionKinds.Variable
@@ -148,28 +147,74 @@ local function make_item(k, _, val)
 				item.kind = completionKinds.Module
 			end
 		elseif val.tag == "Function" then
-			item.kind = completionKinds.Function
-
 			-- generate function signature
-			local sig = {}
-			for _, name in ipairs(val[1]) do
-				if name.tag == "Dots" then
-					table.insert(sig, "...")
-				else
-					table.insert(sig, name[1])
+			local sig
+			if val.signature then
+				sig = val.signature
+			else
+				sig = {}
+				for _, name in ipairs(val.arguments) do
+					if name.tag == "Dots" then
+						table.insert(sig, "...")
+					elseif name[1] then
+						table.insert(sig, name[1])
+					elseif name.displayName then
+						table.insert(sig, name.displayName)
+					elseif name.name then
+						table.insert(sig, name.name)
+					end
 				end
+				sig = table.concat(sig, ", ")
 			end
+
+			local ret = "()"
+			local literals = {String = "string", Number = "number", True = "bool", False = "bool", Nil = "nil"}
 			if val.scope then
-				local ret = getmetatable(val.scope)
-				log("fn_ret(%s[%d]) -> %s", tostring(k), ret.id or -1, require'inspect'(ret._return))
+				local scope_mt = getmetatable(val.scope)
+				if scope_mt._return then
+					local types, values, noValues = {}, {}, false
+					for _, r in ipairs(scope_mt._return) do
+						if literals[r.tag] then
+							table.insert(types, literals[r.tag])
+							if not r[1] then
+								noValues = true
+							elseif r.tag == "String" then
+								table.insert(values, string.format("%q", r[1]))
+							elseif r.tag == "Number" then
+								table.insert(values, tostring(r[1]))
+							end
+						else
+							noValues = true
+						end
+					end
+					if noValues then 
+						ret = table.concat(types, "|")
+					else
+						ret = table.concat(values, "|")
+					end
+					--ret = "?"
+				end
+			elseif val.returns then
+				ret = {}
+				for _, r in ipairs(val.returns) do table.insert(ret, r.name) end
+				ret = table.concat(ret, ", ")
 			end
-			item.detail = ("%s(%s)"):format(k, table.concat(sig, ", "))
+
+
+			item.kind = completionKinds.Function
+			item.insertText = k
+			item.label = ("%s(%s) -> %s"):format(k, sig, ret)
+			item.documentation = val.description
 		elseif val.tag == "Table" then
 			item.detail = "<table>"
-		elseif val.tag == "String" then
-			item.detail = string.format("%q", val[1])
-		elseif val.tag == "Number" then
-			item.detail = tostring(val[1])
+		elseif val.tag == "String" or val.tag == "Number" then
+			item.kind = completionKinds.Field
+			item.documentation = val.description
+			if val.value then
+				item.detail = string.format("%q", val.value)
+			else
+				item.detail = string.format("<%s>", val.tag)
+			end
 		end
 	end
 
@@ -194,7 +239,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 	local pos = params.position
 	local document = document_for(params.textDocument.uri)
 	if document.scopes == nil then
-		rpc.respond(id, {
+		return rpc.respond(id, {
 			isIncomplete = false,
 			items = {}
 		})
@@ -202,30 +247,11 @@ method_handlers["textDocument/completion"] = function(params, id)
 	local line = document.lines[pos.line+1]
 
 	local char = utf.to_bytes(line.text, pos.character)
-	local word = line.text:sub(1, char):match("[A-Za-z][%w_.:]*$") or ""
+	local word = line.text:sub(1, char):match("[A-Za-z_][%w_.:]*$") or ""
 
 	local items = {}
 	local used  = {}
 	if char then
-		log("Complete %q", word)
-		local function follow_path(path_ids, ii, scope)
-			log("follow_path %s, %d", require'inspect'(path_ids), ii)
-			assert(scope)
-			local iword = path_ids[ii]
-			local last = ii == #path_ids
-			for iname, node, val in iter_scope(scope) do
-				if last then
-					if iname:sub(1, iword:len()) == iword then
-						table.insert(items, make_item(iname, node, val))
-					end
-				elseif iname == iword and val.tag == "Table" then
-					if val.scope then
-						follow_path(path_ids, ii+1, val.scope)
-					end
-				end
-			end
-		end
-
 		local realpos = line.start + char - 1
 		local scope = pick_scope(document.scopes, realpos)
 
@@ -237,19 +263,35 @@ method_handlers["textDocument/completion"] = function(params, id)
 			for i=#path_ids, 2, -2 do table.remove(path_ids, i) end
 
 			local iword = path_ids[1]
+			local function follow_path(ii, _scope)
+				assert(_scope)
+				local _iword = path_ids[ii]
+				local last = ii == #path_ids
+				for iname, node, val in iter_scope(_scope) do
+					if last then
+						if iname:sub(1, _iword:len()) == _iword then
+							table.insert(items, make_item(iname, node, val))
+						end
+					elseif iname == _iword and val.tag == "Table" then
+						if val.scope then
+							follow_path(path_ids, ii+1, val.scope)
+						end
+					end
+				end
+			end
+
 			for iname, node, val in iter_scope(scope) do
 				if not used[iname] and node.pos <= realpos then
 					used[iname] = true
 					if iname == iword and val.tag == "Table" then
-						log("found iword %q = %s", iname, parser.pp(val))
 						if val.scope then
-							follow_path(path_ids, 2, val.scope)
+							follow_path(2, val.scope)
 						end
 					end
 				end
 			end
 		else
-			-- local scope
+			-- variable scope
 			for iname, node, val in iter_scope(scope) do
 				if not used[iname] and node.pos <= realpos then
 					used[iname] = true
@@ -261,7 +303,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 		end
 	end
 
-	rpc.respond(id, {
+	return rpc.respond(id, {
 		isIncomplete = false,
 		items = items
 	})
@@ -300,21 +342,18 @@ method_handlers["textDocument/definition"] = function(params, id)
 	-- FIXME: this looks for the parent local, which makes sense if you're
 	-- looking at a local variable, but if you want to find an actual function
 	-- definition this is inconvenient
-	log("Line %q", line.text)
 	local word = line.text:sub(word_s, -1):match("^([%a_][%w_.:]*)")
-	log("Looking for %q", word)
 
 	local used  = {}
 	if char then
 		local realpos = line.start + char - 1
 		local scope = pick_scope(document.scopes, realpos)
 		local word_start = word:match("^([^.:]+)")
-		log("word_start: %q", word_start)
 		for k, symbol in iter_scope(scope) do
-			if not used[k] and symbol.pos <= realpos then
+			if not used[k] and symbol.canGoto ~= false and symbol.pos <= realpos then
 				if k == word_start then
 					if word:find("[:.]") then
-						log("membre!")
+						error("NYI field definition")
 					else
 						local sub = document.text:sub(symbol.pos, symbol.posEnd)
 						local a, b = string.find(sub, k, 1, true)
