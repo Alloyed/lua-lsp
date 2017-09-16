@@ -10,7 +10,10 @@ _G.Root = nil
 local function main(_)
 	while not Shutdown do
 		-- header
-		local data = assert(rpc.decode())
+		local data, err = rpc.decode()
+		if data == nil then
+			if err == "eof" then return os.exit(1) end
+			error(err)
 		if data.method then
 			-- request
 			if not method_handlers[data.method] then
