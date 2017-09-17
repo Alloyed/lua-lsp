@@ -60,6 +60,7 @@ opid:  -- includes additional operators from Lua 5.3
   We need to support lua 5.2/luajit and 5.1 ideally. this means erroring when
   5.1 uses goto, and when non-5.3 uses bitops
 ]]
+-- luacheck: ignore
 
 local lpeg = require "lpeglabel"
 

@@ -1,5 +1,5 @@
 --[[
-This module implements functions that handle scoping rules 
+This module implements functions that handle scoping rules
 ]]
 local scope = {}
 

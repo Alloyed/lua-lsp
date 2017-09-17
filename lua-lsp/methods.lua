@@ -14,7 +14,7 @@ function method_handlers.initialize(params, id)
 		error("already initialized!")
 	end
 	_G.Root  = params.rootPath or params.rootUriA
-	log("Root = %q", Root)	
+	log("Root = %q", Root)
 	log.setTraceLevel(params.trace or "off")
 	--if params.initializationOptions then
 	--	-- use for server-specific config?
@@ -188,7 +188,7 @@ local function make_item(k, _, val)
 							noValues = true
 						end
 					end
-					if noValues then 
+					if noValues then
 						ret = table.concat(types, "|")
 					else
 						ret = table.concat(values, "|")
@@ -316,7 +316,7 @@ local function make_position(document, pos)
 		if line.start > pos then
 			local text = document.lines[i-1].text
 			return {
-				line = i-1-1, 
+				line = i-1-1,
 				character = utf.to_codeunits(text, pos - last_linepos + 1)
 			}
 		end

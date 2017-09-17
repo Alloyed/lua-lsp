@@ -14,7 +14,7 @@ local function main(_)
 		if data == nil then
 			if err == "eof" then return os.exit(1) end
 			error(err)
-		if data.method then
+		elseif data.method then
 			-- request
 			if not method_handlers[data.method] then
 				log("WARNING: %s NYI", data.method)

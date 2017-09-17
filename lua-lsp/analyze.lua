@@ -42,7 +42,6 @@ local function add_builtins(_scope, version)
 			end
 		end
 	end
-	
 
 	dive_type(info.global, _scope)
 end
