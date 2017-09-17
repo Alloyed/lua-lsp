@@ -1,4 +1,5 @@
 # lua-lsp
+[![Build Status](https://travis-ci.org/Alloyed/lua-lsp.svg)](https://travis-ci.org/Alloyed/lua-lsp)
 
 **This is a work-in progress!**
 
