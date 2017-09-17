@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 
---- Takes each template and makes a slurp-compatible lua file from it
+--- Takes each template and makes a require()-compatible lua file from it
 --  so we can avoid wierd datafile resolving issues
 local templates = {
 	"https://raw.githubusercontent.com/rm-code/love-atom/master/data/love-completions.json",
@@ -18,7 +18,9 @@ local function basename(url)
 end
 
 for _, url in ipairs(templates) do
-	os.execute(string.format("wget -P 'lua-lsp/data' %q", url))
+	os.execute("sc -c 'rm -rv lua-lsp/data/*.json'")
+	os.execute(string.format("wget -P 'lua-lsp/data' -- %q", url))
+
 	local path = basename(url)
 	io.stderr:write("generating " .. path .. "\n")
 
@@ -27,6 +29,9 @@ for _, url in ipairs(templates) do
 	f:close()
 
 	f = assert(io.open("lua-lsp/data/"..path..".lua", 'w'))
+	-- FIXME: ser does not produce stable results
+	-- this makes git diff/blame a lot less useful, so we should switch to
+	-- another loadstring compatible serializer
 	f:write(ser(s))
 	f:close()
 end

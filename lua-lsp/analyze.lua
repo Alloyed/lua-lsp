@@ -5,52 +5,58 @@ local parser       = require 'lua-lsp.lua-parser.parser'
 local ok, luacheck = pcall(require, 'luacheck')
 if not ok then luacheck = nil end
 
+-- luacheck: globals Documents Root
 local analyze = {}
 
+-- FIXME: we should just do this once and deepcopy it for every document
+local TOPLEVEL = {}
 local function add_builtins(_scope, version)
 	local info = require('lua-lsp.data.'..version)
-	local function dive_type(node, scope)
-		if node.type == "table" then
-			for key, value in pairs(node.fields) do
-				if value.type == "string" then
-					scope[key] = {
-						{tag = "Id", key, pos=getmetatable(scope).pos, canGoto = false},
-						{
-							tag = "String",
-							description = value.description,
-							link = value.link
-						}
-					}
-				elseif value.type == "function" then
-					scope[key] = {
-						{
-							tag = "Id",
-							key,
-							pos=getmetatable(scope).pos,
-							canGoto = false
-						},
-						{
-							tag = "Function",
-							description = value.description,
-							arguments = value.args,
-							signature = value.argsDisplay,
-							returns   = value.returnTypes
-						}
-					}
 
-				end
+	local function visit_field(key, value, scope)
+		local Id = {tag = "Id", key, pos=0, canGoto = false}
+		if value.type == "table" then
+			local fields
+			if key == TOPLEVEL then
+				fields = scope
+			else
+				fields = {}
+				scope[key] = {Id, {
+					tag = "Table",
+					description = value.description,
+					scope = fields
+				}}
 			end
+			for k, v in pairs(value.fields) do
+				visit_field(k, v, fields)
+			end
+		elseif value.type == "string" then
+			scope[key] = {Id, {
+					tag = "String",
+					description = value.description,
+					link = value.link
+				}
+			}
+		elseif value.type == "function" then
+			scope[key] = {Id, {
+					tag = "Function",
+					description = value.description,
+					arguments = value.args,
+					signature = value.argsDisplay,
+					returns   = value.returnTypes
+				}
+			}
 		end
 	end
 
-	dive_type(info.global, _scope)
+	visit_field(TOPLEVEL, info.global, _scope)
 end
 
-local function slurp_locals(ast)
-	local scopes = {setmetatable({},{pos=0, posEnd=9999999999, origin="file"})}
+local function gen_scopes(ast)
+	local scopes = {setmetatable({},{pos=0, posEnd=math.huge, origin="file"})}
 	add_builtins(scopes[1], "5_1")
 
-	local dive_stat
+	local visit_stat
 
 	local function clean_value(value)
 		local literals = {"Number", "String"}
@@ -64,7 +70,13 @@ local function slurp_locals(ast)
 				value = value[1]
 			}
 		elseif value.tag == "Table" then
-			return value
+			-- FIXME: inline pairs
+			return {
+				tag = value.tag,
+				pos = value.pos,
+				posEnd = value.posEnd,
+				scope = value.scope or {},
+			}
 		elseif value.tag == "Call" then
 			-- find require(), maybe
 			if value[1].tag == "Id" then
@@ -93,8 +105,24 @@ local function slurp_locals(ast)
 			assert(type(key[1]) == "string")
 			assert(key.pos)
 			assert(key.posEnd)
+			-- This local shadows an existing local in this scope, so we
+			-- need to create a new scope that represents the current scope
+			-- post-shadowing
+			if a[key[1]] then
+				local a_mt = getmetatable(a)
+				assert(a_mt.posEnd)
+				local new_a = setmetatable({}, {
+					__index = a,
+					id = #scopes+1,
+					pos = key.pos,
+					posEnd = a_mt.posEnd
+				})
+				table.insert(scopes, new_a)
+				a = new_a
+			end
 			a[key[1]] = {key, clean_value(value)}
 		end
+		return a
 	end
 
 	local function is_valid_path(path)
@@ -183,69 +211,70 @@ local function slurp_locals(ast)
 		table.insert(mt._return, expr)
 	end
 
-	local function dive_expr(node, a)
+	local function visit_expr(node, a)
 		if node.tag == "Function" then
 			assert(node[2].tag == "Block")
 			local namelist = node[1]
-			dive_stat(node[2], a, function(next_a)
+			visit_stat(node[2], a, function(next_a)
 				getmetatable(next_a).origin = node
 				node.scope = next_a
 				for _, name in ipairs(namelist) do
 					if name.tag ~= "Dots" then
-						save_local(next_a, name, {Tag = "Arg"})
+						next_a = save_local(next_a, name, {Tag = "Arg"})
 					end
 				end
+				return next_a
 			end)
 		elseif node.tag == "Call" then
 			for _, expr in ipairs(node) do
-				dive_expr(expr, a)
+				visit_expr(expr, a)
 			end
 		elseif node.tag == "Invoke" then
 			for _, expr in ipairs(node) do
-				dive_expr(expr, a)
+				visit_expr(expr, a)
 			end
 		elseif node.tag == "Paren" then
-			dive_expr(node[1], a)
+			visit_expr(node[1], a)
 		elseif node.tag == "Table" then
 			node.scope = node.scope or {}
 			local idx = 1
 			for _, inode in ipairs(node) do
 				if inode.tag == "Pair" then
 					local key, value = inode[1], inode[2]
-					dive_expr(key, a)
-					dive_expr(value, a)
+					visit_expr(key, a)
+					visit_expr(value, a)
 					save_pair(node.scope, key, value)
 				else
 					local key, value = {Tag="Number", idx}, inode
 					idx = idx + 1
-					dive_expr(value, a)
+					visit_expr(value, a)
 					save_pair(node.scope, key, value)
 				end
 			end
 		end
 	end
 
-	function dive_stat(node, a, fn)
+	function visit_stat(node, a, add_symbols)
 		assert(node.pos)
 		assert(node.tag)
 		if node.tag == "Block" or node.tag == "Do" then
-			local scope = setmetatable({}, {
+			local new_a = setmetatable({}, {
 				__index = a,
 				id = #scopes+1,
 				pos = node.pos,
 				posEnd = node.posEnd
 			})
-			table.insert(scopes, scope)
-			if fn then fn(scope) end
+			table.insert(scopes, new_a)
+			if add_symbols then new_a = add_symbols(new_a) end
 			for _, i in ipairs(node) do
-				dive_stat(i, scope)
+				visit_stat(i, new_a)
 			end
 		elseif node.tag == "Set" then
 			local namelist,exprlist = node[1], node[2]
 			for i=1, math.max(#namelist, #exprlist) do
 				local name, expr = namelist[i], exprlist[i]
 				if expr then
-					dive_expr(expr, a)
+					visit_expr(expr, a)
 				end
 
 				if name then
@@ -260,74 +289,75 @@ local function slurp_locals(ast)
 			local exprlist = node[1]
 			if exprlist and exprlist.tag then
 				local expr = exprlist
-				dive_expr(expr, a)
+				visit_expr(expr, a)
 				save_return(a, expr)
 			elseif exprlist then
 				for _, expr in ipairs(exprlist) do
-					dive_expr(expr, a)
+					visit_expr(expr, a)
 					save_return(a, expr)
 				end
 			end
 		elseif node.tag == "Local" then
 			local namelist,exprlist = node[1], node[2]
 			for i, name in ipairs(namelist) do
-				save_local(a, name, exprlist and exprlist[i])
+				a = save_local(a, name, exprlist and exprlist[i])
 			end
 			if exprlist then
 				for _, expr in ipairs(exprlist) do
-					dive_expr(expr, a)
+					visit_expr(expr, a)
 				end
 			end
 		elseif node.tag == "Localrec" then
 			local name, expr = node[1][1], node[2][1]
-			save_local(a, name, expr)
+			a = save_local(a, name, expr)
 
-			dive_expr(expr, a)
+			visit_expr(expr, a)
 		elseif node.tag == "Fornum" then
 			for _, n in ipairs(node) do
 				if n.tag == "Block" then
-					dive_stat(n, a, function(next_a)
-						save_local(next_a, node[1], {tag="Iter"})
+					visit_stat(n, a, function(next_a)
+						return save_local(next_a, node[1], {tag="Iter"})
 					end)
 				end
 			end
 		elseif node.tag == "Forin" then
 			local namelist, exprlist, block = node[1], node[2], node[3]
 			for _, expr in ipairs(exprlist) do
-				dive_expr(expr, a)
+				visit_expr(expr, a)
 			end
-			dive_stat(block, a, function(next_a)
+			visit_stat(block, a, function(next_a)
 				for _, name in ipairs(namelist) do
-					save_local(next_a, name, {tag="Iter"})
+					next_a = save_local(next_a, name, {tag="Iter"})
 				end
+				return next_a
 			end)
 		elseif node.tag == "While" then
 			local expr, block = node[1], node[2]
-			dive_expr(expr, a)
-			dive_stat(block, a)
+			visit_expr(expr, a)
+			visit_stat(block, a)
 		elseif node.tag == "Repeat" then
 			local block, expr = node[1], node[2]
-			dive_stat(block, a)
-			dive_expr(expr, a)
+			visit_stat(block, a)
+			visit_expr(expr, a)
 		elseif node.tag == "Call" then
 			for _, expr in ipairs(node) do
-				dive_expr(expr, a)
+				visit_expr(expr, a)
 			end
 		elseif node.tag == "If" then
 			for i=1, #node, 2 do
 				if node[i+1] then
 					-- if/elseif block
-					dive_expr(node[i], a) -- test
-					dive_stat(node[i+1], a) -- body
+					visit_expr(node[i], a) -- test
+					visit_stat(node[i+1], a) -- body
 				else
 					-- else block
-					dive_stat(node[i], a)
+					visit_stat(node[i], a)
 				end
 			end
 		end
 	end
 
-	dive_stat(ast, scopes[1])
+	visit_stat(ast, scopes[1])
 	return scopes
 end
 
@@ -358,7 +388,7 @@ local function try_luacheck(document)
 end
 
 
-function analyze.document(document)
+function analyze.refresh(document)
 	local text = document.text
 
 	local lines = {}
@@ -376,7 +406,7 @@ function analyze.document(document)
 	local ast, err = parser.parse(document.text, document.uri)
 	if ast then
 		document.ast = ast
-		document.scopes = slurp_locals(document.ast)
+		document.scopes = gen_scopes(document.ast)
 		document.last_text = document.text
 		try_luacheck(document)
 	else
@@ -401,7 +431,39 @@ function analyze.document(document)
 		-- FIXME: in this state (aka broken) the position numbers of the old
 		-- AST are out of sync with the new text object.
 	end
-	log.verbose("analyze took %f s", os.clock() - start_time)
+	local path = document.uri
+	local _, e = string.find(path, Root, 1, true)
+	path = string.sub(path, e+2 or 1, -1)
+	log.verbose("%s: analyze took %f s", path, os.clock() - start_time)
+end
+
+function analyze.document(uri)
+	local ref = nil
+	if type(uri) == "table" then
+		ref = uri
+		uri = uri.uri
+	end
+	if Documents[uri] then
+		if ref and ref.text then
+			Documents[uri].text = ref.text
+			analyze.refresh(Documents[uri])
+		end
+		return Documents[uri]
+	end
+	local document = ref or {}
+	document.uri = uri
+
+	if not document.text then
+		local f       = assert(io.open(uri:gsub("^[^:]+://", ""), "r"))
+		document.text = f:read("*a")
+		f:close()
+	end
+
+	analyze.refresh(document)
+
+	Documents[uri] = document
+
+	return document
 end
 
 return analyze

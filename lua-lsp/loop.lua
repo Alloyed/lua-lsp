@@ -17,16 +17,16 @@ local function main(_)
 		elseif data.method then
 			-- request
 			if not method_handlers[data.method] then
-				log("WARNING: %s NYI", data.method)
+				local err = string.format("%q: Not found/NYI", data.mehod)
+				rpc.respondError(data.id, err, "MethodNotFound")
 			else
 				local ok, err = xpcall(function()
 					method_handlers[data.method](data.params, data.id)
 				end, debug.traceback)
 				if not ok then
-					log("---------------------")
-					log("%s", err)
-					log("---------------------")
-					--rpc.respondError(data.id, err, "InternalError")
+					if data.id then
+						rpc.respondError(data.id, err, "InternalError")
+					end
 				end
 			end
 		elseif data.result then

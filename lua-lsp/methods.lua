@@ -14,8 +14,8 @@ function method_handlers.initialize(params, id)
 		error("already initialized!")
 	end
 	_G.Root  = params.rootPath or params.rootUriA
-	log("Root = %q", Root)
 	log.setTraceLevel(params.trace or "off")
+	log("Root = %q", Root)	
 	--if params.initializationOptions then
 	--	-- use for server-specific config?
 	--end
@@ -23,7 +23,7 @@ function method_handlers.initialize(params, id)
 	Initialized = true
 
 	-- hopefully this is modest enough
-	rpc.respond(id, {
+	return rpc.respond(id, {
 		capabilities = {
 			completionProvider = {
 				triggerCharacters = {".",":"},
@@ -48,52 +48,33 @@ function method_handlers.initialize(params, id)
 	})
 end
 
-local function document_for(uri)
-	if Documents[uri] then
-		return Documents[uri]
-	end
-	local document = {}
-	document.uri = uri
-
-	local f = assert(io.open(uri:gsub("^[^:]+://", ""), "r"))
-	document.text  = f:read("*a")
-	f:close()
-
-	analyze.document(document)
-
-	Documents[uri] = document
-
-	return document
-end
-
 method_handlers["textDocument/didOpen"] = function(params)
 	Documents[params.textDocument.uri] = params.textDocument
-	analyze.document(params.textDocument)
+	analyze.refresh(params.textDocument)
 end
 
 method_handlers["textDocument/didChange"] = function(params)
-	local uri = params.textDocument.uri
-	local document = document_for(uri)
+	local document = analyze.document(params.textDocument)
 
 	for _, patch in ipairs(params.contentChanges) do
 		if (patch.range == nil and patch.rangeLength == nil) then
 			document.text = patch.text
 		else
-			error("NYI")
+			error("Incremental changes NYI")
 			-- remove text from patch.range.start -> patch.range["end"]
 			-- assert(patch.rangeLength == actual_length)
 			-- then insert patch.text at origin point
 		end
 	end
 
-	analyze.document(document)
+	analyze.refresh(document)
 end
 
 method_handlers["textDocument/didSave"] = function(params)
 	local uri = params.textDocument.uri
-	local document = document_for(uri)
+	local document = analyze.document(uri)
 	-- FIXME: merge in details from params.textDocument
-	analyze.document(document)
+	analyze.refresh(document)
 end
 
 method_handlers["textDocument/didClose"] = function(params)
@@ -236,80 +217,6 @@ local function iter_scope(scope)
 	end)
 end
 
-method_handlers["textDocument/completion"] = function(params, id)
-	local pos = params.position
-	local document = document_for(params.textDocument.uri)
-	if document.scopes == nil then
-		return rpc.respond(id, {
-			isIncomplete = false,
-			items = {}
-		})
-	end
-	local line = document.lines[pos.line+1]
-
-	local char = utf.to_bytes(line.text, pos.character)
-	local word = line.text:sub(1, char):match("[A-Za-z_][%w_.:]*$") or ""
-
-	local items = {}
-	local used  = {}
-	if char then
-		local realpos = line.start + char - 1
-		local scope = pick_scope(document.scopes, realpos)
-
-		if word:find("[:.]") then
-			-- path scope
-			local path_ids = {}
-
-			for s in word:gmatch("[^:.]*") do table.insert(path_ids, s) end
-			for i=#path_ids, 2, -2 do table.remove(path_ids, i) end
-
-			local iword = path_ids[1]
-			local function follow_path(ii, _scope)
-				assert(_scope)
-				local _iword = path_ids[ii]
-				local last = ii == #path_ids
-				for iname, node, val in iter_scope(_scope) do
-					if last then
-						if iname:sub(1, _iword:len()) == _iword then
-							table.insert(items, make_item(iname, node, val))
-						end
-					elseif iname == _iword and val.tag == "Table" then
-						if val.scope then
-							follow_path(path_ids, ii+1, val.scope)
-						end
-					end
-				end
-			end
-
-			for iname, node, val in iter_scope(scope) do
-				if not used[iname] and node.pos <= realpos then
-					used[iname] = true
-					if iname == iword and val.tag == "Table" then
-						if val.scope then
-							follow_path(2, val.scope)
-						end
-					end
-				end
-			end
-		else
-			-- variable scope
-			for iname, node, val in iter_scope(scope) do
-				if not used[iname] and node.pos <= realpos then
-					used[iname] = true
-					if iname:sub(1, word:len()) == word then
-						table.insert(items, make_item(iname, node, val))
-					end
-				end
-			end
-		end
-	end
-
-	return rpc.respond(id, {
-		isIncomplete = false,
-		items = items
-	})
-end
-
 local function make_position(document, pos)
 	local last_linepos = nil
 	for i, line in ipairs(document.lines) do
@@ -346,62 +253,149 @@ local function line_for(document, pos)
 	local line = document.lines[pos.line+1]
 	local char = utf.to_bytes(line.text, pos.character)
 
-	return line, char
+	return line, char, line.start + char - 1
 end
 
---- Returns a document index for an LSP position. Indexes are measured in bytes.
-local function index_for(document, pos)
-	local line, char = line_for(document, pos)
+method_handlers["textDocument/completion"] = function(params, id)
+	local document = analyze.document(params.textDocument)
+	if document.scopes == nil then
+		return rpc.respond(id, {
+			isIncomplete = false,
+			items = {}
+		})
+	end
+	local line, char, pos = line_for(document, params.position)
+	local word = line.text:sub(1, char):match("[A-Za-z_][%w_.:]*$") or ""
 
-	return line.start + char - 1
+	local items = {}
+	local used  = {}
+	local scope = pick_scope(document.scopes, pos)
+
+	if word:find("[:.]") then
+		-- path scope
+		local path_ids = {}
+
+		for s in word:gmatch("[^:.]*") do table.insert(path_ids, s) end
+		for i=#path_ids, 2, -2 do table.remove(path_ids, i) end
+
+		local iword = path_ids[1]
+		local function follow_path(ii, _scope)
+			assert(_scope)
+			local _iword = path_ids[ii]
+			local last = ii == #path_ids
+			for iname, node, val in iter_scope(_scope) do
+				if last then
+					if iname:sub(1, _iword:len()) == _iword then
+						table.insert(items, make_item(iname, node, val))
+					end
+				elseif iname == _iword and val.tag == "Table" then
+					if val.scope then
+						follow_path(path_ids, ii+1, val.scope)
+					end
+				end
+			end
+		end
+
+		for iname, node, val in iter_scope(scope) do
+			if not used[iname] and node.pos <= pos then
+				used[iname] = true
+				if iname == iword and val.tag == "Table" then
+					if val.scope then
+						follow_path(2, val.scope)
+					end
+				end
+			end
+		end
+	else
+		-- variable scope
+		for iname, node, val in iter_scope(scope) do
+			if not used[iname] and node.pos <= pos then
+				used[iname] = true
+				if iname:sub(1, word:len()) == word then
+					table.insert(items, make_item(iname, node, val))
+				end
+			end
+		end
+	end
+
+	return rpc.respond(id, {
+		isIncomplete = false,
+		items = items
+	})
 end
 
 
 method_handlers["textDocument/definition"] = function(params, id)
-	local pos = params.position
-	local document = document_for(params.textDocument.uri)
+	local document = analyze.document(params.textDocument)
 
-	local line = document.lines[pos.line+1]
-	local char = utf.to_bytes(line.text, pos.character)
-	assert(char)
+	local line, char, cursor = line_for(document, params.position)
 	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
 	-- FIXME: this looks for the parent local, which makes sense if you're
 	-- looking at a local variable, but if you want to find an actual function
 	-- definition this is inconvenient
 	local word = line.text:sub(word_s, -1):match("^([%a_][%w_.:]*)")
 
-	local used  = {}
-	if char then
-		local realpos = line.start + char - 1
-		local scope = pick_scope(document.scopes, realpos)
-		local word_start = word:match("^([^.:]+)")
-		for k, symbol in iter_scope(scope) do
-			if not used[k] and symbol.canGoto ~= false and symbol.pos <= realpos then
-				if k == word_start then
-					if word:find("[:.]") then
-						error("NYI field definition")
-					else
-						local sub = document.text:sub(symbol.pos, symbol.posEnd)
-						local a, b = string.find(sub, k, 1, true)
-						a, b = a + symbol.pos - 1, b + symbol.pos - 1
+	local scope = pick_scope(document.scopes, cursor)
+	local word_start = word:match("^([^.:]+)")
 
-						local range = make_range(document, a, b)
-						rpc.respond(id, {
-							uri = params.textDocument.uri,
-							range = range
-						})
-						return
-					end
-				end
-			end
+	local symbol, _ = unpack(scope[word_start])
+	if symbol.pos <= cursor and symbol.canGoto ~= false then
+		if word:find("[:.]") then
+			error("NYI field definition")
+		else
+			local sub = document.text:sub(symbol.pos, symbol.posEnd)
+			local a, b = string.find(sub, word, 1, true)
+			a, b = a + symbol.pos - 1, b + symbol.pos - 1
+
+			return rpc.respond(id, {
+				uri = params.textDocument.uri,
+				range = make_range(document, a, b)
+			})
 		end
 	end
 
-	rpc.respondError(id, string.format("symbol %q not found", word))
+	return rpc.respondError(id, string.format("symbol %q not found", word))
+end
+
+method_handlers["textDocument/hover"] = function(params, id)
+	local document = analyze.document(params.textDocument)
+	if not document.scopes then
+		return rpc.respondError(id, "No AST data")
+	end
+
+	local line, char, cursor = line_for(document, params.position)
+	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
+	-- FIXME: this looks for the parent local, which makes sense if you're
+	-- looking at a local variable, but if you want to find an actual function
+	-- definition this is inconvenient
+	local word = line.text:sub(word_s, -1):match("^([%a_][%w_.:]*)")
+
+	local scope = pick_scope(document.scopes, cursor)
+	local word_start = word:match("^([^.:]+)")
+
+	local symbol, value = unpack(scope[word_start])
+	if symbol.pos <= cursor then
+		if word:find("[:.]") then
+			error("NYI field definition")
+		else
+			local contents = {}
+
+			local item = make_item(word, symbol, value)
+
+			if value.tag == "Function" then
+				table.insert(contents, "yep a function")
+			end
+			return rpc.respond(id, {
+				contents = contents
+			})
+		end
+	end
+
+	return rpc.respondError(id, string.format("symbol %q not found", word))
 end
 
 method_handlers["textDocument/documentSymbol"] = function(params, id)
-	local document = document_for(params.textDocument.uri)
+	local document = analyze.document(params.textDocument)
 	local symbols = {}
 
 	for _, scope in ipairs(document.scopes) do
@@ -422,7 +416,7 @@ end
 
 function method_handlers.shutdown(_, id)
 	Shutdown = true
-	rpc.respond(id, json.null)
+	return rpc.respond(id, json.null)
 end
 
 function method_handlers.exit(_)

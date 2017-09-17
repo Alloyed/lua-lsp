@@ -47,6 +47,7 @@ function rpc.respondError(id, errorMsg, errorKey, data)
 	})
 	io.write("Content-Length: ".. string.len(msg).."\r\n\r\n"..msg)
 	io.flush()
+	io.stderr:write("Error: "..errorMsg.."\n")
 end
 
 function rpc.notify(method, params)
