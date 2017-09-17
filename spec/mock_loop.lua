@@ -1,4 +1,6 @@
+
 return function(fn)
+	local unpack  = table.unpack or unpack
 	_G.Documents = {}
 	_G.Shutdown = false
 	_G.Initialized = false
@@ -13,7 +15,7 @@ return function(fn)
 		error(string.format("respondError %s: %s ", id, errorMsg))
 	end
 	function s_rpc.notify(...)
-		--error(string.format("%s", require'inspect'{...}))
+		--error(string.format("%s"))
 		-- throw away notifications: TODO: add busted watcher
 		--error()
 	end

@@ -1,7 +1,8 @@
+globals = {"Documents", "Initialized", "Root", "Shutdown", "Args"}
 std="max"
 
 files["spec/*.lua"].std = "+busted"
-files["spec/commands/*.lua"].std = "+busted"
+files["spec/*.rockspec"].std = "rockspec" 
 
 files["rockspecs/*.rockspec"].std = "rockspec"
 files["./*.rockspec"].std = "rockspec" 

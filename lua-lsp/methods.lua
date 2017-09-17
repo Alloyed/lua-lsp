@@ -4,10 +4,9 @@ local rpc     = require 'lua-lsp.rpc'
 local log     = require 'lua-lsp.log'
 local utf     = require 'lua-lsp.unicode'
 local json    = require 'dkjson'
+local unpack  = table.unpack or unpack
 
 local method_handlers = {}
-
--- luacheck: globals Initialized Documents Root Shutdown
 
 function method_handlers.initialize(params, id)
 	if Initialized then
@@ -15,7 +14,7 @@ function method_handlers.initialize(params, id)
 	end
 	_G.Root  = params.rootPath or params.rootUriA
 	log.setTraceLevel(params.trace or "off")
-	log("Root = %q", Root)	
+	log("Root = %q", Root)
 	--if params.initializationOptions then
 	--	-- use for server-specific config?
 	--end

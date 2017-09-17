@@ -18,11 +18,11 @@ install:
   - luarocks install --only-deps lua-lsp-scm-1.rockspec
 
 script:
-  - luacheck .
+  - luacheck -ur .
   - busted --verbose --coverage
 
 after_success:
-  - luacov-coveralls --exclude $TRAVIS_BUILD_DIR/lua_install
+  - "luacov-coveralls --include '^%./lua%-lsp'"
 
 branches:
   except:

@@ -5,7 +5,6 @@ local parser       = require 'lua-lsp.lua-parser.parser'
 local ok, luacheck = pcall(require, 'luacheck')
 if not ok then luacheck = nil end
 
--- luacheck: globals Documents Root
 local analyze = {}
 
 -- FIXME: we should just do this once and deepcopy it for every document
@@ -151,7 +150,7 @@ local function gen_scopes(ast)
 	local function save_pair(scope, key, value)
 		assert(scope)
 		assert(key)
-		assert(key[1], require'inspect'(key))
+		assert(key[1])
 		assert(value)
 		scope[key[1]] = {key, clean_value(value)}
 	end
@@ -411,7 +410,7 @@ function analyze.refresh(document)
 		try_luacheck(document)
 	else
 		local line, column = err.line, err.column
-		assert(err.line, require'inspect'(err))
+		assert(err.line)
 		rpc.notify("textDocument/publishDiagnostics", {
 			uri = document.uri,
 			diagnostics = { {

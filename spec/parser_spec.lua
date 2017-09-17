@@ -1,4 +1,3 @@
--- luacheck: std busted
 local mock_loop = require 'spec.mock_loop'
 describe("lua-parser", function()
 	it("handles the empty string", function()
@@ -27,7 +26,6 @@ describe("lua-parser", function()
 					text = text
 				}
 			})
-			--assert.is_nil(require'inspect'(Documents["file:///tmp/fake.lua"].scopes))
 		end)
 	end)
 	it("errors on functions with extra ids #atm", function()
@@ -40,7 +38,6 @@ describe("lua-parser", function()
 					text = text
 				}
 			})
-			--assert.is_nil(require'inspect'(Documents["file:///tmp/fake.lua"].scopes))
 		end)
 	end)
 end)
