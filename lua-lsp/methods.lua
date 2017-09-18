@@ -149,7 +149,10 @@ local function make_item(k, _, val)
 			end
 
 			local ret = "()"
-			local literals = {String = "string", Number = "number", True = "bool", False = "bool", Nil = "nil"}
+			local literals = {
+				String = "string", Number = "number", True = "bool",
+				False = "bool", Nil = "nil"
+			}
 			if val.scope then
 				local scope_mt = getmetatable(val.scope)
 				if scope_mt._return then
@@ -289,7 +292,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 					end
 				elseif iname == _iword and val.tag == "Table" then
 					if val.scope then
-						follow_path(path_ids, ii+1, val.scope)
+						follow_path(ii+1, val.scope)
 					end
 				end
 			end
@@ -329,21 +332,44 @@ method_handlers["textDocument/definition"] = function(params, id)
 
 	local line, char, cursor = line_for(document, params.position)
 	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
-	-- FIXME: this looks for the parent local, which makes sense if you're
-	-- looking at a local variable, but if you want to find an actual function
-	-- definition this is inconvenient
 	local word = line.text:sub(word_s, -1):match("^([%a_][%w_.:]*)")
 
 	local scope = pick_scope(document.scopes, cursor)
 	local word_start = word:match("^([^.:]+)")
 
-	local symbol, _ = unpack(scope[word_start])
-	if symbol.pos <= cursor and symbol.canGoto ~= false then
+	local symbol, val = unpack(scope[word_start])
+	if symbol and symbol.pos <= cursor then
 		if word:find("[:.]") then
-			error("NYI field definition")
-		else
+			local path_ids = {}
+
+			for s in word:gmatch("[^:.]*") do table.insert(path_ids, s) end
+			for i=#path_ids, 2, -2 do table.remove(path_ids, i) end
+
+			local function follow_path(ii, _scope)
+				assert(_scope)
+				local key = path_ids[ii]
+				local last = ii == #path_ids
+				local isym, ival = unpack(_scope[key])
+				if not key then return nil, nil end
+
+				if last then
+					return isym, ival
+				elseif ival.tag == "Table" then
+					if ival.scope then
+						return follow_path(ii+1, ival.scope)
+					end
+				end
+			end
+			symbol = follow_path(2, val.scope)
+		end
+
+		if symbol and symbol.canGoto ~= false then
 			local sub = document.text:sub(symbol.pos, symbol.posEnd)
-			local a, b = string.find(sub, word, 1, true)
+			local word_end = word:match("([^.:]+)$")
+			local a, b = string.find(sub, word_end, 1, true)
+			if not a then
+				error(("find %q in %q"):format(word_end, sub))
+			end
 			a, b = a + symbol.pos - 1, b + symbol.pos - 1
 
 			return rpc.respond(id, {
@@ -364,25 +390,46 @@ method_handlers["textDocument/hover"] = function(params, id)
 
 	local line, char, cursor = line_for(document, params.position)
 	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
-	-- FIXME: this looks for the parent local, which makes sense if you're
-	-- looking at a local variable, but if you want to find an actual function
-	-- definition this is inconvenient
 	local word = line.text:sub(word_s, -1):match("^([%a_][%w_.:]*)")
 
 	local scope = pick_scope(document.scopes, cursor)
 	local word_start = word:match("^([^.:]+)")
 
 	local symbol, value = unpack(scope[word_start])
-	if symbol.pos <= cursor then
+	if symbol and symbol.pos <= cursor then
 		if word:find("[:.]") then
-			error("NYI field definition")
-		else
+			local path_ids = {}
+
+			for s in word:gmatch("[^:.]*") do table.insert(path_ids, s) end
+			for i=#path_ids, 2, -2 do table.remove(path_ids, i) end
+
+			local function follow_path(ii, _scope)
+				assert(_scope)
+				local key = path_ids[ii]
+				local last = ii == #path_ids
+				local isym, ival = unpack(_scope[key])
+				if not key then return nil, nil end
+
+				if last then
+					return isym, ival
+				elseif ival.tag == "Table" then
+					if ival.scope then
+						return follow_path(ii+1, ival.scope)
+					end
+				end
+			end
+			symbol, value = follow_path(2, value.scope)
+		end
+
+		if symbol then
 			local contents = {}
 
 			local item = make_item(word, symbol, value)
 
 			if value.tag == "Function" then
-				table.insert(contents, "yep a function")
+				table.insert(contents, item.label.."\n")
+				table.insert(contents, item.documentation)
+				log("%s", require'inspect'(contents))
 			end
 			return rpc.respond(id, {
 				contents = contents
@@ -397,6 +444,9 @@ method_handlers["textDocument/documentSymbol"] = function(params, id)
 	local document = analyze.document(params.textDocument)
 	local symbols = {}
 
+	-- FIXME: report table keys too, like a.b.c
+	-- also consider making a linear list of symbols we can just iterate
+	-- through
 	for _, scope in ipairs(document.scopes) do
 		for _, pair in pairs(scope) do
 			local symbol, _ = unpack(pair)

@@ -37,8 +37,8 @@ function unicode.to_bytes(str, utf16)
 			local code0,code1,code2 = byte0-0xE0,byte1-0x80,byte2-0x80
 			codepoint = code0*shift_12 + code1*shift_6 + code2
 		elseif bytes == 4 then
-			local byte0,byte1,byte2,byte3 = byte_seq:byte(1,4)
-			local code0,code1,code2,code3 = byte0-0xF0,byte1-0x80,byte2-0x80,byte3-0x80
+			local b0,b1,b2,b3 = byte_seq:byte(1,4)
+			local code0,code1,code2,code3 = b0-0xF0,b1-0x80,b2-0x80,b3-0x80
 			codepoint = code0*shift_18 + code1*shift_12 + code2*shift_6 + code3
 		end
 
@@ -86,8 +86,8 @@ function unicode.to_codeunits(str, byte_index)
 			local code0,code1,code2 = byte0-0xE0,byte1-0x80,byte2-0x80
 			codepoint = code0*shift_12 + code1*shift_6 + code2
 		elseif bytes == 4 then
-			local byte0,byte1,byte2,byte3 = byte_seq:byte(1,4)
-			local code0,code1,code2,code3 = byte0-0xF0,byte1-0x80,byte2-0x80,byte3-0x80
+			local b0,b1,b2,b3 = byte_seq:byte(1,4)
+			local code0,code1,code2,code3 = b0-0xF0,b1-0x80,b2-0x80,b3-0x80
 			codepoint = code0*shift_18 + code1*shift_12 + code2*shift_6 + code3
 		end
 

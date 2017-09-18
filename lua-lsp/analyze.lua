@@ -360,30 +360,64 @@ local function gen_scopes(ast)
 	return scopes
 end
 
+local POPEN = true
+local popen_cmd = "luacheck %q --filename %q --formatter plain --ranges --codes"
+local message_match =  "^([^:]+):(%d+):(%d+)%-(%d+): %(W(%d+)%) (.+)"
 local function try_luacheck(document)
+	local diagnostics = {}
 	local opts = {}
 	if luacheck then
-		local reports = luacheck.check_strings({document.text}, {opts})
-		local diagnostics = {}
+		local reports
+		if POPEN then
+			local tmp_path = "/tmp/check.lua"
+			local tmp = assert(io.open(tmp_path, "w"))
+			tmp:write(document.text)
+			tmp:close()
+
+			local _, ce = document.uri:find(Root, 1, true)
+			local fname = document.uri:sub((ce or -1)+2, -1)
+			local issues = io.popen(popen_cmd:format(tmp_path, fname))
+			reports = {{}}
+			for line in issues:lines() do
+				local _, l, scol, ecol, code, msg = line:match(message_match)
+				table.insert(reports[1], {
+					code = code,
+					line = tonumber(l),
+					column = tonumber(scol),
+					end_column = tonumber(ecol),
+					message = msg
+				})
+			end
+			issues:close()
+		else
+			reports = luacheck.check_strings({document.text}, {opts})
+		end
+
 		for _, issue in ipairs(reports[1]) do
 			-- FIXME: translate columns to characters
 			table.insert(diagnostics, {
 				code = issue.code,
 				range = {
-					start   = {line = issue.line-1, character = issue.column-1},
-					["end"] = {line = issue.line-1, character = issue.end_column-1}
+					start = {
+						line = issue.line-1,
+						character = issue.column-1
+					},
+					["end"] = {
+						line = issue.line-1,
+						character = issue.end_column-1
+					}
 				},
 				-- 1 == error, 2 == warning
 				severity = issue.code:find("^0") and 1 or 2,
 				source   = "luacheck",
-				message  = luacheck.get_message(issue)
+				message  = issue.message or luacheck.get_message(issue)
 			})
 		end
-		rpc.notify("textDocument/publishDiagnostics", {
-			uri = document.uri,
-			diagnostics = diagnostics,
-		})
 	end
+	rpc.notify("textDocument/publishDiagnostics", {
+		uri = document.uri,
+		diagnostics = diagnostics,
+	})
 end
 
 
@@ -405,8 +439,8 @@ function analyze.refresh(document)
 	local ast, err = parser.parse(document.text, document.uri)
 	if ast then
 		document.ast = ast
-		document.scopes = gen_scopes(document.ast)
 		document.last_text = document.text
+		document.scopes = gen_scopes(document.ast)
 		try_luacheck(document)
 	else
 		local line, column = err.line, err.column
