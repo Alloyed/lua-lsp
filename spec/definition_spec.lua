@@ -35,7 +35,7 @@ describe("textDocument/definition", function()
 			rpc.request("textDocument/definition", {
 				textDocument = doc,
 				position = { line = 1, character = 8}
-			}, function(...)
+			}, function()
 				callme = true
 			end)
 			assert.truthy(callme)
@@ -57,7 +57,7 @@ describe("textDocument/definition", function()
 			rpc.request("textDocument/definition", {
 				textDocument = doc,
 				position = { line = 1, character = 8}
-			}, function(...)
+			}, function()
 				callme = true
 			end)
 			assert.truthy(callme)

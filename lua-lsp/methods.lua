@@ -220,18 +220,23 @@ local function iter_scope(scope)
 end
 
 local function make_position(document, pos)
-	local last_linepos = nil
+	-- HACK: I'm not entirely sure why the AST is spitting out indexes larger
+	-- than the string but clamping it seems fine
+	if pos == document.text:len() + 1 then
+		pos = pos - 1
+	end
+	assert(pos > 0)
+	assert(pos <= document.text:len())
 	for i, line in ipairs(document.lines) do
-		if line.start > pos then
-			local text = document.lines[i-1].text
+		if line.start <= pos and line.start + line.text:len() >= pos then
+			local text = line.text
 			return {
-				line = i-1-1,
-				character = utf.to_codeunits(text, pos - last_linepos + 1)
+				line = i-1,
+				character = utf.to_codeunits(text, pos - line.start + 1)
 			}
 		end
-		last_linepos = line.start
 	end
-	return nil
+	error("invalid pos")
 end
 
 -- turn two index arguments into a range
@@ -243,6 +248,8 @@ local function make_range(document, startidx, endidx)
 end
 
 local function make_location(document, symbol)
+	assert(symbol.pos)
+	assert(symbol.posEnd)
 	return {
 		uri = document.uri,
 		range = make_range(document, symbol.pos, symbol.posEnd)
@@ -429,7 +436,6 @@ method_handlers["textDocument/hover"] = function(params, id)
 			if value.tag == "Function" then
 				table.insert(contents, item.label.."\n")
 				table.insert(contents, item.documentation)
-				log("%s", require'inspect'(contents))
 			end
 			return rpc.respond(id, {
 				contents = contents

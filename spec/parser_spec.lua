@@ -10,7 +10,8 @@ describe("lua-parser", function()
 					text = text
 				}
 			})
-			assert.spy(s_rpc.notify).was_called_with("textDocument/publishDiagnostics", {
+			assert.spy(s_rpc.notify).was_called_with(
+			"textDocument/publishDiagnostics", {
 					diagnostics = {},
 					uri = "file:///tmp/fake.lua"
 			})
@@ -28,10 +29,12 @@ describe("lua-parser", function()
 			})
 		end)
 	end)
-	it("errors on functions with extra ids #atm", function()
+	it("errors on functions with extra ids", function()
 		mock_loop(function(rpc, s_rpc)
 			spy.on(s_rpc, "notify")
-			local text =  "function my_fn(a, b, c) what return 'str' end\nfunction a() lol_wtf() end"
+			local text = "function my_fn(a, b, c)\
+				what return 'str' end\
+				function a() lol_wtf() end"
 			rpc.notify("textDocument/didOpen", {
 				textDocument = {
 					uri = "file:///tmp/fake.lua",

@@ -219,6 +219,13 @@ local function gen_scopes(ast)
 				node.scope = next_a
 				for _, name in ipairs(namelist) do
 					if name.tag ~= "Dots" then
+						-- when methods are defined like `function a:method()`
+						-- then self param doesn't include position, presumably
+						-- because it is implicit. add it back in
+						if name[1] == "self" and not name.pos then
+							name.pos = node.pos
+							name.posEnd = node.posEnd
+						end
 						next_a = save_local(next_a, name, {Tag = "Arg"})
 					end
 				end
@@ -375,11 +382,14 @@ local function try_luacheck(document)
 			tmp:close()
 
 			local _, ce = document.uri:find(Root, 1, true)
-			local fname = document.uri:sub((ce or -1)+2, -1)
+			local fname = document.uri:sub((ce or -1)+2, -1):gsub("file://","")
 			local issues = io.popen(popen_cmd:format(tmp_path, fname))
 			reports = {{}}
 			for line in issues:lines() do
 				local _, l, scol, ecol, code, msg = line:match(message_match)
+				assert(tonumber(l), ("found %q in %q"):format(tostring(l), line))
+				assert(tonumber(scol), line)
+				assert(tonumber(ecol), line)
 				table.insert(reports[1], {
 					code = code,
 					line = tonumber(l),
@@ -414,6 +424,7 @@ local function try_luacheck(document)
 			})
 		end
 	end
+	log("report %s", document.uri)
 	rpc.notify("textDocument/publishDiagnostics", {
 		uri = document.uri,
 		diagnostics = diagnostics,
@@ -445,6 +456,7 @@ function analyze.refresh(document)
 	else
 		local line, column = err.line, err.column
 		assert(err.line)
+		log("report err:%s", document.uri)
 		rpc.notify("textDocument/publishDiagnostics", {
 			uri = document.uri,
 			diagnostics = { {
@@ -466,7 +478,7 @@ function analyze.refresh(document)
 	end
 	local path = document.uri
 	local _, e = string.find(path, Root, 1, true)
-	path = string.sub(path, e+2 or 1, -1)
+	path = string.sub(path, (e or -1)+2, -1)
 	log.verbose("%s: analyze took %f s", path, os.clock() - start_time)
 end
 
