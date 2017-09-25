@@ -24,7 +24,6 @@ build = {
       ["lua-lsp.log"] = "lua-lsp/log.lua",
       ["lua-lsp.loop"] = "lua-lsp/loop.lua",
       ["lua-lsp.lua-parser.parser"] = "lua-lsp/lua-parser/parser.lua",
-      ["lua-lsp.lua-parser.pp"] = "lua-lsp/lua-parser/pp.lua",
       ["lua-lsp.lua-parser.scope"] = "lua-lsp/lua-parser/scope.lua",
       ["lua-lsp.lua-parser.validator"] = "lua-lsp/lua-parser/validator.lua",
       ["lua-lsp.methods"] = "lua-lsp/methods.lua",
