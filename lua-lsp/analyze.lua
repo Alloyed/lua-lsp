@@ -13,7 +13,7 @@ local function add_builtins(_scope, version)
 	local info = require('lua-lsp.data.'..version)
 
 	local function visit_field(key, value, scope)
-		local Id = {tag = "Id", key, pos=0, canGoto = false}
+		local Id = {tag = "Id", key, pos=0, posEnd=0, canGoto = false}
 		if value.type == "table" then
 			local fields
 			if key == TOPLEVEL then
@@ -51,8 +51,8 @@ local function add_builtins(_scope, version)
 	visit_field(TOPLEVEL, info.global, _scope)
 end
 
-local function gen_scopes(ast)
-	local scopes = {setmetatable({},{pos=0, posEnd=math.huge, origin="file"})}
+local function gen_scopes(len, ast)
+	local scopes = {setmetatable({},{pos=0, posEnd=len+1, origin="file"})}
 	for _, builtin in ipairs(Config.builtins) do
 		add_builtins(scopes[1], builtin)
 	end
@@ -63,10 +63,6 @@ local function gen_scopes(ast)
 		if value == nil then
 			return {tag = "Unknown"}
 		end
-		assert(value.posEnd)
-		assert(value._sub == nil)
-		value.posEnd = value.posEnd - 1
-		value._sub = true
 
 		local literals = {"Number", "String"}
 		if literals[value.tag] then
@@ -113,9 +109,6 @@ local function gen_scopes(ast)
 			assert(key.pos)
 
 			assert(key.posEnd)
-			assert(key._sub == nil)
-			key.posEnd = key.posEnd - 1
-			key._sub = true
 
 			-- This local shadows an existing local in this scope, so we
 			-- need to create a new scope that represents the current scope
@@ -238,7 +231,11 @@ local function gen_scopes(ast)
 							name.pos = node.pos
 							name.posEnd = node.posEnd
 						end
-						next_a = save_local(next_a, name, {Tag = "Arg"})
+						next_a = save_local(next_a, name, {
+							Tag = "Arg",
+							pos = name.pos,
+							posEnd = name.posEnd
+						})
 					end
 				end
 				return next_a
@@ -387,6 +384,7 @@ local function try_luacheck(document)
 	if luacheck then
 		local reports
 		if Config._useNativeLuacheck == false then
+			log("use native luacheck")
 			local tmp_path = "/tmp/check.lua"
 			local tmp = assert(io.open(tmp_path, "w"))
 			tmp:write(document.text)
@@ -442,6 +440,17 @@ local function try_luacheck(document)
 	})
 end
 
+local line_mt = {
+	__index = function(t, k)
+		-- line.text generation is lazy because strings are expensive,
+		-- relatively speaking
+		if k == "text" then
+			t.text = t._doc.text:sub(t.start, t["end"]):gsub("\n$", "")
+			return t.text
+		end
+	end
+}
+
 function analyze.refresh(document)
 	local text = document.text
 
@@ -450,8 +459,9 @@ function analyze.refresh(document)
 	local len = text:len()
 	while ii <= len do
 		local pos_s, pos_e = string.find(document.text, "([^\n]*)\n?", ii)
-		local line = text:sub(pos_s, pos_e):gsub("\n$", "")
-		table.insert(lines, {text = line, start = pos_s})
+		table.insert(lines, setmetatable({
+			start = pos_s, ["end"] = pos_e, _doc = document
+		}, line_mt))
 		ii = pos_e + 1
 	end
 	document.lines=lines
@@ -461,8 +471,7 @@ function analyze.refresh(document)
 	if ast then
 		document.ast = ast
 		document.last_text = document.text
-		_G.Docco = document.text
-		document.scopes = gen_scopes(document.ast)
+		document.scopes = gen_scopes(#document.text, document.ast)
 		try_luacheck(document)
 	else
 		local line, column = err.line, err.column

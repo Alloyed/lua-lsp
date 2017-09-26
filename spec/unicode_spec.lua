@@ -13,14 +13,22 @@ describe("utf8 bytes <-> utf16 code units", function()
 	it("handles ascii", function()
 		assert.equal(0, unicode.to_codeunits("jeff", 1))
 		assert.equal(1, unicode.to_bytes("jeff", 0))
+
 		assert.equal(1, unicode.to_codeunits("jeff", 2))
+		assert.equal(5, unicode.to_bytes("jeff", 4))
+
+		assert.equal(4, unicode.to_codeunits("jeff", 5))
 		assert.equal(2, unicode.to_bytes("jeff", 1))
+
 		assert.equal(1, unicode.to_codeunits("\tjeff", 2))
 		assert.equal(2, unicode.to_bytes("\tjeff", 1))
+
 		assert.has.errors(call(unicode.to_codeunits, "jeff", 100), "invalid index")
 		assert.has.errors(call(unicode.to_bytes, "jeff", 100), "invalid index")
-		assert.has.errors(call(unicode.to_codeunits, "jeff", 5), "invalid index")
-		assert.has.errors(call(unicode.to_bytes, "jeff", 4), "invalid index")
+
+		assert.has.errors(call(unicode.to_codeunits, "jeff", 6), "invalid index")
+		assert.has.errors(call(unicode.to_bytes, "jeff", 5), "invalid index")
+
 		assert.equal(0, unicode.to_codeunits("", 1))
 		assert.equal(1, unicode.to_bytes("", 0))
 	end)

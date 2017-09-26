@@ -52,7 +52,18 @@ function unicode.to_bytes(str, utf16)
 			local code0,code1,code2,code3 = b0-0xF0,b1-0x80,b2-0x80,b3-0x80
 			codepoint = code0*shift_18 + code1*shift_12 + code2*shift_6 + code3
 		end
+	end
 
+	if codepoint >= 0x010000 then
+		-- 2 code units
+		codeunit_i = codeunit_i + 2
+	else
+		codeunit_i = codeunit_i + 1
+	end
+
+	byte_i = byte_i + bytes
+	if codeunit_i == utf16 then
+		return byte_i
 	end
 	error("invalid index")
 end
@@ -96,6 +107,18 @@ function unicode.to_codeunits(str, byte_index)
 			local code0,code1,code2,code3 = b0-0xF0,b1-0x80,b2-0x80,b3-0x80
 			codepoint = code0*shift_18 + code1*shift_12 + code2*shift_6 + code3
 		end
+	end
+
+	if codepoint >= 0x010000 then
+		-- 2 code units
+		codeunit_i = codeunit_i + 2
+	else
+		codeunit_i = codeunit_i + 1
+	end
+
+	byte_i = byte_i + bytes
+	if byte_i == byte_index then
+		return codeunit_i
 	end
 	error("invalid index")
 end

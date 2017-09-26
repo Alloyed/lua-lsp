@@ -87,6 +87,7 @@ local function pick_scope(scopes, pos)
 	assert(scopes ~= nil)
 	local closest = nil
 	local size = math.huge
+	assert(#scopes > 0)
 	for _, scope in ipairs(scopes) do
 		local meta = getmetatable(scope)
 		local dist = meta.posEnd - meta.pos
@@ -137,21 +138,25 @@ local function make_item(k, _, val)
 				sig = val.signature
 			else
 				sig = {}
-				for _, name in ipairs(val.arguments) do
-					if name.tag == "Dots" then
-						table.insert(sig, "...")
-					elseif name[1] then
-						table.insert(sig, name[1])
-					elseif name.displayName then
-						table.insert(sig, name.displayName)
-					elseif name.name then
-						table.insert(sig, name.name)
+				if val.arguments then
+					for _, name in ipairs(val.arguments) do
+						if name.tag == "Dots" then
+							table.insert(sig, "...")
+						elseif name[1] then
+							table.insert(sig, name[1])
+						elseif name.displayName then
+							table.insert(sig, name.displayName)
+						elseif name.name then
+							table.insert(sig, name.name)
+						end
 					end
+				else
+					table.insert(sig, "?")
 				end
 				sig = table.concat(sig, ", ")
 			end
 
-			local ret = "()"
+			local ret = ""
 			local literals = {
 				String = "string", Number = "number", True = "bool",
 				False = "bool", Nil = "nil"
@@ -187,10 +192,13 @@ local function make_item(k, _, val)
 				ret = table.concat(ret, ", ")
 			end
 
+			if ret ~= "" then
+				ret = string.format("-> %s", ret)
+			end
 
 			item.kind = completionKinds.Function
 			item.insertText = k
-			item.label = ("%s(%s) -> %s"):format(k, sig, ret)
+			item.label = ("%s(%s) %s"):format(k, sig, ret)
 			item.documentation = val.description
 		elseif val.tag == "Table" then
 			item.detail = "<table>"
@@ -281,47 +289,43 @@ method_handlers["textDocument/completion"] = function(params, id)
 
 	local items = {}
 	local used  = {}
-	local scope = pick_scope(document.scopes, pos)
+	local scope = assert(pick_scope(document.scopes, pos))
+	log("looking for %q", word)
 
 	if word:find("[:.]") then
+		log("path scope")
 		-- path scope
 		local path_ids = {}
 
-		for s in word:gmatch("[^:.]*") do table.insert(path_ids, s) end
-		for i=#path_ids, 2, -2 do table.remove(path_ids, i) end
+		for s in word:gmatch("([^:.]*)[:.]?") do table.insert(path_ids, s) end
 
-		local iword = path_ids[1]
+		log("iword %q, {%s}", path_ids[1], table.concat(path_ids, ":"))
 		local function follow_path(ii, _scope)
 			assert(_scope)
 			local _iword = path_ids[ii]
 			local last = ii == #path_ids
-			for iname, node, val in iter_scope(_scope) do
-				if last then
+			log("follow_path %d, %q %s", ii, _iword, tostring(last))
+			if last then
+				for iname, node, val in iter_scope(_scope) do
 					if iname:sub(1, _iword:len()) == _iword then
 						table.insert(items, make_item(iname, node, val))
 					end
-				elseif iname == _iword and val.tag == "Table" then
+				end
+			else
+				local node, val = unpack(_scope[_iword] or {false, false})
+				if node and val.tag == "Table" then
 					if val.scope then
 						follow_path(ii+1, val.scope)
 					end
 				end
 			end
 		end
-
-		for iname, node, val in iter_scope(scope) do
-			if not used[iname] and node.pos <= pos then
-				used[iname] = true
-				if iname == iword and val.tag == "Table" then
-					if val.scope then
-						follow_path(2, val.scope)
-					end
-				end
-			end
-		end
+		follow_path(1, scope)
 	else
 		-- variable scope
 		for iname, node, val in iter_scope(scope) do
 			if not used[iname] and node.posEnd < pos then
+				log("%q %q", iname, word)
 				used[iname] = true
 				if iname:sub(1, word:len()) == word then
 					table.insert(items, make_item(iname, node, val))
@@ -347,7 +351,7 @@ method_handlers["textDocument/definition"] = function(params, id)
 	local scope = pick_scope(document.scopes, cursor)
 	local word_start = word:match("^([^.:]+)")
 
-	local symbol, val = unpack(scope[word_start])
+	local symbol, val = unpack(scope[word_start] or {false, false})
 	if symbol and symbol.pos <= cursor then
 		if word:find("[:.]") then
 			local path_ids = {}
@@ -400,12 +404,14 @@ method_handlers["textDocument/hover"] = function(params, id)
 
 	local line, char, cursor = line_for(document, params.position)
 	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
-	local word = line.text:sub(word_s, -1):match("^([%a_][%w_.:]*)")
+	local _, word_e = line.text:sub(char, -1):find("[%w_]*")
+	word_e = word_e + char - 1
+	local word = line.text:sub(word_s, word_e)
 
 	local scope = pick_scope(document.scopes, cursor)
 	local word_start = word:match("^([^.:]+)")
 
-	local symbol, value = unpack(scope[word_start])
+	local symbol, value = unpack(scope[word_start] or {false, false})
 	if symbol and symbol.pos <= cursor then
 		if word:find("[:.]") then
 			local path_ids = {}
@@ -470,6 +476,11 @@ method_handlers["textDocument/documentSymbol"] = function(params, id)
 		end
 	end
 	return rpc.respond(id, symbols)
+end
+
+method_handlers["textDocument/formatting"] = function(params, id)
+	local formatter = require 'lua-lsp.formatter.formatter'
+	error(require'inspect'(formatter))
 end
 
 function method_handlers.shutdown(_, id)
