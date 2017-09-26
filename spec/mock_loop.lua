@@ -2,6 +2,7 @@
 return function(fn)
 	local unpack  = table.unpack or unpack
 	_G.Documents = {}
+	_G.Config = {builtins = {}}
 	_G.Shutdown = false
 	_G.Initialized = false
 	_G.Root = nil
@@ -46,6 +47,7 @@ return function(fn)
 	local co = coroutine.create(function()
 		c_rpc.request("initialize", {
 			rootPath = "/",
+			trace = "verbose"
 		}, function() end)
 		return fn(c_rpc, s_rpc)
 	end)
@@ -53,12 +55,14 @@ return function(fn)
 
 	while not Shutdown and coroutine.status(co) ~= 'dead' do
 		local ok, data = coroutine.resume(co, unpack(Args))
-		assert(ok == true, "co: "..tostring(data))
+		if not ok then
+			error("\n"..tostring(data))
+		end
 		if data == nil then -- end
 			Shutdown = true
 		elseif data.method then
 			-- request
-			assert(method_handlers[data.method])
+			assert(method_handlers[data.method], "no method "..data.method)
 			method_handlers[data.method](data.params, data.id)
 		elseif data.result then
 			s_rpc.finish(data)

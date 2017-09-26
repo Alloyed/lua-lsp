@@ -3,6 +3,11 @@ local log             = require 'lua-lsp.log'
 local method_handlers = require 'lua-lsp.methods'
 
 _G.Documents = {}
+-- selfish default
+_G.Config = {
+	builtins = {"luajit-2_0", "love-completions"},
+	_useNativeLuacheck = false -- underscore means "experimental" here
+}
 _G.Shutdown = false
 _G.Initialized = false
 _G.Root = nil

@@ -53,15 +53,23 @@ end
 
 local function gen_scopes(ast)
 	local scopes = {setmetatable({},{pos=0, posEnd=math.huge, origin="file"})}
-	add_builtins(scopes[1], "5_1")
+	for _, builtin in ipairs(Config.builtins) do
+		add_builtins(scopes[1], builtin)
+	end
 
 	local visit_stat
 
 	local function clean_value(value)
-		local literals = {"Number", "String"}
 		if value == nil then
 			return {tag = "Unknown"}
-		elseif literals[value.tag] then
+		end
+		assert(value.posEnd)
+		assert(value._sub == nil)
+		value.posEnd = value.posEnd - 1
+		value._sub = true
+
+		local literals = {"Number", "String"}
+		if literals[value.tag] then
 			return {
 				tag = value.tag,
 				pos = value.pos,
@@ -103,7 +111,12 @@ local function gen_scopes(ast)
 		if key.tag == "Id" then
 			assert(type(key[1]) == "string")
 			assert(key.pos)
+
 			assert(key.posEnd)
+			assert(key._sub == nil)
+			key.posEnd = key.posEnd - 1
+			key._sub = true
+
 			-- This local shadows an existing local in this scope, so we
 			-- need to create a new scope that represents the current scope
 			-- post-shadowing
@@ -197,7 +210,6 @@ local function gen_scopes(ast)
 	end
 
 	local function save_return(a, expr)
-		--log("save_return [%d]\t%s", getmetatable(a).id, parser.pp(expr))
 		-- move the return value up to the closest enclosing scope
 		local mt
 		repeat
@@ -367,7 +379,6 @@ local function gen_scopes(ast)
 	return scopes
 end
 
-local POPEN = true
 local popen_cmd = "luacheck %q --filename %q --formatter plain --ranges --codes"
 local message_match =  "^([^:]+):(%d+):(%d+)%-(%d+): %(W(%d+)%) (.+)"
 local function try_luacheck(document)
@@ -375,7 +386,7 @@ local function try_luacheck(document)
 	local opts = {}
 	if luacheck then
 		local reports
-		if POPEN then
+		if Config._useNativeLuacheck == false then
 			local tmp_path = "/tmp/check.lua"
 			local tmp = assert(io.open(tmp_path, "w"))
 			tmp:write(document.text)
@@ -424,13 +435,12 @@ local function try_luacheck(document)
 			})
 		end
 	end
-	log("report %s", document.uri)
+	log("%d reports for %s", #diagnostics, document.uri)
 	rpc.notify("textDocument/publishDiagnostics", {
 		uri = document.uri,
 		diagnostics = diagnostics,
 	})
 end
-
 
 function analyze.refresh(document)
 	local text = document.text
@@ -438,7 +448,7 @@ function analyze.refresh(document)
 	local lines = {}
 	local ii = 1
 	local len = text:len()
-	while ii < len do
+	while ii <= len do
 		local pos_s, pos_e = string.find(document.text, "([^\n]*)\n?", ii)
 		local line = text:sub(pos_s, pos_e):gsub("\n$", "")
 		table.insert(lines, {text = line, start = pos_s})
@@ -451,6 +461,7 @@ function analyze.refresh(document)
 	if ast then
 		document.ast = ast
 		document.last_text = document.text
+		_G.Docco = document.text
 		document.scopes = gen_scopes(document.ast)
 		try_luacheck(document)
 	else

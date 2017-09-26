@@ -282,7 +282,8 @@ local function makeIndexOrCall (t1, t2)
 end
 
 -- grammar
-local G = { V"Lua",
+local G = {}
+G["5.3"] = { V"Lua",
   Lua      = V"Shebang"^-1 * V"Skip" * V"Block" * expect(P(-1), "Extra");
   Shebang  = P"#!" * (P(1) - P"\n")^0;
 
@@ -475,6 +476,51 @@ local G = { V"Lua",
             + sym("~")   / "bnot";
   PowOp     = sym("^")   / "pow";
 }
+local function copy(t)
+	local nt = {}
+	for k, v in pairs(t) do
+		nt[k] = v
+	end
+	return nt
+end
+
+G["5.2"] = copy(G["5.3"])
+-- remove bitops
+G["5.2"].BorOp   = nil
+G["5.2"].BXorOp  = nil
+G["5.2"].BAndOp  = nil
+G["5.2"].ShiftOp = nil
+-- remove integer division "//"
+G["5.2"].MulOp   =
+	  sym("*")   / "mul"
+	+ sym("/")   / "div"
+	+ sym("%")   / "mod";
+-- remove unicode codepoints
+G["5.2"].EscSeq = P"\\" / "" * (
+	  P"a" / "\a"
+	+ P"b" / "\b"
+	+ P"f" / "\f"
+	+ P"n" / "\n"
+	+ P"r" / "\r"
+	+ P"t" / "\t"
+	+ P"v" / "\v"
+
+	+ P"\n" / "\n"
+	+ P"\r" / "\n"
+
+	+ P"\\" / "\\"
+	+ P"\"" / "\""
+	+ P"\'" / "\'"
+
+	+ P"z" * space^0  / ""
+
+	+ digit * digit^-2 / tonumber / string.char
+	+ P"x" * expect(C(xdigit * xdigit), "HexEsc") * Cc(16) / tonumber / string.char
+
+	+ throw("EscSeq")
+);
+
+G["5.1"] = copy(G["5.2"])
 
 local parser = {}
 
@@ -485,7 +531,7 @@ local syntaxerror = validator.syntaxerror
 function parser.parse (subject, filename)
   local errorinfo = { subject = subject, filename = filename }
   lpeg.setmaxstack(1000)
-  local ast, label, sfail = lpeg.match(G, subject, nil, errorinfo)
+  local ast, label, sfail = lpeg.match(G["5.3"], subject, nil, errorinfo)
   if not ast then
     local errpos = #subject-#sfail+1
     local errmsg = labels[label][2]

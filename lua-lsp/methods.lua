@@ -15,9 +15,12 @@ function method_handlers.initialize(params, id)
 	_G.Root  = params.rootPath or params.rootUriA
 	log.setTraceLevel(params.trace or "off")
 	log("Root = %q", Root)
-	--if params.initializationOptions then
-	--	-- use for server-specific config?
-	--end
+	if params.initializationOptions then
+		-- use for server-specific config?
+		for k, v in pairs(params.initializationOptions) do
+			Config[k] = v
+		end
+	end
 	--ClientCapabilities = params.capabilities
 	Initialized = true
 
@@ -318,7 +321,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 	else
 		-- variable scope
 		for iname, node, val in iter_scope(scope) do
-			if not used[iname] and node.pos <= pos then
+			if not used[iname] and node.posEnd < pos then
 				used[iname] = true
 				if iname:sub(1, word:len()) == word then
 					table.insert(items, make_item(iname, node, val))

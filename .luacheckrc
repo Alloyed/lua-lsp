@@ -1,4 +1,4 @@
-globals = {"Documents", "Initialized", "Root", "Shutdown", "Args"}
+globals = {"Documents", "Config", "Initialized", "Root", "Shutdown", "Args"}
 std="max"
 
 files["spec/*.lua"].std = "+busted"
