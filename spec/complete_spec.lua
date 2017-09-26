@@ -39,6 +39,9 @@ describe("textDocument/completion #atm", function()
 				textDocument = doc,
 				position = {line = 1, character = 7}
 			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
 				assert.same({
 					isIncomplete = false,
 					items = {{label = "mySymbol"}}
@@ -57,6 +60,9 @@ describe("textDocument/completion #atm", function()
 				textDocument = doc,
 				position = {line = 1, character = 7}
 			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a.label < b.label
+				end)
 				assert.same({
 					isIncomplete = false,
 					items = {{label = "symbolA"},{label="symbolB"}}
@@ -75,6 +81,9 @@ describe("textDocument/completion #atm", function()
 				textDocument = doc,
 				position = {line = 1, character = 6}
 			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
 				assert.same({
 					isIncomplete = false,
 					items = {{label = "symbolC"}}
