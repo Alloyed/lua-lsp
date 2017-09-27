@@ -276,6 +276,20 @@ local function line_for(document, pos)
 	return line, char, line.start + char - 1
 end
 
+local function split_path(path)
+	local path_ids = {}
+
+	local i = 1
+	while path:find("[:.]", i) do
+		local is, ie = path:find("[:.]", i)
+		table.insert(path_ids, path:sub(i, is-1))
+		i = ie+1
+	end
+	table.insert(path_ids, path:sub(i, -1))
+
+	return path_ids
+end
+
 method_handlers["textDocument/completion"] = function(params, id)
 	local document = analyze.document(params.textDocument)
 	if document.scopes == nil then
@@ -293,18 +307,12 @@ method_handlers["textDocument/completion"] = function(params, id)
 	log("looking for %q", word)
 
 	if word:find("[:.]") then
-		log("path scope")
+		local path_ids = split_path(word)
 		-- path scope
-		local path_ids = {}
-
-		for s in word:gmatch("([^:.]*)[:.]?") do table.insert(path_ids, s) end
-
-		log("iword %q, {%s}", path_ids[1], table.concat(path_ids, ":"))
 		local function follow_path(ii, _scope)
 			assert(_scope)
 			local _iword = path_ids[ii]
 			local last = ii == #path_ids
-			log("follow_path %d, %q %s", ii, _iword, tostring(last))
 			if last then
 				for iname, node, val in iter_scope(_scope) do
 					if iname:sub(1, _iword:len()) == _iword then
@@ -325,7 +333,6 @@ method_handlers["textDocument/completion"] = function(params, id)
 		-- variable scope
 		for iname, node, val in iter_scope(scope) do
 			if not used[iname] and node.posEnd < pos then
-				log("%q %q", iname, word)
 				used[iname] = true
 				if iname:sub(1, word:len()) == word then
 					table.insert(items, make_item(iname, node, val))
@@ -354,10 +361,7 @@ method_handlers["textDocument/definition"] = function(params, id)
 	local symbol, val = unpack(scope[word_start] or {false, false})
 	if symbol and symbol.pos <= cursor then
 		if word:find("[:.]") then
-			local path_ids = {}
-
-			for s in word:gmatch("[^:.]*") do table.insert(path_ids, s) end
-			for i=#path_ids, 2, -2 do table.remove(path_ids, i) end
+			local path_ids = split_path(word)
 
 			local function follow_path(ii, _scope)
 				assert(_scope)
@@ -414,10 +418,7 @@ method_handlers["textDocument/hover"] = function(params, id)
 	local symbol, value = unpack(scope[word_start] or {false, false})
 	if symbol and symbol.pos <= cursor then
 		if word:find("[:.]") then
-			local path_ids = {}
-
-			for s in word:gmatch("[^:.]*") do table.insert(path_ids, s) end
-			for i=#path_ids, 2, -2 do table.remove(path_ids, i) end
+			local path_ids = split_path(word)
 
 			local function follow_path(ii, _scope)
 				assert(_scope)

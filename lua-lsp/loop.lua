@@ -11,6 +11,9 @@ _G.Config = {
 _G.Shutdown = false
 _G.Initialized = false
 _G.Root = nil
+_G.print = function()
+	error("illegal print, use log() instead:")
+end
 
 local function main(_)
 	while not Shutdown do
@@ -22,10 +25,11 @@ local function main(_)
 		elseif data.method then
 			-- request
 			if not method_handlers[data.method] then
-				local err = string.format("%q: Not found/NYI", data.mehod)
+				err = string.format("%q: Not found/NYI", data.mehod)
 				rpc.respondError(data.id, err, "MethodNotFound")
 			else
-				local ok, err = xpcall(function()
+				local ok
+				ok, err = xpcall(function()
 					method_handlers[data.method](data.params, data.id)
 				end, debug.traceback)
 				if not ok then
