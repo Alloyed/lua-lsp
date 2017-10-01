@@ -10,7 +10,8 @@ description = {
 dependencies = {
 	"lua >= 5.1, < 5.4",
 	"dkjson",
-	"lpeglabel"
+	"lpeglabel",
+	"inspect"
 }
 build = {
    type = "builtin",

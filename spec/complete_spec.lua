@@ -162,4 +162,36 @@ return t
 			assert.truthy(callme)
 		end)
 	end)
+
+	it("resolves modules #atm", function()
+		mock_loop(function(rpc)
+			local text =  [[
+local tbl=require'mymod'
+print(t)
+return tbl.a
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 1, character = 6}
+			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
+				assert.equal(1, #out.items)
+				assert.same({
+					detail = 'M<mymod>',
+					label  = 'tbl'
+				}, out.items[1])
+				callme = true
+			end)
+			assert.truthy(callme)
+		end)
+	end)
 end)

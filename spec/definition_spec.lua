@@ -118,6 +118,73 @@ describe("textDocument/definition", function()
 		end)
 	end)
 
+	it("handles field definition", function()
+		mock_loop(function(rpc)
+			local text =  [[
+local jack = { diane = 1 }
+jack.jill = 2
+return jack.diane + jack.jill
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line=2, character=12} -- jack.diane
+			}, function(out)
+				assert.same({line=0, character=15}, out.range.start)
+			end)
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line = 2, character = 25} -- jack.jill
+			}, function(out)
+				assert.same({line=1, character=5}, out.range.start)
+			end)
+		end)
+	end)
+	it("handles function fields", function()
+		mock_loop(function(rpc)
+			local text =  [[
+local jack = { diane = function() end }
+function jack.jill() return end
+function jack:little_ditty() return end
+return jack.diane() + jack.jill() + jack:little_ditty()
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line=3, character=12} -- jack.diane
+			}, function(out)
+				assert.same({line=0, character=15}, out.range.start)
+			end)
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line = 3, character = 27} -- jack.jill
+			}, function(out)
+				assert.same({line=1, character=14}, out.range.start)
+			end)
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line=3, character=41} -- jack:little_ditty
+			}, function(out)
+				assert.same({line=2, character=14}, out.range.start)
+			end)
+		end)
+	end)
+
+
 	it("handles wide characters", function()
 		mock_loop(function(rpc)
 			local text = "a='😬' local jeff\n return jeff\n"

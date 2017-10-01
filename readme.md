@@ -30,7 +30,7 @@ let g:LanguageClient_serverCommands = {
 Listed in rough priority order
 
 * [X] Local variable completion
-* [ ] Table completion
+* [X] Table completion
 * [ ] Resolve `require()` modules
 * [X] Diagnostics (luacheck integration)
 * [X] Symbol hover

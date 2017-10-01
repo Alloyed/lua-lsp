@@ -296,7 +296,8 @@ local function gen_scopes(len, ast)
 					if expr then
 						save_set(a, name, expr)
 					else
-						save_set(a, name, {tag="Unknown"}) -- probably a vararg
+						-- probably a vararg
+						save_set(a, name, {tag="Unknown"})
 					end
 				end
 			end
@@ -314,19 +315,19 @@ local function gen_scopes(len, ast)
 			end
 		elseif node.tag == "Local" then
 			local namelist,exprlist = node[1], node[2]
-			for i, name in ipairs(namelist) do
-				a = save_local(a, name, exprlist and exprlist[i])
-			end
 			if exprlist then
 				for _, expr in ipairs(exprlist) do
 					visit_expr(expr, a)
 				end
 			end
+			for i, name in ipairs(namelist) do
+				a = save_local(a, name, exprlist and exprlist[i])
+			end
 		elseif node.tag == "Localrec" then
 			local name, expr = node[1][1], node[2][1]
 			a = save_local(a, name, expr)
-
 			visit_expr(expr, a)
+
 		elseif node.tag == "Fornum" then
 			for _, n in ipairs(node) do
 				if n.tag == "Block" then
@@ -376,7 +377,7 @@ local function gen_scopes(len, ast)
 	return scopes
 end
 
-local popen_cmd = "luacheck %q --filename %q --formatter plain --ranges --codes"
+local popen_cmd = "sh -c 'cd %q; luacheck %q --filename %q --formatter plain --ranges --codes'"
 local message_match =  "^([^:]+):(%d+):(%d+)%-(%d+): %(W(%d+)%) (.+)"
 local function try_luacheck(document)
 	local diagnostics = {}
@@ -384,7 +385,6 @@ local function try_luacheck(document)
 	if luacheck then
 		local reports
 		if Config._useNativeLuacheck == false then
-			log("use native luacheck")
 			local tmp_path = "/tmp/check.lua"
 			local tmp = assert(io.open(tmp_path, "w"))
 			tmp:write(document.text)
@@ -392,7 +392,8 @@ local function try_luacheck(document)
 
 			local _, ce = document.uri:find(Root, 1, true)
 			local fname = document.uri:sub((ce or -1)+2, -1):gsub("file://","")
-			local issues = io.popen(popen_cmd:format(tmp_path, fname))
+			local root = Root:gsub("file://", "")
+			local issues = io.popen(popen_cmd:format(root, tmp_path, fname))
 			reports = {{}}
 			for line in issues:lines() do
 				local _, l, scol, ecol, code, msg = line:match(message_match)
@@ -423,7 +424,7 @@ local function try_luacheck(document)
 					},
 					["end"] = {
 						line = issue.line-1,
-						character = issue.end_column-1
+						character = issue.end_column
 					}
 				},
 				-- 1 == error, 2 == warning
@@ -433,7 +434,6 @@ local function try_luacheck(document)
 			})
 		end
 	end
-	log("%d reports for %s", #diagnostics, document.uri)
 	rpc.notify("textDocument/publishDiagnostics", {
 		uri = document.uri,
 		diagnostics = diagnostics,
@@ -476,7 +476,6 @@ function analyze.refresh(document)
 	else
 		local line, column = err.line, err.column
 		assert(err.line)
-		log("report err:%s", document.uri)
 		rpc.notify("textDocument/publishDiagnostics", {
 			uri = document.uri,
 			diagnostics = { {

@@ -14,7 +14,7 @@ function method_handlers.initialize(params, id)
 	end
 	_G.Root  = params.rootPath or params.rootUriA
 	log.setTraceLevel(params.trace or "off")
-	log("Root = %q", Root)
+	log.info("Root = %q", Root)
 	if params.initializationOptions then
 		-- use for server-specific config?
 		for k, v in pairs(params.initializationOptions) do
@@ -96,6 +96,7 @@ local function pick_scope(scopes, pos)
 			closest = scope
 		end
 	end
+	assert(closest, require'inspect'(scopes))
 
 	return closest
 end
@@ -126,11 +127,11 @@ local function make_item(k, _, val)
 
 	if val then
 		item.kind = completionKinds.Variable
-		if val.tag == "Call" then
-			if val[1][1] == "require" then
-				-- this is a module
-				item.kind = completionKinds.Module
-			end
+		log("tag is %s", val.tag)
+		if val.tag == "Require" then
+			-- this is a module
+			item.kind = completionKinds.Module
+			item.detail = ("M<%s>"):format(val.module)
 		elseif val.tag == "Function" then
 			-- generate function signature
 			local sig
@@ -303,7 +304,13 @@ method_handlers["textDocument/completion"] = function(params, id)
 
 	local items = {}
 	local used  = {}
-	local scope = assert(pick_scope(document.scopes, pos))
+	local scope = pick_scope(document.scopes, pos)
+	if scope == nil then
+		return rpc.respond(id, {
+			isIncomplete = false,
+			items = {}
+		})
+	end
 	log("looking for %q", word)
 
 	if word:find("[:.]") then
@@ -347,13 +354,23 @@ method_handlers["textDocument/completion"] = function(params, id)
 	})
 end
 
+--- Get pair(), and unpack them automatically
+local function getp(t, k)
+	local pair = t[k]
+	if pair then
+		return unpack(pair)
+	end
+	return nil
+end
 
 method_handlers["textDocument/definition"] = function(params, id)
 	local document = analyze.document(params.textDocument)
 
 	local line, char, cursor = line_for(document, params.position)
 	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
-	local word = line.text:sub(word_s, -1):match("^([%a_][%w_.:]*)")
+	local _, word_e = line.text:sub(char, -1):find("[%w_]*")
+	word_e = word_e + char - 1
+	local word = line.text:sub(word_s, word_e)
 
 	local scope = pick_scope(document.scopes, cursor)
 	local word_start = word:match("^([^.:]+)")
@@ -367,8 +384,9 @@ method_handlers["textDocument/definition"] = function(params, id)
 				assert(_scope)
 				local key = path_ids[ii]
 				local last = ii == #path_ids
-				local isym, ival = unpack(_scope[key])
-				if not key then return nil, nil end
+				local isym, ival = getp(_scope, key)
+				assert(isym)
+				if not isym then return nil, nil end
 
 				if last then
 					return isym, ival
@@ -397,7 +415,8 @@ method_handlers["textDocument/definition"] = function(params, id)
 		end
 	end
 
-	return rpc.respondError(id, string.format("symbol %q not found", word))
+	-- No results
+	return rpc.respond(id, json.null)
 end
 
 method_handlers["textDocument/hover"] = function(params, id)
@@ -415,7 +434,7 @@ method_handlers["textDocument/hover"] = function(params, id)
 	local scope = pick_scope(document.scopes, cursor)
 	local word_start = word:match("^([^.:]+)")
 
-	local symbol, value = unpack(scope[word_start] or {false, false})
+	local symbol, value = getp(scope, word_start)
 	if symbol and symbol.pos <= cursor then
 		if word:find("[:.]") then
 			local path_ids = split_path(word)
@@ -424,7 +443,7 @@ method_handlers["textDocument/hover"] = function(params, id)
 				assert(_scope)
 				local key = path_ids[ii]
 				local last = ii == #path_ids
-				local isym, ival = unpack(_scope[key])
+				local isym, ival = getp(_scope, key)
 				if not key then return nil, nil end
 
 				if last then
@@ -453,7 +472,11 @@ method_handlers["textDocument/hover"] = function(params, id)
 		end
 	end
 
-	return rpc.respondError(id, string.format("symbol %q not found", word))
+	-- This is the no result response, see:
+	-- https://github.com/Microsoft/language-server-protocol/issues/261
+	return rpc.respond(id,{
+		contents = {}
+	})
 end
 
 method_handlers["textDocument/documentSymbol"] = function(params, id)
