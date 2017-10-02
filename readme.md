@@ -31,7 +31,7 @@ Listed in rough priority order
 
 * [X] Local variable completion
 * [X] Table completion
-* [ ] Resolve `require()` modules
+* [X] Resolve `require()` modules
 * [X] Diagnostics (luacheck integration)
 * [X] Symbol hover
 * [X] Go to definition
@@ -40,7 +40,7 @@ Listed in rough priority order
 * [ ] Whitespace formatting
 * [ ] List references
 * [ ] ldoc integration
-* [ ] `.luacompleterc` integration
+* [X] `.luacompleterc` integration
 * [ ] Error-tolerant parsing
 * [ ] Configurable transports (only stdio for now)
 * [ ] Async I/O (needed for streaming/cancel support)
