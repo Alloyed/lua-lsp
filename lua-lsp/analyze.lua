@@ -1,7 +1,8 @@
 -- Analysis engine
+local parser       = require 'lua-lsp.lua-parser.parser'
 local log          = require 'lua-lsp.log'
 local rpc          = require 'lua-lsp.rpc'
-local parser       = require 'lua-lsp.lua-parser.parser'
+local json         = require 'dkjson'
 local ok, luacheck = pcall(require, 'luacheck')
 if not ok then luacheck = nil end
 
@@ -9,9 +10,7 @@ local analyze = {}
 
 -- FIXME: we should just do this once and deepcopy it for every document
 local TOPLEVEL = {}
-local function add_builtins(_scope, version)
-	local info = require('lua-lsp.data.'..version)
-
+local function add_builtins(_scope, info)
 	local function visit_field(key, value, scope)
 		local Id = {tag = "Id", key, pos=0, posEnd=0, canGoto = false}
 		if value.type == "table" then
@@ -48,13 +47,20 @@ local function add_builtins(_scope, version)
 		end
 	end
 
-	visit_field(TOPLEVEL, info.global, _scope)
+	if info.global then
+		visit_field(TOPLEVEL, info.global, _scope)
+	end
 end
 
 local function gen_scopes(len, ast)
 	local scopes = {setmetatable({},{pos=0, posEnd=len+1, origin="file"})}
 	for _, builtin in ipairs(Config.builtins) do
-		add_builtins(scopes[1], builtin)
+		local info = require('lua-lsp.data.'..builtin)
+		add_builtins(scopes[1], info)
+	end
+
+	if Config.complete then
+		add_builtins(scopes[1], Config.complete)
 	end
 
 	local visit_stat
@@ -73,7 +79,6 @@ local function gen_scopes(len, ast)
 				value = value[1]
 			}
 		elseif value.tag == "Table" then
-			-- FIXME: inline pairs
 			return {
 				tag = value.tag,
 				pos = value.pos,
@@ -390,14 +395,14 @@ local function try_luacheck(document)
 			tmp:write(document.text)
 			tmp:close()
 
-			local _, ce = document.uri:find(Root, 1, true)
+			local _, ce = document.uri:find(Config.root, 1, true)
 			local fname = document.uri:sub((ce or -1)+2, -1):gsub("file://","")
-			local root = Root:gsub("file://", "")
+			local root = Config.root:gsub("file://", "")
 			local issues = io.popen(popen_cmd:format(root, tmp_path, fname))
 			reports = {{}}
 			for line in issues:lines() do
 				local _, l, scol, ecol, code, msg = line:match(message_match)
-				assert(tonumber(l), ("found %q in %q"):format(tostring(l), line))
+				assert(tonumber(l), line)
 				assert(tonumber(scol), line)
 				assert(tonumber(ecol), line)
 				table.insert(reports[1], {
@@ -484,7 +489,7 @@ function analyze.refresh(document)
 					start   = {line = line-1, character = column-1},
 					-- the parser does not keep track of the end of the error
 					-- so only pass in what we know
-					["end"] = {line = line-1, character = column-1}
+					["end"] = {line = line-1, character = column}
 				},
 				-- 1 == error, 2 == warning
 				severity = 1,
@@ -496,7 +501,7 @@ function analyze.refresh(document)
 		-- AST are out of sync with the new text object.
 	end
 	local path = document.uri
-	local _, e = string.find(path, Root, 1, true)
+	local _, e = string.find(path, Config.root, 1, true)
 	path = string.sub(path, (e or -1)+2, -1)
 	log.verbose("%s: analyze took %f s", path, os.clock() - start_time)
 end
@@ -528,6 +533,57 @@ function analyze.document(uri)
 	Documents[uri] = document
 
 	return document
+end
+
+function analyze.module(mod)
+	-- FIXME: load path from config file
+	mod = mod:gsub("%.", "/")
+	for _, template in ipairs(Config.packagePath) do
+		local p = template:gsub("^%./", Config.root.."/"):gsub("?", mod)
+		local uri = "file://"..p
+		if Documents[uri] then
+			return analyze.document(uri)
+		elseif Documents[uri] ~= false then
+			local f = io.open(p)
+			if f then
+				f:close()
+				return analyze.document(uri)
+			else
+				-- cache missing file
+				Documents[uri] = false
+			end
+		end
+	end
+	return nil, "module not found"
+end
+
+--- load a .luacompleterc file into Config, for later using
+function analyze.load_completerc(root)
+	local f = io.open(root.."/.luacompleterc")
+	if f then
+		local s = assert(f:read("*a"))
+		local data, err = json.decode(s)
+		if data then
+			Config.complete = data
+
+			if data.luaVersion == "love" then
+				Config.builtins = {"love-completions", "luajit-2_0"}
+			elseif data.luaVersion then
+				Config.builtins = {(data.luaVersion:gsub("%.","_"))}
+			end
+
+			if data.packagePath then
+				setmetatable(data.packagePath, nil)
+				Config.packagePath = data.packagePath
+			end
+
+			if data.cwd then
+				log.error("field 'cwd' in .luacompleterc is not supported'")
+			end
+		else
+			log.warning(".luacompleterc: %s", tostring(err))
+		end
+	end
 end
 
 return analyze

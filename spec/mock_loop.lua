@@ -5,7 +5,6 @@ return function(fn)
 	_G.Config = {builtins = {}}
 	_G.Shutdown = false
 	_G.Initialized = false
-	_G.Root = nil
 
 	local s_rpc = {}
 	package.loaded['lua-lsp.rpc'] = s_rpc

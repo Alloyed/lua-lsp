@@ -1,0 +1,4 @@
+{
+	"luaVersion": "5.3",
+	"packagePath": ["./?.lua"]
+}

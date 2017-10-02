@@ -7,10 +7,15 @@ local unicode = {}
 local shift_6  = math.pow(2, 6)
 local shift_12 = math.pow(2, 12)
 local shift_18 = math.pow(2, 18)
--- the iterator is from the lua 5.3 reference manual
--- "[\0-\x7F\xC2-\xF4][\x80-\xBF]*" was the original but 5.1 doesn't
--- support hex numbers, and you can't have a \0 character in a pattern silly
-local patt = "[\01-\127\194-\244][\128-\191]*"
+-- The iterator is from the lua 5.3 reference manual:
+-- "[\0-\x7F\xC2-\xF4][\x80-\xBF]*"
+-- modifications are to keep 5.1-3 compat.
+local patt
+if setfenv then -- lua5.1 compat
+	patt = "[%z\01-\127\194-\244][\128-\191]*"
+else
+	patt = "[\0-\127\194-\244][\128-\191]*"
+end
 
 --- given a utf8 string, and a utf16 code unit index (0-indexed), find the
 --  equivalent byte index (1-indexed)

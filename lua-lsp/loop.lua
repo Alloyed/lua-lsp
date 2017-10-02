@@ -5,12 +5,12 @@ local method_handlers = require 'lua-lsp.methods'
 _G.Documents = {}
 -- selfish default
 _G.Config = {
-	builtins = {"luajit-2_0", "love-completions"},
+	builtins = {"5_1"},
+	packagePath = {"./?.lua"},
 	_useNativeLuacheck = false -- underscore means "experimental" here
 }
 _G.Shutdown = false
 _G.Initialized = false
-_G.Root = nil
 _G.print = function()
 	error("illegal print, use log() instead:")
 end

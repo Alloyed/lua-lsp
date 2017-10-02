@@ -12,15 +12,10 @@ function method_handlers.initialize(params, id)
 	if Initialized then
 		error("already initialized!")
 	end
-	_G.Root  = params.rootPath or params.rootUriA
+	Config.root  = params.rootPath or params.rootUri
 	log.setTraceLevel(params.trace or "off")
-	log.info("Root = %q", Root)
-	if params.initializationOptions then
-		-- use for server-specific config?
-		for k, v in pairs(params.initializationOptions) do
-			Config[k] = v
-		end
-	end
+	log.info("Config.root = %q", Config.root)
+	analyze.load_completerc(Config.root)
 	--ClientCapabilities = params.capabilities
 	Initialized = true
 
@@ -127,7 +122,6 @@ local function make_item(k, _, val)
 
 	if val then
 		item.kind = completionKinds.Variable
-		log("tag is %s", val.tag)
 		if val.tag == "Require" then
 			-- this is a module
 			item.kind = completionKinds.Module
@@ -291,6 +285,82 @@ local function split_path(path)
 	return path_ids
 end
 
+local definition_of
+--- Get pair(), and unpack them automatically
+local function getp(doc, t, k)
+	local pair = t[k]
+	if pair then
+		local key, value = unpack(pair)
+		if value.tag == "Require" then
+			-- Resolve the return value of this module
+			local ref = analyze.module(value.module)
+			doc = ref
+			if ref then
+				local mt = ref.scopes and getmetatable(ref.scopes[1])
+				local ret = mt and mt._return and mt._return[1]
+				if ret then
+					local _
+					_, value, doc = definition_of(ref, ret)
+				end
+			end
+		end
+
+		return key, value, doc
+	end
+	return nil
+end
+
+
+function definition_of(doc, id_or_pos)
+	local document = analyze.document(doc)
+
+	local word, cursor
+	if id_or_pos.tag then
+		local id = id_or_pos
+		word  = id[1]
+		cursor = id.pos+1
+	else
+		local line, char
+		line, char, cursor = line_for(document, id_or_pos)
+		local word_s = line.text:sub(1, char):find("[%w.:_]*$")
+		local _, word_e = line.text:sub(char, -1):find("[%w_]*")
+		word_e = word_e + char - 1
+		word = line.text:sub(word_s, word_e)
+	end
+	local scope = pick_scope(document.scopes, cursor)
+	local word_start = word:match("^([^.:]+)")
+
+	local symbol, val
+	symbol, val, document = getp(document, scope, word_start)
+	if symbol and symbol.pos <= cursor then
+		if word:find("[:.]") then
+			local path_ids = split_path(word)
+
+			local function follow_path(ii, _scope)
+				assert(_scope, require'inspect'(val, {depth =2}))
+				local key = path_ids[ii]
+				local last = ii == #path_ids
+				local isym, ival, idoc = getp(document, _scope, key)
+				assert(isym)
+				if not isym then return nil, nil end
+
+				if last then
+					return isym, ival, idoc
+				else
+					if ival.tag == "Table" and ival.scope then
+						return follow_path(ii+1, ival.scope)
+					end
+				end
+			end
+			symbol, val, document = follow_path(2, val.scope)
+		end
+
+		if symbol and symbol.canGoto ~= false then
+			return symbol, val, document
+		end
+	end
+end
+
 method_handlers["textDocument/completion"] = function(params, id)
 	local document = analyze.document(params.textDocument)
 	if document.scopes == nil then
@@ -327,10 +397,12 @@ method_handlers["textDocument/completion"] = function(params, id)
 					end
 				end
 			else
-				local node, val = unpack(_scope[_iword] or {false, false})
-				if node and val.tag == "Table" then
-					if val.scope then
-						follow_path(ii+1, val.scope)
+				local node, val = getp(document, _scope,_iword)
+				if node then
+					if val.tag == "Table" then
+						if val.scope then
+							return follow_path(ii+1, val.scope)
+						end
 					end
 				end
 			end
@@ -354,53 +426,19 @@ method_handlers["textDocument/completion"] = function(params, id)
 	})
 end
 
---- Get pair(), and unpack them automatically
-local function getp(t, k)
-	local pair = t[k]
-	if pair then
-		return unpack(pair)
-	end
-	return nil
-end
-
 method_handlers["textDocument/definition"] = function(params, id)
 	local document = analyze.document(params.textDocument)
 
-	local line, char, cursor = line_for(document, params.position)
+	local line, char = line_for(document, params.position)
 	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
 	local _, word_e = line.text:sub(char, -1):find("[%w_]*")
 	word_e = word_e + char - 1
 	local word = line.text:sub(word_s, word_e)
 
-	local scope = pick_scope(document.scopes, cursor)
-	local word_start = word:match("^([^.:]+)")
-
-	local symbol, val = unpack(scope[word_start] or {false, false})
-	if symbol and symbol.pos <= cursor then
-		if word:find("[:.]") then
-			local path_ids = split_path(word)
-
-			local function follow_path(ii, _scope)
-				assert(_scope)
-				local key = path_ids[ii]
-				local last = ii == #path_ids
-				local isym, ival = getp(_scope, key)
-				assert(isym)
-				if not isym then return nil, nil end
-
-				if last then
-					return isym, ival
-				elseif ival.tag == "Table" then
-					if ival.scope then
-						return follow_path(ii+1, ival.scope)
-					end
-				end
-			end
-			symbol = follow_path(2, val.scope)
-		end
-
+	local symbol, _, doc = definition_of(params.textDocument, params.position)
+	if symbol then
 		if symbol and symbol.canGoto ~= false then
-			local sub = document.text:sub(symbol.pos, symbol.posEnd)
+			local sub = doc.text:sub(symbol.pos, symbol.posEnd)
 			local word_end = word:match("([^.:]+)$")
 			local a, b = string.find(sub, word_end, 1, true)
 			if not a then
@@ -409,7 +447,7 @@ method_handlers["textDocument/definition"] = function(params, id)
 			a, b = a + symbol.pos - 1, b + symbol.pos - 1
 
 			return rpc.respond(id, {
-				uri = params.textDocument.uri,
+				uri = doc.uri,
 				range = make_range(document, a, b)
 			})
 		end
@@ -425,51 +463,25 @@ method_handlers["textDocument/hover"] = function(params, id)
 		return rpc.respondError(id, "No AST data")
 	end
 
-	local line, char, cursor = line_for(document, params.position)
+	local line, char, _ = line_for(document, params.position)
 	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
 	local _, word_e = line.text:sub(char, -1):find("[%w_]*")
 	word_e = word_e + char - 1
 	local word = line.text:sub(word_s, word_e)
 
-	local scope = pick_scope(document.scopes, cursor)
-	local word_start = word:match("^([^.:]+)")
+	local symbol, value = definition_of(params.textDocument, params.position)
+	if symbol then
+		local contents = {}
 
-	local symbol, value = getp(scope, word_start)
-	if symbol and symbol.pos <= cursor then
-		if word:find("[:.]") then
-			local path_ids = split_path(word)
+		local item = make_item(word, symbol, value)
 
-			local function follow_path(ii, _scope)
-				assert(_scope)
-				local key = path_ids[ii]
-				local last = ii == #path_ids
-				local isym, ival = getp(_scope, key)
-				if not key then return nil, nil end
-
-				if last then
-					return isym, ival
-				elseif ival.tag == "Table" then
-					if ival.scope then
-						return follow_path(ii+1, ival.scope)
-					end
-				end
-			end
-			symbol, value = follow_path(2, value.scope)
+		if value.tag == "Function" then
+			table.insert(contents, item.label.."\n")
+			table.insert(contents, item.documentation)
 		end
-
-		if symbol then
-			local contents = {}
-
-			local item = make_item(word, symbol, value)
-
-			if value.tag == "Function" then
-				table.insert(contents, item.label.."\n")
-				table.insert(contents, item.documentation)
-			end
-			return rpc.respond(id, {
-				contents = contents
-			})
-		end
+		return rpc.respond(id, {
+			contents = contents
+		})
 	end
 
 	-- This is the no result response, see:
