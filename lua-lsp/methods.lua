@@ -78,17 +78,29 @@ method_handlers["textDocument/didClose"] = function(params)
 	Documents[params.textDocument.uri] = nil
 end
 
-local function pick_scope(scopes, pos)
+local function pick_scope(dirty, scopes, pos)
 	assert(scopes ~= nil)
 	local closest = nil
 	local size = math.huge
 	assert(#scopes > 0)
-	for _, scope in ipairs(scopes) do
-		local meta = getmetatable(scope)
-		local dist = meta.posEnd - meta.pos
-		if meta.pos <= pos and meta.posEnd >= pos and dist < size then
-			size = dist
-			closest = scope
+	if dirty then
+		-- ignore posEnd, it's probably wrong
+		for _, scope in ipairs(scopes) do
+			local meta = getmetatable(scope)
+			local dist = pos - meta.pos
+			if meta.pos <= pos and dist < size then
+				size = dist
+				closest = scope
+			end
+		end
+	else
+		for _, scope in ipairs(scopes) do
+			local meta = getmetatable(scope)
+			local dist = meta.posEnd - meta.pos
+			if meta.pos <= pos and meta.posEnd >= pos and dist < size then
+				size = dist
+				closest = scope
+			end
 		end
 	end
 	assert(closest, require'inspect'(scopes))
@@ -117,10 +129,26 @@ local completionKinds = {
 	Reference = 18,
 }
 
-local function make_item(k, _, val)
+local function merge_(a, b)
+	for k, v in pairs(b) do a[k] = v end
+end
+
+local function make_items(k, _, val, isVariant)
 	local item = { label = k }
 
 	if val then
+		if not isVariant and val.variants then
+			local items = {}
+			for _, variant in ipairs(val.variants) do
+				local fakeval = {}
+				merge_(fakeval, val)
+				fakeval.variants = nil
+				merge_(fakeval, variant)
+				local i = make_items(k, _, fakeval, true)
+				table.insert(items, i[1])
+			end
+			return items
+		end
 		item.kind = completionKinds.Variable
 		if val.tag == "Require" then
 			-- this is a module
@@ -194,22 +222,30 @@ local function make_item(k, _, val)
 			item.kind = completionKinds.Function
 			item.insertText = k
 			item.label = ("%s(%s) %s"):format(k, sig, ret)
+			item.detail = "<fn>"
 			item.documentation = val.description
 		elseif val.tag == "Table" then
 			item.detail = "<table>"
-		elseif val.tag == "String" or val.tag == "Number" then
-			item.kind = completionKinds.Field
+			item.documentation = val.description
+		elseif val.tag == "String" then
 			item.documentation = val.description
 			if val.value then
 				item.detail = string.format("%q", val.value)
 			else
 				item.detail = string.format("<%s>", val.tag)
 			end
+		elseif val.tag == "Literal" then
+			item.documentation = val.description
+			if val.value then
+				item.detail = tostring(val.value)
+			end
+		elseif val.tag == "Arg" then
+			item.detail = "<arg>"
 		end
 	end
 
 	item.kind = nil
-	return item
+	return {item}
 end
 
 local function iter_scope(scope)
@@ -298,9 +334,11 @@ local function getp(doc, t, k)
 			if ref then
 				local mt = ref.scopes and getmetatable(ref.scopes[1])
 				local ret = mt and mt._return and mt._return[1]
-				if ret then
+				if ret and ret.tag == "Id" then
 					local _
 					_, value, doc = definition_of(ref, ret)
+				else
+					value = ret
 				end
 			end
 		end
@@ -318,6 +356,8 @@ function definition_of(doc, id_or_pos)
 	if id_or_pos.tag then
 		local id = id_or_pos
 		word  = id[1]
+		assert(id.tag == "String" or id.tag == "Id", id.tag)
+		assert(type(word) == "string", require'inspect'(id, {depth = 3}))
 		cursor = id.pos+1
 	else
 		local line, char
@@ -327,7 +367,7 @@ function definition_of(doc, id_or_pos)
 		word_e = word_e + char - 1
 		word = line.text:sub(word_s, word_e)
 	end
-	local scope = pick_scope(document.scopes, cursor)
+	local scope = pick_scope(document.dirty, document.scopes, cursor)
 	local word_start = word:match("^([^.:]+)")
 
 	local symbol, val
@@ -355,9 +395,7 @@ function definition_of(doc, id_or_pos)
 			symbol, val, document = follow_path(2, val.scope)
 		end
 
-		if symbol and symbol.canGoto ~= false then
-			return symbol, val, document
-		end
+		return symbol, val, document
 	end
 end
 
@@ -374,7 +412,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 
 	local items = {}
 	local used  = {}
-	local scope = pick_scope(document.scopes, pos)
+	local scope = pick_scope(document.dirty, document.scopes, pos)
 	if scope == nil then
 		return rpc.respond(id, {
 			isIncomplete = false,
@@ -384,7 +422,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 	log("looking for %q", word)
 
 	if word:find("[:.]") then
-		local path_ids = split_path(word)
+		local path_ids, is_method = split_path(word)
 		-- path scope
 		local function follow_path(ii, _scope)
 			assert(_scope)
@@ -393,7 +431,9 @@ method_handlers["textDocument/completion"] = function(params, id)
 			if last then
 				for iname, node, val in iter_scope(_scope) do
 					if iname:sub(1, _iword:len()) == _iword then
-						table.insert(items, make_item(iname, node, val))
+						for _, item in ipairs(make_items(iname, node, val)) do
+							table.insert(items, item)
+						end
 					end
 				end
 			else
@@ -414,7 +454,9 @@ method_handlers["textDocument/completion"] = function(params, id)
 			if not used[iname] and node.posEnd < pos then
 				used[iname] = true
 				if iname:sub(1, word:len()) == word then
-					table.insert(items, make_item(iname, node, val))
+					for _, item in ipairs(make_items(iname, node, val)) do
+						table.insert(items, item)
+					end
 				end
 			end
 		end
@@ -436,21 +478,19 @@ method_handlers["textDocument/definition"] = function(params, id)
 	local word = line.text:sub(word_s, word_e)
 
 	local symbol, _, doc = definition_of(params.textDocument, params.position)
-	if symbol then
-		if symbol and symbol.canGoto ~= false then
-			local sub = doc.text:sub(symbol.pos, symbol.posEnd)
-			local word_end = word:match("([^.:]+)$")
-			local a, b = string.find(sub, word_end, 1, true)
-			if not a then
-				error(("find %q in %q"):format(word_end, sub))
-			end
-			a, b = a + symbol.pos - 1, b + symbol.pos - 1
-
-			return rpc.respond(id, {
-				uri = doc.uri,
-				range = make_range(document, a, b)
-			})
+	if symbol and symbol.canGoto ~= false then
+		local sub = doc.text:sub(symbol.pos, symbol.posEnd)
+		local word_end = word:match("([^.:]+)$")
+		local a, b = string.find(sub, word_end, 1, true)
+		if not a then
+			error(("find %q in %q"):format(word_end, sub))
 		end
+		a, b = a + symbol.pos - 1, b + symbol.pos - 1
+
+		return rpc.respond(id, {
+			uri = doc.uri,
+			range = make_range(document, a, b)
+		})
 	end
 
 	-- No results
@@ -473,7 +513,9 @@ method_handlers["textDocument/hover"] = function(params, id)
 	if symbol then
 		local contents = {}
 
-		local item = make_item(word, symbol, value)
+		local item = make_items(word, symbol, value)
+		log("item: %t1", item)
+		item = item[1]
 
 		if value.tag == "Function" then
 			table.insert(contents, item.label.."\n")

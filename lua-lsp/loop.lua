@@ -40,6 +40,8 @@ local function main(_)
 				if not ok then
 					if data.id then
 						rpc.respondError(data.id, err, "InternalError")
+					else
+						log.warning("%s", tostring(err))
 					end
 				end
 			end

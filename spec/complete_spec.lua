@@ -140,7 +140,7 @@ return t
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "string"}}
+					items = {{detail = '"a"', label = "string"}}
 				}, out)
 				callme = true
 			end)
@@ -155,7 +155,7 @@ return t
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "string"}}
+					items = {{detail = '"a"', label = "string"}}
 				}, out)
 				callme = true
 			end)

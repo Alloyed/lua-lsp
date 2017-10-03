@@ -36,12 +36,24 @@ local function add_builtins(_scope, info)
 				}
 			}
 		elseif value.type == "function" then
+			local variants = nil
+			if value.variants then
+				variants = {}
+				for _, v in ipairs(value.variants) do
+					table.insert(variants, {
+						arguments = v.args,
+						description = v.description,
+						returns = v.returnTypes
+					})
+				end
+			end
 			scope[key] = {Id, {
 					tag = "Function",
 					description = value.description,
-					arguments = value.args,
+					arguments = value.args or {},
 					signature = value.argsDisplay,
-					returns   = value.returnTypes
+					returns   = value.returnTypes,
+					variants  = variants
 				}
 			}
 		end
@@ -50,6 +62,14 @@ local function add_builtins(_scope, info)
 	if info.global then
 		visit_field(TOPLEVEL, info.global, _scope)
 	end
+end
+
+local function set(...)
+	local t = {}
+	for i=1, select('#', ...) do
+		t[select(i, ...)] = true
+	end
+	return t
 end
 
 local function gen_scopes(len, ast)
@@ -70,13 +90,13 @@ local function gen_scopes(len, ast)
 			return {tag = "Unknown"}
 		end
 
-		local literals = {"Number", "String"}
+		local literals = set("Number", "String", "Nil", "True", "False")
 		if literals[value.tag] then
 			return {
-				tag = value.tag,
+				tag = value.tag == "String" and "String" or "Literal",
 				pos = value.pos,
 				posEnd = value.posEnd,
-				value = value[1]
+				value = value[1] or value.tag
 			}
 		elseif value.tag == "Table" then
 			return {
@@ -104,7 +124,14 @@ local function gen_scopes(len, ast)
 				arguments = value[1],
 				signature = nil
 			}
+		elseif value.tag == "Arg" then
+			return {
+				tag = value.tag,
+				pos = value.pos,
+				posEnd = value.posEnd,
+			}
 		end
+		--log("unknown %q", tostring(value.tag))
 		return {tag = "Unknown"}
 	end
 
@@ -237,7 +264,8 @@ local function gen_scopes(len, ast)
 							name.posEnd = node.posEnd
 						end
 						next_a = save_local(next_a, name, {
-							Tag = "Arg",
+							name,
+							tag = "Arg",
 							pos = name.pos,
 							posEnd = name.posEnd
 						})
@@ -456,6 +484,25 @@ local line_mt = {
 	end
 }
 
+-- stolen from https://rosettacode.org/wiki/Longest_common_prefix#Lua
+-- probably not the fastest impl but /shrug
+local function lcp (strList)
+    local shortest = math.huge
+    for _, str in ipairs(strList) do
+        if str:len() < shortest then shortest = str:len() end
+    end
+    for strPos = 1, shortest do
+		local first = strList[1]:sub(strPos, strPos)
+		if not first then return strPos-1 end
+        for listPos = 2, #strList do
+            if strList[listPos]:sub(strPos, strPos) ~= first then
+                return strPos-1
+            end
+        end
+    end
+    return shortest
+end
+
 function analyze.refresh(document)
 	local text = document.text
 
@@ -475,13 +522,14 @@ function analyze.refresh(document)
 	local ast, err = parser.parse(document.text, document.uri)
 	if ast then
 		document.ast = ast
-		document.last_text = document.text
+		document.validtext = document.text
 		document.scopes = gen_scopes(#document.text, document.ast)
 		try_luacheck(document)
 	else
+		document.dirty = lcp{document.text, document.validtext}
 		local line, column = err.line, err.column
 		assert(err.line)
-		rpc.notify("textDocument/publishDiagnostics", {
+		return rpc.notify("textDocument/publishDiagnostics", {
 			uri = document.uri,
 			diagnostics = { {
 				code = "011", -- this is a luacheck code
@@ -523,6 +571,7 @@ function analyze.document(uri)
 	document.uri = uri
 
 	if not document.text then
+		log("reading %q", uri)
 		local f       = assert(io.open(uri:gsub("^[^:]+://", ""), "r"))
 		document.text = f:read("*a")
 		f:close()
@@ -557,6 +606,24 @@ function analyze.module(mod)
 	return nil, "module not found"
 end
 
+local function split_pkg_path(path)
+	local path_ids = {}
+
+	local i = 1
+	while path:find(";", i) do
+		local is, ie = path:find(";", i)
+		table.insert(path_ids, path:sub(i, is-1))
+		i = ie+1
+	end
+	table.insert(path_ids, path:sub(i, -1))
+
+	for _, s in ipairs(path_ids) do
+		assert(s:match("?"), "path missing '?': "..s)
+	end
+
+	return path_ids
+end
+
 --- load a .luacompleterc file into Config, for later using
 function analyze.load_completerc(root)
 	local f = io.open(root.."/.luacompleterc")
@@ -573,8 +640,8 @@ function analyze.load_completerc(root)
 			end
 
 			if data.packagePath then
-				setmetatable(data.packagePath, nil)
-				Config.packagePath = data.packagePath
+				assert(type(data.packagePath) == "string")
+				Config.packagePath = split_pkg_path(data.packagePath)
 			end
 
 			if data.cwd then

@@ -32,14 +32,16 @@ local function fmt(s, ...)
 
 		if input == "%_" then
 			return tostring(args[i])
-		elseif input == "%t" then
+		elseif input:match("^%%t") then
 			local t = args[i]
+			local depth = input:match("^%%t(%d*)")
+			depth = tonumber(depth)
 			if type(t) ~= 'table' then
 				return tostring(t)
 			elseif t.totable then
 				t = t:totable()
 			end
-			return inspect(t)
+			return inspect(t, {depth = depth})
 		else
 			return string.format(input, args[i])
 		end
@@ -126,12 +128,12 @@ end
 setmetatable(log, {
 	__call = function(_, ...)
 		if log.enabled.verbose then
-			local info = debug.getinfo(2, 'S')
+			local info = debug.getinfo(2, 'lS')
 			local msg = fmt(...)
 			local pre = string.format(
 			"%s:%d: ",
 			info.short_src,
-			info.linedefined)
+			info.currentline)
 
 			log.file:write(pre, msg, "\n")
 

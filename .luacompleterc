@@ -1,4 +1,4 @@
 {
 	"luaVersion": "5.3",
-	"packagePath": ["./?.lua"]
+	"packagePath": "./?.lua;/home/kyle/.luarocks/share/lua/5.1/?.lua"
 }
