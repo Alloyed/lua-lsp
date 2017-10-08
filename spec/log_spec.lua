@@ -1,3 +1,4 @@
+-- luacheck: ignore 122
 local log = require 'lua-lsp.log'
 
 describe("log.fmt", function()
@@ -27,7 +28,7 @@ describe("log.fmt", function()
 		assert.equal('{ "okay" } '..tostring(t),
 		log.fmt("%1$t %1$_", t))
 	end)
-	it("handles functions", function()
+	it("handles functions #atm", function()
 		assert.equal("12 nil",
 		log.fmt(function()
 			return "%2$d %1$_", nil, 12
@@ -39,6 +40,7 @@ describe("log levels", function()
 	it("can disable logging", function()
 		log.setTraceLevel("off")
 		log.file = {write = function() end}
+		-- luacheck: ignore 122
 		io.write = log.file.write
 		stub(log.file, "write")
 
