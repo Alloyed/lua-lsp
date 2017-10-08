@@ -40,7 +40,6 @@ describe("log levels", function()
 	it("can disable logging", function()
 		log.setTraceLevel("off")
 		log.file = {write = function() end}
-		-- luacheck: ignore 122
 		io.write = log.file.write
 		stub(log.file, "write")
 

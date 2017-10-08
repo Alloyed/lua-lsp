@@ -15,7 +15,13 @@ function log.fmt(s, ...)
 	local args
 	if type(s) == 'function' then
 		args = pack(s(...))
-		s = table.remove(args, 1)
+		s = args[1]
+		for i = 2, args.n do
+			args[i-1] = args[i]
+			if i == args.n then
+				args[i] = nil
+			end
+		end
 		args.n = args.n - 1
 	else
 		args = pack(...)
