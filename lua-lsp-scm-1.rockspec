@@ -11,8 +11,7 @@ dependencies = {
 	"lua >= 5.1, < 5.4",
 	"dkjson",
 	"lpeglabel",
-	"inspect",
-	"ldt-fmt"
+	"inspect"
 }
 build = {
    type = "builtin",
