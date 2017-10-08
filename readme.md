@@ -1,48 +1,69 @@
 # lua-lsp
 [![Build Status](https://travis-ci.org/Alloyed/lua-lsp.svg)](https://travis-ci.org/Alloyed/lua-lsp)
 
-**This is a work-in progress!**
-
 A [Language Server][lsp] for Lua code, written in Lua.
 
 [lsp]: https://github.com/Microsoft/language-server-protocol
+
+It's still a work in progress, but it's usable from day-to-day. It currently
+supports:
+
+* Limited autocompletion
+* Goto definition
+* As you type linting and syntax checking
+* Code formatting
+* Supports Lua 5.1-5.3 and Luajit
 
 ### Installation/Usage
 
 lua-lsp can be installed using luarocks:
 ```
-$ luarocks install https://raw.githubusercontent.com/Alloyed/lua-lsp/master/lua-lsp-scm-1.rockspec
+$ luarocks install --server=http://luarocks.org/dev lua-lsp
 ```
 This will install the `lua-lsp` command. Language clients can then communicate
-with this process using stdio as a transport. To do this in neovim, for
-example, install [autozimu/LanguageClient-neovim][nvim] and add this to your
-`init.vim`:
+with this process using stdio as a transport. See [editors.md](editors.md) for
+more instructions specific to your editor of choice.
+
+### Plugins
+
+lua-lsp automatically integrates with common lua packages, when they are
+installed. For linting, install luacheck:
 ```
-let g:LanguageClient_serverCommands = {
-	\ 'lua':  ['lua-lsp'],
-	\ }
+$ luarocks install luacheck
 ```
+For code formatting, we currently support Formatter, which only supports Lua
+5.1:
+```
+$ luarocks-5.1 install Formatter
+```
+If you have another package you'd like to see integrated, feel free to leave an
+issue/PR. Other plugins are always welcome, especially if they provide
+materially different results.
 
-[nvim]: https://github.com/autozimu/LanguageClient-neovim
+### Configuration
 
-### Features
+lua-lsp reads a few project-level configuration files to do its work.
 
-Listed in rough priority order
+To configure linting, we read your standard [.luacheckrc][check] file.
 
-* [X] Local variable completion
-* [X] Table completion
-* [X] Resolve `require()` modules
-* [X] Diagnostics (luacheck integration)
-* [X] Symbol hover
-* [X] Go to definition
-* [X] Document symbols
-* [X] Workspace symbols
-* [ ] Whitespace formatting
-* [ ] List references
-* [ ] ldoc integration
-* [X] `.luacompleterc` integration
-* [ ] Error-tolerant parsing
-* [ ] Configurable transports (only stdio for now)
-* [ ] Async I/O (needed for streaming/cancel support)
-* [ ] Dynamic analysis (attach to running lua process)
-* [ ] Alternate language support (moonscript? l2l?)
+For autocomplete support, we reimplement the [.luacompleterc][complete] format
+created by atom-autocomplete-lua. In particular, we need `luaVersion` to
+properly understand your code.
+
+More LSP-specific configuration flags will hopefully be provided through your
+editor's configuration support.
+
+[complete]: https://github.com/dapetcu21/atom-autocomplete-lua#configuration
+[check]: http://luacheck.readthedocs.io/en/stable/config.html
+
+### TODO
+
+The LSP spec is big, and we don't implement all of it. here's a
+quick wishlist ordered by roughly by priority/feasibility.
+
+* User configuration (`workspace/didChangeConfiguration`)
+* List references (`textDocument/references`)
+* Find symbols (`workspace/symbol`)
+* Function signature help (`textDocument/signatureHelp`)
+* Code links (`textDocument/documentLink`)
+* File events (`workspace/didChangeWatchedFiles`)
