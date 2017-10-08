@@ -163,7 +163,7 @@ return t
 		end)
 	end)
 
-	it("resolves modules #atm", function()
+	it("resolves modules", function()
 		mock_loop(function(rpc)
 			local text =  [[
 local tbl=require'mymod'

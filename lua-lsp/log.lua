@@ -109,12 +109,12 @@ end
 
 function log.debug(...)
 	if log.enabled.verbose then
-		local info = debug.getinfo(2, 'S')
+		local info = debug.getinfo(2, 'lS')
 		local msg = log.fmt(...)
 		local pre = string.format(
 			"%s:%d: ",
 			info.short_src,
-			info.linedefined)
+			info.currentline)
 
 		log.file:write(pre, msg, "\n")
 

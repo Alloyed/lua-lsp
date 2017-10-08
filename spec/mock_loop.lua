@@ -46,7 +46,7 @@ return function(fn)
 	local co = coroutine.create(function()
 		c_rpc.request("initialize", {
 			rootPath = "/",
-			trace = "verbose"
+			trace = "off"
 		}, function() end)
 		return fn(c_rpc, s_rpc)
 	end)
