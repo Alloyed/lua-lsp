@@ -1,5 +1,5 @@
 local mock_loop = require 'spec.mock_loop'
-describe("textDocument/didChange", function()
+describe("textDocument/didOpen", function()
 	it("triggers", function()
 		mock_loop(function(rpc, s_rpc)
 			spy.on(s_rpc, "notify")

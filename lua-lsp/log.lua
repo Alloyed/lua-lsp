@@ -11,7 +11,7 @@ local function pack(...)
 	return {n = select('#', ...), ...}
 end
 
-local function fmt(s, ...)
+function log.fmt(s, ...)
 	local args
 	if type(s) == 'function' then
 		args = pack(s(...))
@@ -61,7 +61,7 @@ end
 local message_types = { error = 1, warning = 2, info = 3, log = 4 }
 function log.info(...)
 	if log.enabled.default then
-		local msg = fmt(...)
+		local msg = log.fmt(...)
 		log.file:write(msg, "\n")
 
 		rpc.notify("window/logMessage", {
@@ -73,7 +73,7 @@ end
 
 function log.warning(...)
 	if log.enabled.default then
-		local msg = fmt(...)
+		local msg = log.fmt(...)
 		log.file:write(msg, "\n")
 
 		rpc.notify("window/logMessage", {
@@ -85,7 +85,7 @@ end
 
 function log.error(...)
 	if log.enabled.default then
-		local msg = fmt(...)
+		local msg = log.fmt(...)
 		log.file:write(msg, "\n")
 
 		rpc.notify("window/logMessage", {
@@ -97,7 +97,7 @@ end
 
 function log.verbose(...)
 	if log.enabled.verbose then
-		local msg = fmt(...)
+		local msg = log.fmt(...)
 		log.file:write(msg, "\n")
 
 		rpc.notify("window/logMessage", {
@@ -110,7 +110,7 @@ end
 function log.debug(...)
 	if log.enabled.verbose then
 		local info = debug.getinfo(2, 'S')
-		local msg = fmt(...)
+		local msg = log.fmt(...)
 		local pre = string.format(
 			"%s:%d: ",
 			info.short_src,
@@ -129,7 +129,7 @@ setmetatable(log, {
 	__call = function(_, ...)
 		if log.enabled.verbose then
 			local info = debug.getinfo(2, 'lS')
-			local msg = fmt(...)
+			local msg = log.fmt(...)
 			local pre = string.format(
 			"%s:%d: ",
 			info.short_src,

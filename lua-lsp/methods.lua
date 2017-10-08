@@ -298,13 +298,34 @@ local function make_location(document, symbol)
 	}
 end
 
---- Returns line and index for an LSP position. index is relative to line, not
---  the document, and is measured in bytes.
+--- Returns line object, line index, and global index for an LSP position.
+-- line index and global index are measured in bytes, starting from 1
 local function line_for(document, pos)
 	local line = document.lines[pos.line+1]
 	local char = utf.to_bytes(line.text, pos.character)
 
 	return line, char, line.start + char - 1
+end
+
+-- return the line represented by lineno.
+local function line_for_text(text, lineno)
+	local ii = 1
+	local i  = 1
+	local len = text:len()
+	while ii <= len do
+		local pos_s, pos_e = string.find(text, "([^\n]*)\n?", ii)
+		if i == lineno then
+			return {
+				text = text:sub(pos_s, pos_e),
+				start = pos_s,
+				["end"] = pos_e,
+				_doc = false
+			}
+		end
+		ii = pos_e + 1
+		i = i + 1
+	end
+	error("not found")
 end
 
 local function split_path(path)
@@ -557,9 +578,46 @@ method_handlers["textDocument/documentSymbol"] = function(params, id)
 end
 
 method_handlers["textDocument/formatting"] = function(params, id)
-	local formatter = require 'lua-lsp.formatter.formatter'
-	error(require'inspect'(formatter))
+	local doc = analyze.document(params.textDocument)
+	local indent = "\t"
+	if params.options.insertSpaces then
+		indent = string.rep(" ", params.options.tabSize)
+	end
+
+	local format = require 'lua-lsp.formatting'
+	local new = format.format(doc.text,{indent = indent})
+
+	rpc.respond(id, {
+		{
+			range = make_range(doc, 1, #doc.text),
+			newText = new
+		}
+	})
 end
+
+method_handlers["textDocument/rangeFormatting"] = function(params, id)
+	local doc = analyze.document(params.textDocument)
+	local indent = "\t"
+	if params.options.insertSpaces then
+		indent = string.rep(" ", params.options.tabSize)
+	end
+	local format = require 'lua-lsp.formatting'
+	local new = format.format(doc.text,{indent = indent})
+
+	local _, _, sidx = line_for(doc, params.range.start)
+	local _, _, ridx = line_for(doc, params.range["end"])
+	local line, _, _ = line_for_text(new, params.range["end"].line+1)
+
+	local eidx = line.start + #line.text - 1
+	local changed = new:sub(sidx, eidx)
+	return rpc.respond(id, {
+		{
+			range = make_range(doc, sidx, ridx),
+			newText = changed
+		}
+	})
+end
+
 
 function method_handlers.shutdown(_, id)
 	Shutdown = true
