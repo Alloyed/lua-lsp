@@ -5,7 +5,7 @@ A [Language Server][lsp] for Lua code, written in Lua.
 
 [lsp]: https://github.com/Microsoft/language-server-protocol
 
-It's still a work in progress, but it's usable from day-to-day. It currently
+It's still a work in progress, but it's usable for day-to-day. It currently
 supports:
 
 * Limited autocompletion
