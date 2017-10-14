@@ -4,7 +4,7 @@ lua-lsp with your editor, I'd love to hear from you~
 
 ### Neovim
 There are a few neovim implementations of language clients: I personally use
-[autozimu's client][nvim]. My LSP configurations looks something like this:
+[autozimu's client][nvim]. My LSP configuration looks something like this:
 
 ```vim
 let g:LanguageClient_serverCommands = {
@@ -33,7 +33,7 @@ Atom, please contact me.
 
 ### Sublime Text 3
 
-Sublime has an [LSP plugin][st3] That can be used directly specifying the
+Sublime has an [LSP plugin][st3] That can be used by directly specifying the
 `lua-lsp` command. if you have a working configuration, please contribute it!
 
 [st3]: https://github.com/tomv564/LSP
