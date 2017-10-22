@@ -87,7 +87,7 @@ local function gen_scopes(len, ast)
 
 	local function clean_value(value)
 		if value == nil then
-			return {tag = "Unknown"}
+			return {tag = "None"}
 		end
 
 		local literals = set("Number", "String", "Nil", "True", "False")
@@ -115,6 +115,14 @@ local function gen_scopes(len, ast)
 					}
 				end
 			end
+			-- otherwise pass call on
+			return {
+				tag    = value.tag,
+				pos    = value.pos,
+				posEnd = value.posEnd,
+				ref    = value[1],
+				_value = value
+			}
 		elseif value.tag == "Function" then
 			return {
 				tag = value.tag,
@@ -131,7 +139,7 @@ local function gen_scopes(len, ast)
 				posEnd = value.posEnd,
 			}
 		end
-		--log("unknown %q", tostring(value.tag))
+		log("unknown obj %t1", value)
 		return {tag = "Unknown"}
 	end
 
@@ -199,12 +207,9 @@ local function gen_scopes(len, ast)
 			local idx = path[i]
 			if ia[idx[1]] then
 				local v = ia[idx[1]][2]
-				if v == nil then
-					return
-				elseif v.tag == "Table" then
-					v.scope = v.scope or {}
-					ia = v.scope
-				end
+
+				v.scope = v.scope or {}
+				ia = v.scope
 			end
 		end
 		local key = path[#path]
@@ -227,7 +232,11 @@ local function gen_scopes(len, ast)
 			-- NOTE: mutating like this means we change the original node
 			-- instead of creating a new node. this is actually exactly what we
 			-- want (dirty the old node) but it's counterintuitive
-			a[k][2] = clean_value(nil)
+			-- we used to pass in nil, but I think now that wrongish or
+			-- misleading type info is a good start and we can pare it back
+			-- later considering we still have an unknown/None type
+			--a[k][2] = clean_value(nil)
+			a[k][2] = clean_value(value)
 		else
 			-- this is a new global var
 			scopes[1][k] = {key, clean_value(value)}
@@ -358,8 +367,8 @@ local function gen_scopes(len, ast)
 			end
 		elseif node.tag == "Localrec" then
 			local name, expr = node[1][1], node[2][1]
-			a = save_local(a, name, expr)
 			visit_expr(expr, a)
+			a = save_local(a, name, expr)
 
 		elseif node.tag == "Fornum" then
 			for _, n in ipairs(node) do
@@ -571,7 +580,6 @@ function analyze.document(uri)
 	document.uri = uri
 
 	if not document.text then
-		log("reading %q", uri)
 		local f       = assert(io.open(uri:gsub("^[^:]+://", ""), "r"))
 		document.text = f:read("*a")
 		f:close()

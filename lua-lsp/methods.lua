@@ -198,12 +198,16 @@ local function make_items(k, _, val, isVariant)
 							elseif r.tag == "Number" then
 								table.insert(values, tostring(r[1]))
 							end
+						elseif r.tag == "Id" then
+							table.insert(types, r[1])
+							noValues = true
 						else
+							table.insert(types, r.tag)
 							noValues = true
 						end
 					end
 					if noValues then
-						ret = table.concat(types, "|")
+						ret = table.concat(types, " | ")
 					else
 						ret = table.concat(values, "|")
 					end
@@ -348,6 +352,7 @@ local function getp(doc, t, k)
 	local pair = t[k]
 	if pair then
 		local key, value = unpack(pair)
+		log("tag %_", value.tag)
 		if value.tag == "Require" then
 			-- Resolve the return value of this module
 			local ref = analyze.module(value.module)
@@ -362,6 +367,30 @@ local function getp(doc, t, k)
 					value = ret
 				end
 			end
+		elseif value.tag == "String" then
+			-- We're resolving a string as a table, this means look at the
+			-- string metatable. This is encoded as looking for a global named
+			-- "string", which is true in the default lua impl, but can be
+			-- broken by crazy users doing setmetatable("", new_string)
+			key, value, doc = definition_of(doc, {tag="Id", "string", pos=-1})
+		elseif value.tag == "Call" or value.tag == "Invoke" then
+			local v
+			key, v, doc = definition_of(doc, value.ref)
+			if v.scope then
+				local mt = v.scope and getmetatable(v.scope)
+				local rets = mt and mt._return or {}
+				--for _, ret in ipairs(rets) do
+				local ret = rets[1]
+				-- overload. FIXME: this mutates the original which does
+				-- not make sense if its a copy
+				for _k, _v in pairs(value.scope) do
+					ret.scope[_k] = _v
+				end
+				-- FIXME union type
+				return key, ret, doc
+				--end
+			end
+			error()
 		end
 
 		return key, value, doc
@@ -443,7 +472,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 	log("looking for %q", word)
 
 	if word:find("[:.]") then
-		local path_ids, is_method = split_path(word)
+		local path_ids, _ = split_path(word)
 		-- path scope
 		local function follow_path(ii, _scope)
 			assert(_scope)
@@ -535,8 +564,9 @@ method_handlers["textDocument/hover"] = function(params, id)
 		local contents = {}
 
 		local item = make_items(word, symbol, value)
-		log("item: %t1", item)
 		item = item[1]
+		log("item: %t2", item)
+		log("value: %t3", value)
 
 		if value.tag == "Function" then
 			table.insert(contents, item.label.."\n")

@@ -1,8 +1,8 @@
 
-return function(fn)
+return function(fn, builtins)
 	local unpack  = table.unpack or unpack
 	_G.Documents = {}
-	_G.Config = {builtins = {}}
+	_G.Config = {builtins = builtins or {}}
 	_G.Shutdown = false
 	_G.Initialized = false
 
@@ -11,10 +11,10 @@ return function(fn)
 	function s_rpc.respond(id, result)
 		Args = {{id=id, result = result}}
 	end
-	function s_rpc.respondError(id, errorMsg, errorKey, data)
+	function s_rpc.respondError(id, errorMsg, _, _)
 		error(string.format("respondError %s: %s ", id, errorMsg))
 	end
-	function s_rpc.notify(...)
+	function s_rpc.notify()
 		--error(string.format("%s"))
 		-- throw away notifications: TODO: add busted watcher
 		--error()
@@ -46,7 +46,8 @@ return function(fn)
 	local co = coroutine.create(function()
 		c_rpc.request("initialize", {
 			rootPath = "/",
-			trace = "off"
+			--trace = "off",
+			trace = "verbose",
 		}, function() end)
 		return fn(c_rpc, s_rpc)
 	end)

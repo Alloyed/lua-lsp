@@ -28,7 +28,7 @@ describe("log.fmt", function()
 		assert.equal('{ "okay" } '..tostring(t),
 		log.fmt("%1$t %1$_", t))
 	end)
-	it("handles functions #atm", function()
+	it("handles functions", function()
 		assert.equal("12 nil",
 		log.fmt(function()
 			return "%2$d %1$_", nil, 12

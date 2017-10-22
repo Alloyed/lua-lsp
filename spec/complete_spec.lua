@@ -194,4 +194,137 @@ return tbl.a
 			assert.truthy(callme)
 		end)
 	end)
+
+	it("#atm resolves strings", function()
+		mock_loop(function(rpc)
+			local text =  [[
+string = {test_example = true}
+local mystr = ""
+return mystr.t
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 2, character = 13}
+			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
+				assert.equal(1, #out.items)
+				assert.same({
+					detail = 'True',
+					label  = 'test_example'
+				}, out.items[1])
+				callme = true
+			end)
+			assert.truthy(callme)
+		end, {"_test"})
+	end)
+
+	pending("can resolve simple function returns", function()
+		mock_loop(function(rpc)
+			local text =  [[
+function my_fun()
+	return { field = "a" }
+end
+local mytbl = my_fun()
+return mytbl.f
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 4, character = 13}
+			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
+				assert.equal(1, #out.items)
+				assert.same({
+					detail = '"a"',
+					label  = 'field'
+				}, out.items[1])
+				callme = true
+			end)
+			assert.truthy(callme)
+		end)
+	end)
+
+	it("can handle function return modification #atm", function()
+		mock_loop(function(rpc)
+			local text =  [[
+function my_fun()
+	return { field = "a" }
+end
+local mytbl = my_fun() mytbl.jeff = "b"
+return mytbl.j
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 4, character = 13}
+			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
+				assert.equal(1, #out.items)
+				assert.same({
+					detail = '"b"',
+					label  = 'jeff'
+				}, out.items[1])
+				callme = true
+			end)
+			assert.truthy(callme)
+		end)
+	end)
+
+	pending("can resolve inline function returns", function()
+		mock_loop(function(rpc)
+			local text =  [[
+function my_fun()
+	return { field = "a" }
+end
+return my_fun().f
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 4, character = 13}
+			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
+				assert.equal(1, #out.items)
+				assert.same({
+					detail = 'M<mymod>',
+					label  = 'tbl'
+				}, out.items[1])
+				callme = true
+			end)
+			assert.truthy(callme)
+		end)
+	end)
 end)

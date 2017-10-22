@@ -17,6 +17,7 @@ build = {
    type = "builtin",
    modules = {
       ["lua-lsp.analyze"] = "lua-lsp/analyze.lua",
+      ["lua-lsp.data._test"] = "lua-lsp/data/_test.lua",
       ["lua-lsp.data.5_1"] = "lua-lsp/data/5_1.lua",
       ["lua-lsp.data.5_2"] = "lua-lsp/data/5_2.lua",
       ["lua-lsp.data.5_3"] = "lua-lsp/data/5_3.lua",
