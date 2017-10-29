@@ -25,7 +25,7 @@ describe("textDocument/completion", function()
 		end)
 	end)
 
-	it("returns local variables", function()
+	it("returns local variables #atm", function()
 		mock_loop(function(rpc)
 			local text =  "local mySymbol\nreturn m"
 			local doc = {
@@ -37,7 +37,7 @@ describe("textDocument/completion", function()
 			local callme
 			rpc.request("textDocument/completion", {
 				textDocument = doc,
-				position = {line = 1, character = 7}
+				position = {line = 1, character = 8}
 			}, function(out)
 				table.sort(out.items, function(a, b)
 					return a < b
@@ -58,7 +58,7 @@ describe("textDocument/completion", function()
 			})
 			rpc.request("textDocument/completion", {
 				textDocument = doc,
-				position = {line = 1, character = 7}
+				position = {line = 1, character = 9}
 			}, function(out)
 				table.sort(out.items, function(a, b)
 					return a.label < b.label
@@ -79,7 +79,7 @@ describe("textDocument/completion", function()
 			})
 			rpc.request("textDocument/completion", {
 				textDocument = doc,
-				position = {line = 1, character = 6}
+				position = {line = 1, character = 7}
 			}, function(out)
 				table.sort(out.items, function(a, b)
 					return a < b
@@ -111,7 +111,7 @@ return t
 			local callme
 			rpc.request("textDocument/completion", {
 				textDocument = doc,
-				position = {line = 3, character = 7}
+				position = {line = 3, character = 8}
 			}, function(out)
 				table.sort(out.items, function(a, b)
 					return a < b
@@ -133,7 +133,7 @@ return t
 			})
 			rpc.request("textDocument/completion", {
 				textDocument = doc,
-				position = {line = 3, character = 11}
+				position = {line = 3, character = 12}
 			}, function(out)
 				table.sort(out.items, function(a, b)
 					return a.label < b.label
@@ -148,7 +148,7 @@ return t
 			callme = nil
 			rpc.request("textDocument/completion", {
 				textDocument = doc,
-				position = {line = 3, character = 11}
+				position = {line = 3, character = 12}
 			}, function(out)
 				table.sort(out.items, function(a, b)
 					return a.label < b.label
@@ -179,7 +179,7 @@ return tbl.a
 			local callme
 			rpc.request("textDocument/completion", {
 				textDocument = doc,
-				position = {line = 1, character = 6}
+				position = {line = 1, character = 7}
 			}, function(out)
 				table.sort(out.items, function(a, b)
 					return a < b
@@ -195,7 +195,7 @@ return tbl.a
 		end)
 	end)
 
-	it("#atm resolves strings", function()
+	it("resolves strings", function()
 		mock_loop(function(rpc)
 			local text =  [[
 string = {test_example = true}
@@ -221,6 +221,40 @@ return mystr.t
 					detail = 'True',
 					label  = 'test_example'
 				}, out.items[1])
+				callme = true
+			end)
+			assert.truthy(callme)
+		end, {"_test"})
+	end)
+
+	it("does not resolve invalid/incorrect keys", function()
+		mock_loop(function(rpc)
+			local text =  [[
+-- comment
+return nonexistent.a
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 0, character = 0}
+			}, function(out)
+				assert.equal(0, #out.items)
+				callme = true
+			end)
+			assert.truthy(callme)
+
+			callme = false
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 1, character = 19}
+			}, function(out)
+				assert.equal(0, #out.items)
 				callme = true
 			end)
 			assert.truthy(callme)
@@ -279,10 +313,10 @@ return mytbl.j
 			local callme
 			rpc.request("textDocument/completion", {
 				textDocument = doc,
-				position = {line = 4, character = 13}
+				position = {line = 4, character = 14}
 			}, function(out)
 				table.sort(out.items, function(a, b)
-					return a < b
+					return a.label < b.label
 				end)
 				assert.equal(1, #out.items)
 				assert.same({

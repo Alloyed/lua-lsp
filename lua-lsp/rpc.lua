@@ -35,7 +35,9 @@ local valid_content_type = {
 
 
 function rpc.respondError(id, errorMsg, errorKey, data)
-	assert(errorMsg)
+	if not errorMsg then
+		errorMsg = "missing error message!"
+	end
 	local msg = json.encode({
 		jsonrpc = "2.0",
 		id = id or json.null,

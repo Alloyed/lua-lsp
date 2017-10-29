@@ -139,7 +139,7 @@ local function gen_scopes(len, ast)
 				posEnd = value.posEnd,
 			}
 		end
-		log("unknown obj %t1", value)
+		--log("unknown obj %t1", value)
 		return {tag = "Unknown"}
 	end
 

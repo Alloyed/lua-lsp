@@ -458,12 +458,15 @@ method_handlers["textDocument/completion"] = function(params, id)
 		})
 	end
 	local line, char, pos = line_for(document, params.position)
-	local word = line.text:sub(1, char):match("[A-Za-z_][%w_.:]*$") or ""
+	local word = line.text:sub(1, char-1):match("[A-Za-z_][%w_.:]*$")
+	if not word then
+		log("%q: %_", line.text:sub(1, char-1), word)
+	end
 
 	local items = {}
 	local used  = {}
 	local scope = pick_scope(document.dirty, document.scopes, pos)
-	if scope == nil then
+	if scope == nil or word == nil then
 		return rpc.respond(id, {
 			isIncomplete = false,
 			items = {}
