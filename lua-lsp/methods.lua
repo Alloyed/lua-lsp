@@ -202,7 +202,8 @@ local function make_items(k, _, val, isVariant)
 							table.insert(types, r[1])
 							noValues = true
 						else
-							table.insert(types, r.tag)
+							-- not useful types
+							--table.insert(types, r.tag)
 							noValues = true
 						end
 					end
