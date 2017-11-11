@@ -392,8 +392,7 @@ local function gen_scopes(len, ast)
 		elseif node.tag == "Localrec" then
 			local name, expr = node[1][1], node[2][1]
 			visit_expr(expr, a)
-			a = save_local(a, name, expr)
-
+			local _ = save_local(a, name, expr)
 		elseif node.tag == "Fornum" then
 			for _, n in ipairs(node) do
 				if n.tag == "Block" then
@@ -436,6 +435,8 @@ local function gen_scopes(len, ast)
 					visit_stat(node[i], a)
 				end
 			end
+		elseif node.tag == "Comment" then
+			log("found comment <%d, %d>", node.pos, node.posEnd)
 		end
 	end
 
@@ -549,10 +550,10 @@ function analyze.refresh(document)
 		}, line_mt))
 		ii = pos_e + 1
 	end
-	document.lines=lines
+	document.lines = lines
 
 	local start_time = os.clock()
-	local ast, err = parser.parse(document.text, document.uri)
+	local ast, err = parser.parse(document.text, document.uri, Config.language)
 	if ast then
 		document.ast = ast
 		document.validtext = document.text
@@ -667,8 +668,13 @@ function analyze.load_completerc(root)
 
 			if data.luaVersion == "love" then
 				Config.builtins = {"love-completions", "luajit-2_0"}
+				Config.language = "luajit"
 			elseif data.luaVersion then
 				Config.builtins = {(data.luaVersion:gsub("%.","_"))}
+				Config.language = data.luaVersion
+				if Config.language:match("luajit") then
+					Config.language = "luajit"
+				end
 			end
 
 			if data.packagePath then

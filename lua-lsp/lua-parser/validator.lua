@@ -367,6 +367,8 @@ function traverse_stm (env, stm)
     return traverse_call(env, stm)
   elseif tag == "Invoke" then -- `Invoke{ expr `String{ <string> } expr* }
     return traverse_invoke(env, stm)
+  elseif tag == "Comment" then
+    return
   else
     error("expecting a statement, but got a " .. tag)
   end

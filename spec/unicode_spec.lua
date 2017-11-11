@@ -57,5 +57,9 @@ describe("utf8 bytes <-> utf16 code units", function()
 		s = "いろはにほへとちりぬるを"
 		assert.equal(34, unicode.to_bytes(s, 11))
 		assert.equal(11, unicode.to_codeunits(s, 34))
+
+		s = "🤔🤔🤔🤔"
+		assert.equal(9, unicode.to_bytes(s, 4))
+		assert.equal(4, unicode.to_codeunits(s, 9))
 	end)
 end)

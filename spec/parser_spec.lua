@@ -1,5 +1,5 @@
 local mock_loop = require 'spec.mock_loop'
-describe("lua-parser", function()
+describe("lua-parser in mock loop", function()
 	it("handles the empty string", function()
 		mock_loop(function(rpc, s_rpc)
 			spy.on(s_rpc, "notify")
@@ -42,5 +42,76 @@ describe("lua-parser", function()
 				}
 			})
 		end)
+	end)
+end)
+
+local parser = require 'lua-lsp.lua-parser.parser'
+
+describe("lua-parser version differences:", function()
+	it("cdata numbers", function()
+		local body = [[
+local cdata1 = 1LL
+local cdata2 = 1ULL
+local cdata3 = 0xffULL
+local cdata4 = 0xffLL
+]]
+		assert(parser.parse(body, "out.lua", "luajit"))
+		for _, v in ipairs{"5.1", "5.2", "5.3"} do
+			assert.has_errors(function()
+				assert(parser.parse(body, "out.lua", v))
+			end)
+		end
+	end)
+
+	it("bitops", function()
+		local body = [[
+local cdata1 = 1 | 2
+local cdata2 = 1 & 2
+local cdata3 = 1 ~ 2
+local cdata4 = ~ 2
+local cdata5 = 1 << 2
+local cdata6 = 1 >> 2
+]]
+		assert(parser.parse(body, "out.lua", "5.3"))
+		for _, v in ipairs{"5.1", "5.2", "luajit"} do
+			assert.has_errors(function()
+				assert(parser.parse(body, "out.lua", v))
+			end)
+		end
+	end)
+
+	it("floor div", function()
+		local body = [[
+local cdata1 = 1 // 2
+]]
+		assert(parser.parse(body, "out.lua", "5.3"))
+		for _, v in ipairs{"5.1", "5.2", "luajit"} do
+			assert.has_errors(function()
+				assert(parser.parse(body, "out.lua", v))
+			end)
+		end
+	end)
+
+	it("goto/label", function()
+		local body = [[
+goto mylabel
+
+::mylabel::
+]]
+
+		assert.has_errors(function()
+			assert(parser.parse(body, "out.lua", "5.1"))
+		end)
+
+		for _, v in ipairs{"5.2", "5.3", "luajit"} do
+			assert(parser.parse(body, "out.lua", v))
+		end
+	end)
+
+	pending("locale/unicode", function()
+	end)
+	pending("string escape sequences", function()
+	end)
+	pending("imaginary numbers", function()
 	end)
 end)

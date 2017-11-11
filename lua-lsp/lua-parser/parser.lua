@@ -57,23 +57,37 @@ opid:  -- includes additional operators from Lua 5.3
   pos and posEnd seem pretty goofed up when it comes to Id nodes (which are the
   only ones I looked into), should probably be fixed
 
-  We need to support lua 5.2/luajit and 5.1 ideally. this means erroring when
-  5.1 uses goto, and when non-5.3 uses bitops
+  We need to support lua 5.2/luajit and 5.1 ideally. Details:
+
+  for 5.2 support:
+  * no bitops
+
+  for 5.1 support:
+  * Lua identifiers are locale-defined (AKA current behavior)
+  * no goto
+  * no hex escape/star escape
+
+  for luajit support:
+  http://luajit.org/extensions.html
+  * identifiers support all utf-8 characters. TODO: find out what that means
+  * yes goto
+  * cdata numbers
+
 ]]
 -- luacheck: ignore
 
 local lpeg = require "lpeglabel"
 
-lpeg.locale(lpeg)
+local locale = lpeg.locale()
 
 local P, S, V = lpeg.P, lpeg.S, lpeg.V
 local C, Carg, Cb, Cc = lpeg.C, lpeg.Carg, lpeg.Cb, lpeg.Cc
 local Cf, Cg, Cmt, Cp, Cs, Ct = lpeg.Cf, lpeg.Cg, lpeg.Cmt, lpeg.Cp, lpeg.Cs, lpeg.Ct
 local Lc, T = lpeg.Lc, lpeg.T
 
-local alpha, digit, alnum = lpeg.alpha, lpeg.digit, lpeg.alnum
-local xdigit = lpeg.xdigit
-local space = lpeg.space
+local alpha, digit, alnum = locale.alpha, locale.digit, locale.alnum
+local xdigit = locale.xdigit
+local space = locale.space
 
 
 -- error message auxiliary functions
@@ -486,10 +500,17 @@ end
 
 G["5.2"] = copy(G["5.3"])
 -- remove bitops
-G["5.2"].BorOp   = nil
+G["5.2"].RelExpr = chainOp(V"ConcatExpr", V"RelOp", "RelExpr")
+
+G["5.2"].BOrOp   = nil
+G["5.2"].BOrExpr = nil
 G["5.2"].BXorOp  = nil
+G["5.2"].BXorExpr = nil
 G["5.2"].BAndOp  = nil
+G["5.2"].BAndExpr = nil
 G["5.2"].ShiftOp = nil
+G["5.2"].ShiftExpr = nil
+
 -- remove integer division "//"
 G["5.2"].MulOp   =
 	  sym("*")   / "mul"
@@ -521,6 +542,54 @@ G["5.2"].EscSeq = P"\\" / "" * (
 );
 
 G["5.1"] = copy(G["5.2"])
+-- remove goto/label
+G["5.1"].LabelStat = nil
+G["5.1"].GoToStat = nil
+G["5.1"].Stat = V"IfStat" + V"DoStat" + V"WhileStat" + V"RepeatStat" + V"ForStat"
+              + V"LocalStat" + V"FuncStat" + V"BreakStat" + V"FuncCall"
+			  + V"Assignment" + sym(";") + -V"BlockEnd" * throw("InvalidStat");
+-- remove hex. as far as I can tell star doesn't actually exist
+G["5.1"].EscSeq = P"\\" / "" * (
+	  P"a" / "\a"
+	+ P"b" / "\b"
+	+ P"f" / "\f"
+	+ P"n" / "\n"
+	+ P"r" / "\r"
+	+ P"t" / "\t"
+	+ P"v" / "\v"
+
+	+ P"\n" / "\n"
+	+ P"\r" / "\n"
+
+	+ P"\\" / "\\"
+	+ P"\"" / "\""
+	+ P"\'" / "\'"
+
+	+ P"z" * space^0  / ""
+
+	+ digit * digit^-2 / tonumber / string.char
+
+	+ throw("EscSeq")
+);
+
+G["luajit"] = copy(G["5.2"])
+
+-- Luajit supports complex numbers as 69i, and cdata numbers as 69LL or 69ULL
+-- The parser for Lua source code treats numeric literals with the suffixes LL
+-- or ULL as signed or unsigned 64 bit integers. Case doesn't matter, but
+-- uppercase is recommended for readability. It handles both decimal (42LL) and
+-- hexadecimal (0x2aLL) literals.  The imaginary part of complex numbers can be
+-- specified by suffixing number literals with i or I, e.g. 12.5i. Caveat:
+-- you'll need to use 1i to get an imaginary part with the value one, since i
+-- itself still refers to a variable named i.
+G["luajit"].Hex      = (P"0x" + "0X") * expect(xdigit^1, "DigitHex") * V"Long"^-1;
+G["luajit"].Float    = V"Decimal" * V"Expo"^-1
+                     + V"Int" * V"Expo";
+G["luajit"].Decimal  = digit^1 * "." * digit^0
+                     + P"." * -P"." * expect(digit^1, "DigitDeci");
+G["luajit"].Expo     = S"eE" * S"+-"^-1 * expect(digit^1, "DigitExpo");
+G["luajit"].Int      = digit^1 * V"Long"^-1;
+G["luajit"].Long     = (S"Uu"^-1) * S"Ll" * S"Ll";
 
 local parser = {}
 
@@ -528,10 +597,13 @@ local validator = require("lua-lsp.lua-parser.validator")
 local validate = validator.validate
 local syntaxerror = validator.syntaxerror
 
-function parser.parse (subject, filename)
+function parser.parse(subject, filename, version)
+  if not G[version] then
+	  error(tostring(version) .. " is not a supported lua version", 2)
+  end
   local errorinfo = { subject = subject, filename = filename }
   lpeg.setmaxstack(1000)
-  local ast, label, sfail = lpeg.match(G["5.3"], subject, nil, errorinfo)
+  local ast, label, sfail = lpeg.match(G[version], subject, nil, errorinfo)
   if not ast then
     local errpos = #subject-#sfail+1
     local errmsg = labels[label][2]

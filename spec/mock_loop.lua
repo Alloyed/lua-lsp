@@ -4,7 +4,8 @@ return function(fn, builtins)
 	_G.Documents = {}
 	_G.Config = {
 		packagePath={"/tmp/?.lua"},
-		builtins = builtins or {}
+		builtins = builtins or {},
+		language = "5.1"
 	}
 	_G.Shutdown = false
 	_G.Initialized = false

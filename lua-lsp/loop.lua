@@ -5,7 +5,8 @@ local method_handlers = require 'lua-lsp.methods'
 _G.Documents = {}
 -- selfish default
 _G.Config = {
-	builtins = {"5_1"},
+	language = "5.3",
+	builtins = {"5_3"},
 	packagePath = {"./?.lua"},
 	_useNativeLuacheck = false -- underscore means "experimental" here
 }
