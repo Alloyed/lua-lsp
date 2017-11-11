@@ -101,6 +101,12 @@ function log.error(...)
 	end
 end
 
+function log.fatal(...)
+	local msg = log.fmt(...)
+	log.error("%s", msg)
+	error(msg, 2)
+end
+
 function log.verbose(...)
 	if log.enabled.verbose then
 		local msg = log.fmt(...)

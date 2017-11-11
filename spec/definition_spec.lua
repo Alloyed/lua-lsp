@@ -146,6 +146,7 @@ return jack.diane + jack.jill
 			end)
 		end)
 	end)
+
 	it("handles function fields", function()
 		mock_loop(function(rpc)
 			local text =  [[
@@ -219,6 +220,76 @@ return jack.diane() + jack.jill() + jack:little_ditty()
 				position = {line = 1, character = 8} -- jackv2
 			}, function(out)
 				assert.same({line=0, character=7}, out.range.start)
+			end)
+		end)
+	end)
+
+	it("handles multivars", function()
+		mock_loop(function(rpc)
+			local text = "local jack, diane = 1, 2\nprint(diane)\nreturn jack\n"
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line = 1, character = 8} -- diane
+			}, function(out)
+				assert.same({line=0, character=12}, out.range.start)
+			end)
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line = 2, character = 8} -- jackv2
+			}, function(out)
+				assert.same({line=0, character=6}, out.range.start)
+			end)
+		end)
+	end)
+
+	it("handles document jumping #atm", function()
+		mock_loop(function(rpc)
+			local text = [[
+local a = {}
+a.jeff = 1
+return a
+]]
+			local doc = {
+				uri = "file:///tmp/fake1.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+
+			text = [[
+local a = require'fake1'
+return a.jeff
+]]
+			local doc1 = doc
+			doc = {
+				uri = "file:///tmp/fake2.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line = 1, character = 10} -- a.jeff
+			}, function(out)
+				assert.equal(doc1.uri, out.uri)
+				assert.same({line=1, character=2}, out.range.start)
+			end)
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line = 1, character = 8} -- a
+			}, function(out)
+				assert.equal(doc.uri, out.uri)
+				assert.same({line=0, character=6}, out.range.start)
 			end)
 		end)
 	end)

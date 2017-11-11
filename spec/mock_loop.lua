@@ -2,7 +2,10 @@
 return function(fn, builtins)
 	local unpack  = table.unpack or unpack
 	_G.Documents = {}
-	_G.Config = {builtins = builtins or {}}
+	_G.Config = {
+		packagePath={"/tmp/?.lua"},
+		builtins = builtins or {}
+	}
 	_G.Shutdown = false
 	_G.Initialized = false
 

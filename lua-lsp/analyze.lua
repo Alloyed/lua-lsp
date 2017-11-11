@@ -114,8 +114,23 @@ local function gen_scopes(len, ast)
 						module = value[2][1]
 					}
 				end
+
+				-- FIXME: we need to attach the metatable
+				-- (which is value[3]) to value[2]
+				if value[1][1] == "setmetatable" then
+					return clean_value(value[2])
+				end
 			end
 			-- otherwise pass call on
+			return {
+				tag    = value.tag,
+				pos    = value.pos,
+				posEnd = value.posEnd,
+				ref    = value[1],
+				_value = value
+			}
+		elseif value.tag == "Invoke" then
+			-- FIXME: untested
 			return {
 				tag    = value.tag,
 				pos    = value.pos,
@@ -138,9 +153,18 @@ local function gen_scopes(len, ast)
 				pos = value.pos,
 				posEnd = value.posEnd,
 			}
+		elseif value.tag == "Id" then
+			return { value[1],
+				tag = value.tag,
+				pos = value.pos,
+				posEnd = value.posEnd,
+			}
 		end
 		--log("unknown obj %t1", value)
-		return {tag = "Unknown"}
+		return {
+			tag = "Unknown",
+			orig = value
+		}
 	end
 
 	local function save_local(a, key, value)
@@ -253,7 +277,7 @@ local function gen_scopes(len, ast)
 			setmetatable(a, mt)
 		until mt.origin
 		mt._return = mt._return or {}
-		table.insert(mt._return, expr)
+		table.insert(mt._return, clean_value(expr))
 	end
 
 	local function visit_expr(node, a)

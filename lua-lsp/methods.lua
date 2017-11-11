@@ -348,56 +348,64 @@ end
 
 local definition_of
 --- Get pair(), and unpack them automatically
-local function getp(doc, t, k)
-	local pair = t[k]
-	if pair then
-		local key, value = unpack(pair)
-		log("tag %_", value.tag)
-		if value.tag == "Require" then
-			-- Resolve the return value of this module
-			local ref = analyze.module(value.module)
-			doc = ref
-			if ref then
-				local mt = ref.scopes and getmetatable(ref.scopes[1])
-				local ret = mt and mt._return and mt._return[1]
-				if ret and ret.tag == "Id" then
-					local _
-					_, value, doc = definition_of(ref, ret)
-				else
-					value = ret
-				end
-			end
-		elseif value.tag == "String" then
-			-- We're resolving a string as a table, this means look at the
-			-- string metatable. This is encoded as looking for a global named
-			-- "string", which is true in the default lua impl, but can be
-			-- broken by crazy users doing setmetatable("", new_string)
-			key, value, doc = definition_of(doc, {tag="Id", "string", pos=-1})
-		elseif value.tag == "Call" or value.tag == "Invoke" then
-			local v
-			key, v, doc = definition_of(doc, value.ref)
-			if v.scope then
-				local mt = v.scope and getmetatable(v.scope)
-				local rets = mt and mt._return or {}
-				--for _, ret in ipairs(rets) do
-				local ret = rets[1]
-				-- overload. FIXME: this mutates the original which does
-				-- not make sense if its a copy
-				for _k, _v in pairs(value.scope) do
-					ret.scope[_k] = _v
-				end
-				-- FIXME union type
-				return key, ret, doc
-				--end
-			end
-			error()
-		end
+local function getp(doc, t, k, isDefinition)
+	local pair = t and t[k]
+	if not pair then
+		log("no pair for %q in %_", k, t)
+		return nil
+	end
+	local key, value = unpack(pair)
+	log("found tag %_ in %_ using %q", value.tag, t, k)
 
+	if isDefinition then
 		return key, value, doc
 	end
-	return nil
-end
 
+	if value.tag == "Require" then
+		-- Resolve the return value of this module
+		local ref = analyze.module(value.module)
+		doc = ref
+		if ref then
+			local mt = ref.scopes and getmetatable(ref.scopes[1])
+			local ret = mt and mt._return and mt._return[1]
+			if ret and ret.tag == "Id" then
+				local _
+				_, value, doc = definition_of(ref, ret)
+			else
+				value = ret
+			end
+		end
+	elseif value.tag == "String" then
+		-- We're resolving a string as a table, this means look at the
+		-- string metatable. This is encoded as looking for a global named
+		-- "string", which is true in the default lua impl, but can be
+		-- broken by crazy users doing setmetatable("", new_string)
+		key, value, doc = definition_of(doc, {tag="Id", "string", pos=-1})
+	elseif value.tag == "Call" or value.tag == "Invoke" then
+		local v
+		key, v, doc = definition_of(doc, value.ref)
+		if v.scope then
+			local mt = v.scope and getmetatable(v.scope)
+			local rets = mt and mt._return or {}
+			--for _, ret in ipairs(rets) do
+			local ret = rets[1]
+			-- overload. FIXME: this mutates the original which does
+			-- not make sense if its a copy
+			if ret.scope then
+				for _k, _v in pairs(v.scope) do
+					ret.scope[_k] = _v
+				end
+			end
+			-- FIXME union type
+			log("returning %t1, %t1, %_", key, ret, doc)
+			return key, ret, doc
+			--end
+		end
+		error("i unno")
+	end
+
+	return key, value, doc
+end
 
 function definition_of(doc, id_or_pos)
 	local document = analyze.document(doc)
@@ -420,33 +428,39 @@ function definition_of(doc, id_or_pos)
 	local scope = pick_scope(document.dirty, document.scopes, cursor)
 	local word_start = word:match("^([^.:]+)")
 
-	local symbol, val
-	symbol, val, document = getp(document, scope, word_start)
-	if symbol and symbol.pos <= cursor then
-		if word:find("[:.]") then
-			local path_ids = split_path(word)
+	local symbol, val, _
 
-			local function follow_path(ii, _scope)
-				assert(_scope, require'inspect'(val, {depth =2}))
-				local key = path_ids[ii]
-				local last = ii == #path_ids
-				local isym, ival, idoc = getp(document, _scope, key)
-				assert(isym)
-				if not isym then return nil, nil end
+	if word:find("[:.]") then
+		local valdoc
+		_, val, valdoc = getp(document, scope, word_start)
+		local path_ids = split_path(word)
 
-				if last then
-					return isym, ival, idoc
-				else
-					if ival.tag == "Table" and ival.scope then
-						return follow_path(ii+1, ival.scope)
-					end
+		local function follow_path(ii, _scope)
+			if not _scope then
+				log.fatal("not a scope: %t2", val)
+			end
+			local key = path_ids[ii]
+			local last = ii == #path_ids
+
+			if last then
+				return getp(valdoc, _scope, key, "definition")
+			else
+				local _, ival, _ = getp(valdoc, _scope, key)
+
+				if ival.tag == "Table" and ival.scope then
+					return follow_path(ii+1, ival.scope)
 				end
 			end
-			symbol, val, document = follow_path(2, val.scope)
 		end
-
-		return symbol, val, document
+		symbol, val, document = follow_path(2, val.scope)
+	else
+		symbol, val, document = getp(document, scope, word_start, "definition")
 	end
+
+	if not symbol then
+		return nil, nil, document
+	end
+	return symbol, val, document
 end
 
 method_handlers["textDocument/completion"] = function(params, id)
@@ -483,7 +497,9 @@ method_handlers["textDocument/completion"] = function(params, id)
 			local last = ii == #path_ids
 			if last then
 				for iname, node, val in iter_scope(_scope) do
-					if iname:sub(1, _iword:len()) == _iword then
+					if type(iname) == "string" and
+						iname:sub(1, _iword:len()) == _iword then
+
 						for _, item in ipairs(make_items(iname, node, val)) do
 							table.insert(items, item)
 						end
@@ -491,6 +507,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 				end
 			else
 				local node, val = getp(document, _scope,_iword)
+				log("got %t3", val)
 				if node then
 					if val.tag == "Table" then
 						if val.scope then
@@ -529,25 +546,36 @@ method_handlers["textDocument/definition"] = function(params, id)
 	local _, word_e = line.text:sub(char, -1):find("[%w_]*")
 	word_e = word_e + char - 1
 	local word = line.text:sub(word_s, word_e)
+	log("definition for %q", word)
 
-	local symbol, _, doc = definition_of(params.textDocument, params.position)
-	if symbol and symbol.canGoto ~= false then
-		local sub = doc.text:sub(symbol.pos, symbol.posEnd)
-		local word_end = word:match("([^.:]+)$")
-		local a, b = string.find(sub, word_end, 1, true)
-		if not a then
-			error(("find %q in %q"):format(word_end, sub))
-		end
-		a, b = a + symbol.pos - 1, b + symbol.pos - 1
+	local symbol, _, doc2 = definition_of(params.textDocument, params.position)
 
-		return rpc.respond(id, {
-			uri = doc.uri,
-			range = make_range(document, a, b)
-		})
+	if not symbol or symbol.canGoto == false then
+		-- symbol not found
+		log("Symbol not found: %q", word)
+		return rpc.respond(id, json.null)
 	end
 
-	-- No results
-	return rpc.respond(id, json.null)
+	local doc = document
+	if doc ~= doc2 then
+		log("defined in external file %q", doc2.uri)
+	end
+
+	local sub = doc2.text:sub(symbol.pos, symbol.posEnd)
+	local word_end = word:match("([^.:]+)$")
+	local a, b = string.find(sub, word_end, 1, true)
+	log("find %q in %q", word_end, sub)
+	if not a then
+		error(("failed to find %q in %q\nword from %q")
+		:format(word_end, sub, doc2.uri))
+	end
+	a, b = a + symbol.pos - 1, b + symbol.pos - 1
+
+	return rpc.respond(id, {
+		uri = doc2.uri,
+		range = make_range(doc2, a, b)
+	})
+
 end
 
 method_handlers["textDocument/hover"] = function(params, id)

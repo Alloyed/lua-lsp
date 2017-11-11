@@ -227,6 +227,37 @@ return mystr.t
 		end, {"_test"})
 	end)
 
+	it("resolves calls to setmetatable", function()
+		mock_loop(function(rpc)
+			local text =  [[
+local mytbl = setmetatable({jeff=1}, {})
+return mytbl.j
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 1, character = 13}
+			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
+				assert.equal(1, #out.items)
+				assert.same({
+					detail = '1',
+					label  = 'jeff'
+				}, out.items[1])
+				callme = true
+			end)
+			assert.truthy(callme)
+		end, {"_test"})
+	end)
+
 	it("does not resolve invalid/incorrect keys", function()
 		mock_loop(function(rpc)
 			local text =  [[
@@ -295,7 +326,7 @@ return mytbl.f
 		end)
 	end)
 
-	it("can handle function return modification #atm", function()
+	pending("can handle function return modification", function()
 		mock_loop(function(rpc)
 			local text =  [[
 function my_fun()
