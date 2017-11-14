@@ -1,6 +1,7 @@
 
 return function(fn, builtins)
 	local unpack  = table.unpack or unpack
+	_G.Types = {}
 	_G.Documents = {}
 	_G.Config = {
 		packagePath={"/tmp/?.lua"},

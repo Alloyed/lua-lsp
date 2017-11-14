@@ -8,9 +8,9 @@ if not ok then luacheck = nil end
 
 local analyze = {}
 
--- FIXME: we should just do this once and deepcopy it for every document
 local TOPLEVEL = {}
-local function add_builtins(_scope, info)
+--- turn a luacomplete type into a lsp value
+local function translate_luacomplete(into, data)
 	local function visit_field(key, value, scope)
 		local Id = {tag = "Id", key, pos=0, posEnd=0, canGoto = false}
 		if value.type == "table" then
@@ -27,6 +27,9 @@ local function add_builtins(_scope, info)
 			end
 			for k, v in pairs(value.fields) do
 				visit_field(k, v, fields)
+			end
+			if value.metatable then
+				visit_field(key, value.metatable.fields.__index, scope)
 			end
 		elseif value.type == "string" then
 			scope[key] = {Id, {
@@ -59,9 +62,7 @@ local function add_builtins(_scope, info)
 		end
 	end
 
-	if info.global then
-		visit_field(TOPLEVEL, info.global, _scope)
-	end
+	visit_field(TOPLEVEL, data, into)
 end
 
 local function set(...)
@@ -76,11 +77,13 @@ local function gen_scopes(len, ast)
 	local scopes = {setmetatable({},{pos=0, posEnd=len+1, origin="file"})}
 	for _, builtin in ipairs(Config.builtins) do
 		local info = require('lua-lsp.data.'..builtin)
-		add_builtins(scopes[1], info)
+		if info.global then
+			translate_luacomplete(scopes[1], info.global)
+		end
 	end
 
-	if Config.complete then
-		add_builtins(scopes[1], Config.complete)
+	if Config.complete.global then
+		translate_luacomplete(scopes[1], Config.complete.global)
 	end
 
 	local visit_stat
@@ -520,21 +523,21 @@ local line_mt = {
 
 -- stolen from https://rosettacode.org/wiki/Longest_common_prefix#Lua
 -- probably not the fastest impl but /shrug
-local function lcp (strList)
-    local shortest = math.huge
-    for _, str in ipairs(strList) do
-        if str:len() < shortest then shortest = str:len() end
-    end
-    for strPos = 1, shortest do
+local function lcp(strList)
+	local shortest = math.huge
+	for _, str in ipairs(strList) do
+		if str:len() < shortest then shortest = str:len() end
+	end
+	for strPos = 1, shortest do
 		local first = strList[1]:sub(strPos, strPos)
 		if not first then return strPos-1 end
-        for listPos = 2, #strList do
-            if strList[listPos]:sub(strPos, strPos) ~= first then
-                return strPos-1
-            end
-        end
-    end
-    return shortest
+		for listPos = 2, #strList do
+			if strList[listPos]:sub(strPos, strPos) ~= first then
+				return strPos-1
+			end
+		end
+	end
+	return shortest
 end
 
 function analyze.refresh(document)
@@ -657,6 +660,14 @@ local function split_pkg_path(path)
 	return path_ids
 end
 
+local function add_types(new_types)
+	for k, v in pairs(new_types) do
+		log("add type %s: %t1", k, v)
+		Types[k] = {tag="Table", scope = {}}
+		translate_luacomplete(Types[k].scope, v)
+	end
+end
+
 --- load a .luacompleterc file into Config, for later using
 function analyze.load_completerc(root)
 	local f = io.open(root.."/.luacompleterc")
@@ -665,6 +676,9 @@ function analyze.load_completerc(root)
 		local data, err = json.decode(s)
 		if data then
 			Config.complete = data
+			if data.namedTypes then
+				add_types(data.namedTypes)
+			end
 
 			if data.luaVersion == "love" then
 				Config.builtins = {"love-completions", "luajit-2_0"}
@@ -674,6 +688,13 @@ function analyze.load_completerc(root)
 				Config.language = data.luaVersion
 				if Config.language:match("luajit") then
 					Config.language = "luajit"
+				end
+			end
+
+			for _, builtin in ipairs(Config.builtins) do
+				local info = require('lua-lsp.data.'..builtin)
+				if info.namedTypes then
+					add_types(info.namedTypes)
 				end
 			end
 

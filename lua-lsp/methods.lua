@@ -356,7 +356,6 @@ local function getp(doc, t, k, isDefinition)
 		return nil
 	end
 	local key, value = unpack(pair)
-	log("found tag %_ in %_ using %q", value.tag, t, k)
 
 	if isDefinition then
 		return key, value, doc
@@ -398,26 +397,47 @@ local function getp(doc, t, k, isDefinition)
 				end
 			end
 			-- FIXME union type
-			log("returning %t1, %t1, %_", key, ret, doc)
 			return key, ret, doc
 			--end
+		elseif v.returns then
+			local ret = v.returns[1]
+			if ret.type == "ref" then
+				local _type = Types[ret.name]
+				return key, _type, doc
+			end
 		end
-		error("i unno")
+		error("call return type not understood")
 	end
 
 	return key, value, doc
 end
 
+local function nodes_to_string(id)
+	if id.tag == "String" or id.tag == "Id" then
+		return id[1]
+	elseif id.tag == "Index" then
+		assert(id[2].tag == "String")
+		return nodes_to_string(id[1]) .. "." .. id[2][1]
+	end
+end
+
+--- returns the definition of an expression AST or a position in a document
+-- FIXME: this is real dumb, do the expression parsing someplace else and only
+-- query based on AST
 function definition_of(doc, id_or_pos)
 	local document = analyze.document(doc)
 
 	local word, cursor
 	if id_or_pos.tag then
 		local id = id_or_pos
-		word  = id[1]
-		assert(id.tag == "String" or id.tag == "Id", id.tag)
-		assert(type(word) == "string", require'inspect'(id, {depth = 3}))
-		cursor = id.pos+1
+		if (id.tag == "String" or id.tag == "Id") then
+			cursor = id.pos+1
+			word   = id[1]
+			assert(type(word) == "string", require'inspect'(id, {depth = 3}))
+		elseif id.tag == "Index" then
+			cursor = id.pos+1
+			word = nodes_to_string(id)
+		end
 	else
 		local line, char
 		line, char, cursor = line_for(document, id_or_pos)
@@ -508,7 +528,6 @@ method_handlers["textDocument/completion"] = function(params, id)
 				end
 			else
 				local node, val = getp(document, _scope,_iword)
-				log("got %t3", val)
 				if node then
 					if val.tag == "Table" then
 						if val.scope then
@@ -597,8 +616,6 @@ method_handlers["textDocument/hover"] = function(params, id)
 
 		local item = make_items(word, symbol, value)
 		item = item[1]
-		log("item: %t2", item)
-		log("value: %t3", value)
 
 		if value.tag == "Function" then
 			table.insert(contents, item.label.."\n")

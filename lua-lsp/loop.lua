@@ -2,6 +2,7 @@ local rpc             = require 'lua-lsp.rpc'
 local log             = require 'lua-lsp.log'
 local method_handlers = require 'lua-lsp.methods'
 
+_G.Types = {}
 _G.Documents = {}
 -- selfish default
 _G.Config = {
