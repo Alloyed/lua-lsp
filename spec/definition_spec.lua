@@ -250,7 +250,7 @@ return jack.diane() + jack.jill() + jack:little_ditty()
 		end)
 	end)
 
-	it("handles document jumping #atm", function()
+	it("handles document jumping", function()
 		mock_loop(function(rpc)
 			local text = [[
 local a = {}

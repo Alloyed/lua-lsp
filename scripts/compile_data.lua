@@ -18,7 +18,7 @@ local function basename(url)
 end
 
 for _, url in ipairs(templates) do
-	os.execute("sc -c 'rm -rv lua-lsp/data/*.json'")
+	os.execute("sh -c 'rm -rv lua-lsp/data/*.json'")
 	os.execute(string.format("wget -P 'lua-lsp/data' -- %q", url))
 
 	local path = basename(url)

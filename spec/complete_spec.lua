@@ -25,7 +25,7 @@ describe("textDocument/completion", function()
 		end)
 	end)
 
-	it("returns local variables #atm", function()
+	it("returns local variables", function()
 		mock_loop(function(rpc)
 			local text =  "local mySymbol\nreturn m"
 			local doc = {
@@ -292,7 +292,7 @@ return nonexistent.a
 		end, {"_test"})
 	end)
 
-	pending("can resolve simple function returns", function()
+	it("can resolve simple function returns", function()
 		mock_loop(function(rpc)
 			local text =  [[
 function my_fun()

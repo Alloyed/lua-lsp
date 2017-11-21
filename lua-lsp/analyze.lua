@@ -82,7 +82,7 @@ local function gen_scopes(len, ast)
 		end
 	end
 
-	if Config.complete.global then
+	if Config.complete and Config.complete.global then
 		translate_luacomplete(scopes[1], Config.complete.global)
 	end
 
