@@ -11,14 +11,14 @@ local templates = {
 }
 
 local json = require 'dkjson'
-local ser  = require 'ser'
+local serpent  = require 'serpent'
 
 local function basename(url)
 	return url:match("([^/.]+).json$")
 end
 
+os.execute("sh -c 'rm -rv lua-lsp/data/*.json'")
 for _, url in ipairs(templates) do
-	os.execute("sh -c 'rm -rv lua-lsp/data/*.json'")
 	os.execute(string.format("wget -P 'lua-lsp/data' -- %q", url))
 
 	local path = basename(url)
@@ -32,6 +32,7 @@ for _, url in ipairs(templates) do
 	-- FIXME: ser does not produce stable results
 	-- this makes git diff/blame a lot less useful, so we should switch to
 	-- another loadstring compatible serializer
-	f:write(ser(s))
+	f:write("return ", serpent.block(s, {comment = false}))
 	f:close()
 end
+os.execute("sh -c 'rm -rv lua-lsp/data/*.json'")
