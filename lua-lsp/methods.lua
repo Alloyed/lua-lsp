@@ -133,7 +133,8 @@ local function merge_(a, b)
 	for k, v in pairs(b) do a[k] = v end
 end
 
-local function make_items(k, _, val, isVariant)
+-- this is starting to get silly.
+local function make_items(k, val, isVariant, isMethod)
 	local item = { label = k }
 
 	if val then
@@ -144,7 +145,7 @@ local function make_items(k, _, val, isVariant)
 				merge_(fakeval, val)
 				fakeval.variants = nil
 				merge_(fakeval, variant)
-				local i = make_items(k, _, fakeval, true)
+				local i = make_items(k, fakeval, true, isMethod)
 				table.insert(items, i[1])
 			end
 			return items
@@ -156,27 +157,41 @@ local function make_items(k, _, val, isVariant)
 			item.detail = ("M<%s>"):format(val.module)
 		elseif val.tag == "Function" then
 			-- generate function signature
-			local sig
-			if val.signature then
+			local val_is_method = false
+			local sig = {}
+			if val.arguments then
+				for _, name in ipairs(val.arguments) do
+					local realname = name[1] or name.name
+					log("realname %q", realname)
+					if name.tag == "Dots" then
+						table.insert(sig, "...")
+					elseif realname == "self" and isMethod then
+						val_is_method = true
+					elseif name.displayName then
+						table.insert(sig, name.displayName)
+					elseif realname then
+						table.insert(sig, realname)
+					end
+				end
+			else
+				table.insert(sig, "?")
+			end
+
+			-- we still do the work associated with getting a signature,
+			-- because that work informs whether or not an function is a
+			-- method
+			-- don't use isMethod signatures because the builtins include the
+			-- self param and we don't want to pass that in
+			if val.signature and not isMethod then
 				sig = val.signature
 			else
-				sig = {}
-				if val.arguments then
-					for _, name in ipairs(val.arguments) do
-						if name.tag == "Dots" then
-							table.insert(sig, "...")
-						elseif name[1] then
-							table.insert(sig, name[1])
-						elseif name.displayName then
-							table.insert(sig, name.displayName)
-						elseif name.name then
-							table.insert(sig, name.name)
-						end
-					end
-				else
-					table.insert(sig, "?")
-				end
 				sig = table.concat(sig, ", ")
+			end
+
+			if isMethod and not val_is_method then
+				-- don't list functions that aren't usable as methods
+				log("skip %t", val)
+				return {}
 			end
 
 			local ret = ""
@@ -227,7 +242,7 @@ local function make_items(k, _, val, isVariant)
 			item.kind = completionKinds.Function
 			item.insertText = k
 			item.label = ("%s(%s) %s"):format(k, sig, ret)
-			item.detail = "<fn>"
+			item.detail = isMethod and "<:fn>" or "<fn>"
 			item.documentation = val.description
 		elseif val.tag == "Table" then
 			item.detail = "<table>"
@@ -517,11 +532,14 @@ method_handlers["textDocument/completion"] = function(params, id)
 			local _iword = path_ids[ii]
 			local last = ii == #path_ids
 			if last then
+				local is_method = not not word:find(":")
+				log("Is method? %_", is_method)
 				for iname, node, val in iter_scope(_scope) do
 					if type(iname) == "string" and
 						iname:sub(1, _iword:len()) == _iword then
 
-						for _, item in ipairs(make_items(iname, node, val)) do
+						local subitems = make_items(iname, val, false, is_method)
+						for _, item in ipairs(subitems) do
 							table.insert(items, item)
 						end
 					end
@@ -529,7 +547,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 			else
 				local node, val = getp(document, _scope,_iword)
 				if node then
-					if val.tag == "Table" then
+					if val and val.tag == "Table" then
 						if val.scope then
 							return follow_path(ii+1, val.scope)
 						end
@@ -544,7 +562,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 			if not used[iname] and node.posEnd < pos then
 				used[iname] = true
 				if iname:sub(1, word:len()) == word then
-					for _, item in ipairs(make_items(iname, node, val)) do
+					for _, item in ipairs(make_items(iname, val)) do
 						table.insert(items, item)
 					end
 				end
@@ -614,7 +632,7 @@ method_handlers["textDocument/hover"] = function(params, id)
 	if symbol then
 		local contents = {}
 
-		local item = make_items(word, symbol, value)
+		local item = make_items(word, value, false, word:find(":"))
 		item = item[1]
 
 		if value.tag == "Function" then
