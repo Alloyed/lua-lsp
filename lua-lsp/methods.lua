@@ -134,7 +134,7 @@ local function merge_(a, b)
 end
 
 -- this is starting to get silly.
-local function make_items(k, val, isVariant, isMethod)
+local function make_items(k, val, isVariant, isInvoke)
 	local item = { label = k }
 
 	if val then
@@ -145,7 +145,7 @@ local function make_items(k, val, isVariant, isMethod)
 				merge_(fakeval, val)
 				fakeval.variants = nil
 				merge_(fakeval, variant)
-				local i = make_items(k, fakeval, true, isMethod)
+				local i = make_items(k, fakeval, true, isInvoke)
 				table.insert(items, i[1])
 			end
 			return items
@@ -161,36 +161,39 @@ local function make_items(k, val, isVariant, isMethod)
 			local sig = {}
 			if val.arguments then
 				for _, name in ipairs(val.arguments) do
-					local realname = name[1] or name.name
-					log("realname %q", realname)
+					-- any function with at least one argument _could_ be a
+					-- method
 					if name.tag == "Dots" then
 						table.insert(sig, "...")
-					elseif realname == "self" and isMethod then
+					end
+
+					if isInvoke and not val_is_method then
+						-- eat the first argument if it's not vararg
 						val_is_method = true
-					elseif name.displayName then
-						table.insert(sig, name.displayName)
-					elseif realname then
+					else
+						local realname = name.displayName or name[1] or name.name
+						assert(realname)
 						table.insert(sig, realname)
 					end
+
 				end
 			else
-				table.insert(sig, "?")
+				table.insert(sig, " ??? ")
 			end
 
 			-- we still do the work associated with getting a signature,
 			-- because that work informs whether or not an function is a
 			-- method
-			-- don't use isMethod signatures because the builtins include the
+			-- don't use isInvoke signatures because the builtins include the
 			-- self param and we don't want to pass that in
-			if val.signature and not isMethod then
+			if val.signature and not isInvoke then
 				sig = val.signature
 			else
 				sig = table.concat(sig, ", ")
 			end
 
-			if isMethod and not val_is_method then
+			if isInvoke and not val_is_method then
 				-- don't list functions that aren't usable as methods
-				log("skip %t", val)
 				return {}
 			end
 
@@ -239,11 +242,16 @@ local function make_items(k, val, isVariant, isMethod)
 				ret = string.format("-> %s", ret)
 			end
 
-			item.kind = completionKinds.Function
 			item.insertText = k
 			item.label = ("%s(%s) %s"):format(k, sig, ret)
-			item.detail = isMethod and "<:fn>" or "<fn>"
 			item.documentation = val.description
+			if isInvoke then
+				item.kind   = completionKinds.Method
+				item.detail = "<method>"
+			else
+				item.kind   = completionKinds.Function
+				item.detail = "<function>"
+			end
 		elseif val.tag == "Table" then
 			item.detail = "<table>"
 			item.documentation = val.description
@@ -422,6 +430,11 @@ local function getp(doc, t, k, isDefinition)
 			end
 		end
 		error("call return type not understood")
+	elseif value.tag == "Arg" then
+		-- deref an argument
+		-- we know it's a method call, deref as such
+		if key[1] == "self" then
+		end
 	end
 
 	return key, value, doc
@@ -534,7 +547,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 			if last then
 				local is_method = not not word:find(":")
 				log("Is method? %_", is_method)
-				for iname, node, val in iter_scope(_scope) do
+				for iname, _, val in iter_scope(_scope) do
 					if type(iname) == "string" and
 						iname:sub(1, _iword:len()) == _iword then
 
@@ -627,6 +640,7 @@ method_handlers["textDocument/hover"] = function(params, id)
 	local _, word_e = line.text:sub(char, -1):find("[%w_]*")
 	word_e = word_e + char - 1
 	local word = line.text:sub(word_s, word_e)
+	log("hover for %q", word)
 
 	local symbol, value = definition_of(params.textDocument, params.position)
 	if symbol then
@@ -715,6 +729,11 @@ method_handlers["textDocument/rangeFormatting"] = function(params, id)
 	})
 end
 
+method_handlers["workspace/didChangeConfiguration"] = function(params)
+	assert(params.settings)
+	merge_(Config, params.settings)
+	log("Config loaded, new config: %t", Config)
+end
 
 function method_handlers.shutdown(_, id)
 	Shutdown = true

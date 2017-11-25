@@ -516,7 +516,7 @@ local line_mt = {
 		-- relatively speaking
 		if k == "text" then
 			t.text = t._doc.text:sub(t.start, t["end"]):gsub("\n$", "")
-			return t.text
+			return rawget(t, "text")
 		end
 	end
 }
@@ -662,7 +662,6 @@ end
 
 local function add_types(new_types)
 	for k, v in pairs(new_types) do
-		log("add type %s: %t1", k, v)
 		Types[k] = {tag="Table", scope = {}}
 		translate_luacomplete(Types[k].scope, v)
 	end

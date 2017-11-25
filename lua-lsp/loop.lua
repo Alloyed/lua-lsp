@@ -2,25 +2,40 @@ local rpc             = require 'lua-lsp.rpc'
 local log             = require 'lua-lsp.log'
 local method_handlers = require 'lua-lsp.methods'
 
-_G.Types = {}
-_G.Documents = {}
+_G.Types = _G.Types or {}
+_G.Documents = _G.Documents or {}
 -- selfish default
-_G.Config = {
+_G.Config = _G.Config or {
 	language = "5.3",
 	builtins = {"5_3"},
 	packagePath = {"./?.lua"},
+	debugMode = false,
 	_useNativeLuacheck = false -- underscore means "experimental" here
 }
 _G.Shutdown = false
-_G.Initialized = false
+_G.Initialized = _G.Initialized or false
 _G.print = function()
-	error("illegal print, use log() instead:")
+	error("illegal print, use log() instead:", 2)
+end
+
+local function reload_all()
+	for name, _ in pairs(package.loaded) do
+		if name:find("^lua%-lsp") and name ~= 'lua-lsp.log' then
+			package.loaded[name] = nil
+		end
+	end
+	method_handlers = require 'lua-lsp.methods'
 end
 
 local function main(_)
 	while not Shutdown do
 		-- header
 		local data, err = rpc.decode()
+
+		if _G.Config.debugMode then
+			reload_all()
+		end
+
 		if data == nil then
 			if err == "eof" then return os.exit(1) end
 			error(err)

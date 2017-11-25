@@ -61,7 +61,6 @@ editor's configuration support.
 The LSP spec is big, and we don't implement all of it. here's a
 quick wishlist ordered by roughly by priority/feasibility.
 
-* User configuration (`workspace/didChangeConfiguration`)
 * List references (`textDocument/references`)
 * Find symbols (`workspace/symbol`)
 * Function signature help (`textDocument/signatureHelp`)
