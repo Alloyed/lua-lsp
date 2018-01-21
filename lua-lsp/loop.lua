@@ -4,6 +4,7 @@ local method_handlers = require 'lua-lsp.methods'
 
 _G.Types = _G.Types or {}
 _G.Documents = _G.Documents or {}
+_G.Globals = _G.Globals -- defined in analyze.lua
 -- selfish default
 _G.Config = _G.Config or {
 	language = "5.3",

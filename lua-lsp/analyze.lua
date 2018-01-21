@@ -73,18 +73,48 @@ local function set(...)
 	return t
 end
 
-local function gen_scopes(len, ast)
-	local scopes = {setmetatable({},{pos=0, posEnd=len+1, origin="file"})}
-	for _, builtin in ipairs(Config.builtins) do
-		local info = require('lua-lsp.data.'..builtin)
-		if info.global then
-			translate_luacomplete(scopes[1], info.global)
+local GLOBAL_SCOPE = 1
+local FILE_SCOPE   = 2
+
+local function gen_scopes(len, ast, uri)
+	if not Globals then
+		-- FIXME: we need to teach the rest of the system that it's okay for a
+		-- scope to not have positions
+		Globals = setmetatable({},{
+			id=GLOBAL_SCOPE, pos=0, posEnd=math.huge, origin="global"
+		})
+		Globals._G = {{
+			"_G",
+			tag = "Id",
+			pos = 0,
+			posEnd = 0,
+			file = "__NONE__",
+			global = true,
+		}, {
+			tag = "Table",
+			pos = 0,
+			posEnd = 0,
+			scope = Globals,
+		}}
+		for _, builtin in ipairs(Config.builtins) do
+			local info = require('lua-lsp.data.'..builtin)
+			if info.global then
+				translate_luacomplete(Globals, info.global)
+			end
+		end
+
+		if Config.complete and Config.complete.global then
+			translate_luacomplete(Globals, Config.complete.global)
 		end
 	end
 
-	if Config.complete and Config.complete.global then
-		translate_luacomplete(scopes[1], Config.complete.global)
-	end
+	local scopes = {
+		Globals,
+		setmetatable({},{
+			__index = Globals, id=FILE_SCOPE,
+			pos=0, posEnd=len+1, origin="file"
+		}),
+	}
 
 	local visit_stat
 
@@ -99,6 +129,7 @@ local function gen_scopes(len, ast)
 				tag = value.tag == "String" and "String" or "Literal",
 				pos = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 				value = value[1] or value.tag
 			}
 		elseif value.tag == "Table" then
@@ -106,6 +137,7 @@ local function gen_scopes(len, ast)
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 				scope = value.scope or {},
 			}
 		elseif value.tag == "Call" then
@@ -129,6 +161,7 @@ local function gen_scopes(len, ast)
 				tag    = value.tag,
 				pos    = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 				ref    = value[1],
 				_value = value
 			}
@@ -138,6 +171,7 @@ local function gen_scopes(len, ast)
 				tag    = value.tag,
 				pos    = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 				ref    = value[1],
 				_value = value
 			}
@@ -146,6 +180,7 @@ local function gen_scopes(len, ast)
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 				scope = value.scope,
 				arguments = value[1],
 				signature = nil
@@ -155,12 +190,15 @@ local function gen_scopes(len, ast)
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 			}
 		elseif value.tag == "Id" then
 			return { value[1],
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
+				global = value.global,
 			}
 		end
 		--log("unknown obj %t1", value)
@@ -266,7 +304,9 @@ local function gen_scopes(len, ast)
 			a[k][2] = clean_value(value)
 		else
 			-- this is a new global var
-			scopes[1][k] = {key, clean_value(value)}
+			key.global = true
+			key.file   = uri
+			scopes[GLOBAL_SCOPE][k] = {key, clean_value(value)}
 		end
 	end
 
@@ -443,7 +483,7 @@ local function gen_scopes(len, ast)
 		end
 	end
 
-	visit_stat(ast, scopes[1])
+	visit_stat(ast, scopes[FILE_SCOPE])
 	return scopes
 end
 
@@ -560,7 +600,7 @@ function analyze.refresh(document)
 	if ast then
 		document.ast = ast
 		document.validtext = document.text
-		document.scopes = gen_scopes(#document.text, document.ast)
+		document.scopes = gen_scopes(#document.text, document.ast, document.uri)
 		try_luacheck(document)
 	else
 		document.dirty = lcp{document.text, document.validtext}

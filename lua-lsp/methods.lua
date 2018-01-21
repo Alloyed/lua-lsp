@@ -372,6 +372,7 @@ end
 
 local definition_of
 --- Get pair(), and unpack them automatically
+-- @returns key, value, document
 local function getp(doc, t, k, isDefinition)
 	-- luacheck: ignore 542
 	local pair = t and t[k]
@@ -390,7 +391,8 @@ local function getp(doc, t, k, isDefinition)
 		local ref = analyze.module(value.module)
 		doc = ref
 		if ref then
-			local mt = ref.scopes and getmetatable(ref.scopes[1])
+			-- start at file scope
+			local mt = ref.scopes and getmetatable(ref.scopes[2])
 			local ret = mt and mt._return and mt._return[1]
 			if ret and ret.tag == "Id" then
 				local _
@@ -403,7 +405,8 @@ local function getp(doc, t, k, isDefinition)
 		-- We're resolving a string as a table, this means look at the
 		-- string metatable. This is encoded as looking for a global named
 		-- "string", which is true in the default lua impl, but can be
-		-- broken by crazy users doing setmetatable("", new_string)
+		-- broken by crazy users doing setmetatable("", new_string), which we
+		-- don't actually handle.
 		key, value, doc = definition_of(doc, {tag="Id", "string", pos=-1})
 	elseif value.tag == "Call" or value.tag == "Invoke" then
 		local v
@@ -536,7 +539,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 			items = {}
 		})
 	end
-	log("looking for %q", word)
+	log("looking for %q in scope id %d", word, getmetatable(scope).id)
 
 	if word:find("[:.]") then
 		local path_ids, _ = split_path(word)
@@ -573,7 +576,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 	else
 		-- variable scope
 		for iname, node, val in iter_scope(scope) do
-			if not used[iname] and node.posEnd < pos then
+			if not used[iname] and (node.global or node.posEnd < pos) then
 				used[iname] = true
 				if iname:sub(1, word:len()) == word then
 					for _, item in ipairs(make_items(iname, val)) do
@@ -673,7 +676,8 @@ method_handlers["textDocument/documentSymbol"] = function(params, id)
 	-- FIXME: report table keys too, like a.b.c
 	-- also consider making a linear list of symbols we can just iterate
 	-- through
-	for _, scope in ipairs(document.scopes) do
+	for i=2, #document.scopes do
+		local scope = document.scopes[i]
 		for _, pair in pairs(scope) do
 			local symbol, _ = unpack(pair)
 			if symbol.canGoto ~= false then
