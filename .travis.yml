@@ -2,11 +2,13 @@ language: python
 sudo: false
 
 env:
-  - LUA="lua=5.1"
-  - LUA="lua=5.2"
-  - LUA="lua=5.3"
-  - LUA="luajit=2.0"
-  - LUA="luajit=2.1"
+  - LUA="lua=5.3" FMT=""
+  - LUA="lua=5.1" FMT="lcf"
+  - LUA="lua=5.1" FMT="formatter"
+  - LUA="lua=5.2" FMT=""
+  - LUA="lua=5.3" FMT=""
+  - LUA="lua=5.3" FMT="lcf"
+  - LUA="luajit=2.1" FMT=""
 
 cache:
     directories:
@@ -20,8 +22,7 @@ before_install:
 install:
   - luarocks install --only-deps spec/test-scm-0.rockspec
   - luarocks install --only-deps lua-lsp-scm-1.rockspec
-  - luarocks install Formatter || true
-  - luarocks install lcf || true
+  - luarocks install $FMT || true
 
 script:
   - luacheck -ur .
