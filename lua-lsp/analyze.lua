@@ -765,9 +765,12 @@ end
 function analyze.load_luacheckrc(root)
 	if luacheck then
 		local cfg = require 'luacheck.config'
-		local default = cfg.load_config()
-		local current = cfg.load_config(root.."/.luacheckrc")
-		Config.luacheckrc = cfg.stack_configs(skip(default, current))
+		-- stack_configs is not in release builds of luacheck yet
+		if cfg.stack_configs then
+			local default = cfg.load_config()
+			local current = cfg.load_config(root.."/.luacheckrc")
+			Config.luacheckrc = cfg.stack_configs(skip(default, current))
+		end
 	end
 end
 
