@@ -373,6 +373,7 @@ end
 local definition_of
 --- Get pair(), and unpack them automatically
 local function getp(doc, t, k, isDefinition)
+	-- luacheck: ignore 542
 	local pair = t and t[k]
 	if not pair then
 		log("no pair for %q in %_", k, t)
@@ -433,7 +434,6 @@ local function getp(doc, t, k, isDefinition)
 	elseif value.tag == "Arg" then
 		-- deref an argument
 		-- we know it's a method call, deref as such
-		-- luacheck: ignore 542
 		if key[1] == "self" then
 		end
 	end
