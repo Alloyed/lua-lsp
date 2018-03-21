@@ -25,6 +25,7 @@ local function reload_all()
 			package.loaded[name] = nil
 		end
 	end
+	log.verbose("===========================")
 	method_handlers = require 'lua-lsp.methods'
 end
 

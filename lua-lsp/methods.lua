@@ -378,7 +378,7 @@ local function getp(doc, t, k, isDefinition)
 	-- luacheck: ignore 542
 	local pair = t and t[k]
 	if not pair then
-		log("no pair for %q in %_", k, t)
+		log.debug("no pair for %q in %_", k, t)
 		return nil
 	end
 	local key, value = unpack(pair)
@@ -528,7 +528,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 	local line, char, pos = line_for(document, params.position)
 	local word = line.text:sub(1, char-1):match("[A-Za-z_][%w_.:]*$")
 	if not word then
-		log("%q: %_", line.text:sub(1, char-1), word)
+		log.debug("%q: %_", line.text:sub(1, char-1), word)
 	end
 
 	local items = {}
@@ -540,7 +540,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 			items = {}
 		})
 	end
-	log("looking for %q in scope id %d", word, getmetatable(scope).id)
+	log.debug("looking for %q in scope id %d", word, getmetatable(scope).id)
 
 	if word:find("[:.]") then
 		local path_ids, _ = split_path(word)
@@ -551,7 +551,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 			local last = ii == #path_ids
 			if last then
 				local is_method = not not word:find(":")
-				log("Is method? %_", is_method)
+				log.debug("Is method? %_", is_method)
 				for iname, _, val in iter_scope(_scope) do
 					if type(iname) == "string" and
 						iname:sub(1, _iword:len()) == _iword then
@@ -602,25 +602,28 @@ method_handlers["textDocument/definition"] = function(params, id)
 	local _, word_e = line.text:sub(char, -1):find("[%w_]*")
 	word_e = word_e + char - 1
 	local word = line.text:sub(word_s, word_e)
-	log("definition for %q", word)
+	log.debug("definition for %q", word)
 
 	local symbol, _, doc2 = definition_of(params.textDocument, params.position)
 
-	if not symbol or symbol.canGoto == false then
+	if not symbol or symbol.file == "__NONE__" then
 		-- symbol not found
-		log("Symbol not found: %q", word)
+		log.warning("Symbol not found: %q", word)
+		if symbol then
+			log.warning("did find: %t", symbol)
+		end
 		return rpc.respond(id, json.null)
 	end
 
 	local doc = document
 	if doc ~= doc2 then
-		log("defined in external file %q", doc2.uri)
+		log.debug("defined in external file %q", doc2.uri)
 	end
 
 	local sub = doc2.text:sub(symbol.pos, symbol.posEnd)
 	local word_end = word:match("([^.:]+)$")
 	local a, b = string.find(sub, word_end, 1, true)
-	log("find %q in %q", word_end, sub)
+	log.debug("find %q in %q", word_end, sub)
 	if not a then
 		error(("failed to find %q in %q\nword from %q")
 		:format(word_end, sub, doc2.uri))
@@ -645,7 +648,7 @@ method_handlers["textDocument/hover"] = function(params, id)
 	local _, word_e = line.text:sub(char, -1):find("[%w_]*")
 	word_e = word_e + char - 1
 	local word = line.text:sub(word_s, word_e)
-	log("hover for %q", word)
+	log.debug("hover for %q", word)
 
 	local symbol, value = definition_of(params.textDocument, params.position)
 	if symbol then
@@ -677,11 +680,11 @@ method_handlers["textDocument/documentSymbol"] = function(params, id)
 	-- FIXME: report table keys too, like a.b.c
 	-- also consider making a linear list of symbols we can just iterate
 	-- through
-	for i=2, #document.scopes do
+	for i=1, #document.scopes do
 		local scope = document.scopes[i]
 		for _, pair in pairs(scope) do
 			local symbol, _ = unpack(pair)
-			if symbol.canGoto ~= false then
+			if symbol.file ~= "__NONE__" then
 				table.insert(symbols, {
 					name = symbol[1],
 					kind = 13,
@@ -704,7 +707,7 @@ method_handlers["textDocument/formatting"] = function(params, id)
 	local format = require 'lua-lsp.formatting'
 	local new = format.format(doc.text, {
 		indent = indent,
-		maxChars = 80,
+		maxChars = 120,
 	})
 
 	rpc.respond(id, {
@@ -741,7 +744,7 @@ end
 method_handlers["workspace/didChangeConfiguration"] = function(params)
 	assert(params.settings)
 	merge_(Config, params.settings)
-	log("Config loaded, new config: %t", Config)
+	log.info("Config loaded, new config: %t", Config)
 end
 
 function method_handlers.shutdown(_, id)

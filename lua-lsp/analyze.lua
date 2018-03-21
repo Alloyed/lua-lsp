@@ -12,7 +12,7 @@ local TOPLEVEL = {}
 --- turn a luacomplete type into a lsp value
 local function translate_luacomplete(into, data)
 	local function visit_field(key, value, scope)
-		local Id = {tag = "Id", key, pos=0, posEnd=0, canGoto = false}
+		local Id = {tag = "Id", key, pos=0, posEnd=0, file = "__NONE__"}
 		if value.type == "table" then
 			local fields
 			if key == TOPLEVEL then
@@ -79,7 +79,7 @@ local FILE_SCOPE   = 2
 local function gen_scopes(len, ast, uri)
 	if not Globals then
 		-- FIXME: we need to teach the rest of the system that it's okay for a
-		-- scope to not have positions
+		-- scopes to not have positions
 		Globals = setmetatable({},{
 			id=GLOBAL_SCOPE, pos=0, posEnd=math.huge, origin="global"
 		})
@@ -479,7 +479,7 @@ local function gen_scopes(len, ast, uri)
 				end
 			end
 		elseif node.tag == "Comment" then
-			log("found comment <%d, %d>", node.pos, node.posEnd)
+			log.debug("found comment <%d, %d>", node.pos, node.posEnd)
 		end
 	end
 

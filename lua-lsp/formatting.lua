@@ -18,8 +18,8 @@ end
 -- https://github.com/martin-eden/lua_code_formatter
 drivers['lcf.workshop.base'] = function()
 	-- luacheck: globals request
-	local get_ast = request('!lua.code.get_ast')
-	local get_formatted_code = request('!lua.code.ast_as_code')
+	local get_ast = request('!.lua.code.get_ast')
+	local get_formatted_code = request('!.lua.code.ast_as_code')
 	return {
 		format = function(text, opts)
 			return get_formatted_code(get_ast(text), {
@@ -42,7 +42,7 @@ local noDriver = {
 for mod, driver in pairs(drivers) do
 	local ok, m_or_err = pcall(require, mod)
 	if ok then
-		return m_or_err
+		return driver(m_or_err)
 	end
 end
 
