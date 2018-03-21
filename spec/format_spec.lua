@@ -1,9 +1,12 @@
 local mock_loop = require 'spec.mock_loop'
 local fmt = require 'lua-lsp.formatting'
 
-if fmt.driver == "noop" then return end
-
 describe("textDocument/formatting", function()
+	if fmt.driver == "noop" then
+		pending("can't run: No formatter installed", function() end)
+		return
+	end
+
 	it("works", function()
 		mock_loop(function(rpc)
 			-- luacheck: push ignore
@@ -50,6 +53,11 @@ end
 	end)
 end)
 describe("textDocument/rangeFormatting", function()
+	if fmt.driver == "noop" then
+		pending("can't run: No formatter installed", function() end)
+		return
+	end
+
 	it("works", function()
 		mock_loop(function(rpc)
 			-- luacheck: push ignore

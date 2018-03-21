@@ -16,6 +16,7 @@ function method_handlers.initialize(params, id)
 	log.setTraceLevel(params.trace or "off")
 	log.info("Config.root = %q", Config.root)
 	analyze.load_completerc(Config.root)
+	analyze.load_luacheckrc(Config.root)
 	--ClientCapabilities = params.capabilities
 	Initialized = true
 
@@ -701,7 +702,10 @@ method_handlers["textDocument/formatting"] = function(params, id)
 	end
 
 	local format = require 'lua-lsp.formatting'
-	local new = format.format(doc.text,{indent = indent})
+	local new = format.format(doc.text, {
+		indent = indent,
+		maxChars = 80,
+	})
 
 	rpc.respond(id, {
 		{

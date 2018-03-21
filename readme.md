@@ -31,10 +31,12 @@ installed. For linting, install luacheck:
 ```
 $ luarocks install luacheck
 ```
-For code formatting, we currently support Formatter, which only supports Lua
+For code formatting, we currently support Formatter and LCF. Formatter is 5.1
+only, whereas lcf is 5.3 only.
 5.1:
 ```
 $ luarocks-5.1 install Formatter
+$ luarocks-5.3 install lcf
 ```
 If you have another package you'd like to see integrated, feel free to leave an
 issue/PR. Other plugins are always welcome, especially if they provide

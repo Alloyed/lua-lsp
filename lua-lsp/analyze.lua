@@ -707,7 +707,7 @@ local function add_types(new_types)
 	end
 end
 
---- load a .luacompleterc file into Config, for later using
+--- load a .luacompleterc file into Config, for later use
 function analyze.load_completerc(root)
 	local f = io.open(root.."/.luacompleterc")
 	if f then
@@ -748,6 +748,26 @@ function analyze.load_completerc(root)
 		else
 			log.warning(".luacompleterc: %s", tostring(err))
 		end
+	end
+end
+
+--- Create table from vararg, skipping nil values
+local function skip(...)
+	local t = {}
+	for i=1, select('#', ...) do
+		-- nil values won't increment length
+		t[#t+1] = select(i, ...)
+	end
+	return t
+end
+
+--- Load a .luacheckrc into Config for later use
+function analyze.load_luacheckrc(root)
+	if luacheck then
+		local cfg = require 'luacheck.config'
+		local default = cfg.load_config()
+		local current = cfg.load_config(root.."/.luacheckrc")
+		Config.luacheckrc = cfg.stack_configs(skip(default, current))
 	end
 end
 
