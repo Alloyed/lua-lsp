@@ -7,6 +7,7 @@ return {
             description = "Provides an interface to create noise with the user's speakers.",
             fields = {
               getDistanceModel = {
+                args = {},
                 description = "Returns the distance attenuation model.",
                 link = "https://love2d.org/wiki/love.audio.getDistanceModel",
                 returnTypes = {
@@ -18,6 +19,7 @@ return {
                 type = "function"
               },
               getDopplerScale = {
+                args = {},
                 description = "Gets the current global scale factor for velocity-based doppler effects.",
                 link = "https://love2d.org/wiki/love.audio.getDopplerScale",
                 returnTypes = {
@@ -28,6 +30,7 @@ return {
                 type = "function"
               },
               getOrientation = {
+                args = {},
                 description = "Returns the orientation of the listener.",
                 link = "https://love2d.org/wiki/love.audio.getOrientation",
                 returnTypes = {
@@ -53,6 +56,7 @@ return {
                 type = "function"
               },
               getPosition = {
+                args = {},
                 description = "Returns the position of the listener.",
                 link = "https://love2d.org/wiki/love.audio.getPosition",
                 returnTypes = {
@@ -69,6 +73,7 @@ return {
                 type = "function"
               },
               getSourceCount = {
+                args = {},
                 description = "Returns the number of sources which are currently playing or paused.",
                 link = "https://love2d.org/wiki/love.audio.getSourceCount",
                 returnTypes = {
@@ -79,6 +84,7 @@ return {
                 type = "function"
               },
               getVelocity = {
+                args = {},
                 description = "Returns the velocity of the listener.",
                 link = "https://love2d.org/wiki/love.audio.getVelocity",
                 returnTypes = {
@@ -95,6 +101,7 @@ return {
                 type = "function"
               },
               getVolume = {
+                args = {},
                 description = "Returns the master volume.",
                 link = "https://love2d.org/wiki/love.audio.getVolume",
                 returnTypes = {
@@ -173,6 +180,7 @@ return {
                 type = "function",
                 variants = {
                   {
+                    args = {},
                     description = "This function will pause all currently active Sources."
                   },
                   {
@@ -200,6 +208,7 @@ return {
                 type = "function",
                 variants = {
                   {
+                    args = {},
                     description = "Resumes all audio"
                   },
                   {
@@ -217,6 +226,7 @@ return {
                 type = "function",
                 variants = {
                   {
+                    args = {},
                     description = "Rewinds all playing audio."
                   },
                   {
@@ -321,6 +331,7 @@ return {
                 type = "function",
                 variants = {
                   {
+                    args = {},
                     description = "This function will stop all currently active sources."
                   },
                   {
@@ -358,6 +369,7 @@ return {
             type = "function"
           },
           draw = {
+            args = {},
             description = "Callback function used to draw on the screen every frame.",
             link = "https://love2d.org/wiki/love.draw",
             type = "function"
@@ -376,11 +388,13 @@ return {
             description = "Manages events, like keypresses.",
             fields = {
               clear = {
+                args = {},
                 description = "Clears the event queue.",
                 link = "https://love2d.org/wiki/love.event.clear",
                 type = "function"
               },
               poll = {
+                args = {},
                 description = "Returns an iterator for messages in the event queue.",
                 link = "https://love2d.org/wiki/love.event.poll",
                 returnTypes = {
@@ -391,6 +405,7 @@ return {
                 type = "function"
               },
               pump = {
+                args = {},
                 description = "Pump events into the event queue. This is a low-level function, and is usually not called by the user, but by love.run. Note that this does need to be called for any OS to think you're still running, and if you want to handle OS-generated events at all (think callbacks). love.event.pump can only be called from the main thread, but afterwards, the rest of love.event can be used from any other thread.",
                 link = "https://love2d.org/wiki/love.event.pump",
                 type = "function"
@@ -426,6 +441,7 @@ return {
                 type = "function",
                 variants = {
                   {
+                    args = {},
                     description = "Adds the quit event to the queue.\n\nThe quit event is a signal for the event handler to close LÖVE. It's possible to abort the exit process with the love.quit callback."
                   },
                   {
@@ -448,6 +464,7 @@ return {
                 }
               },
               wait = {
+                args = {},
                 description = "Like love.event.poll but blocks until there is an event in the queue.",
                 link = "https://love2d.org/wiki/love.event.wait",
                 returnTypes = {
@@ -517,6 +534,7 @@ return {
                 type = "function"
               },
               areSymlinksEnabled = {
+                args = {},
                 description = "Gets whether love.filesystem follows symbolic links.",
                 link = "https://love2d.org/wiki/love.filesystem.areSymlinksEnabled",
                 returnTypes = {
@@ -557,6 +575,7 @@ return {
                 type = "function"
               },
               getAppdataDirectory = {
+                args = {},
                 description = "Returns the application data directory (could be the same as getUserDirectory)",
                 link = "https://love2d.org/wiki/love.filesystem.getAppdataDirectory",
                 returnTypes = {
@@ -625,6 +644,7 @@ return {
                 type = "function"
               },
               getRequirePath = {
+                args = {},
                 description = "Gets the filesystem paths that will be searched when require is called.\n\nThe paths string returned by this function is a sequence of path templates separated by semicolons. The argument passed to require will be inserted in place of any question mark (\"?\") character in each template (after the dot characters in the argument passed to require are replaced by directory separators.)\n\nThe paths are relative to the game's source and save directories, as well as any paths mounted with love.filesystem.mount.",
                 link = "https://love2d.org/wiki/love.filesystem.getRequirePath",
                 returnTypes = {
@@ -635,6 +655,7 @@ return {
                 type = "function"
               },
               getSaveDirectory = {
+                args = {},
                 description = "Gets the full path to the designated save directory. This can be useful if you want to use the standard io library (or something else) to read or write in the save directory.",
                 link = "https://love2d.org/wiki/love.filesystem.getSaveDirectory",
                 returnTypes = {
@@ -663,6 +684,7 @@ return {
                 type = "function"
               },
               getSource = {
+                args = {},
                 description = "Returns the full path to the the .love file or directory. If the game is fused to the LÖVE executable, then the executable is returned.",
                 link = "https://love2d.org/wiki/love.filesystem.getSource",
                 returnTypes = {
@@ -673,6 +695,7 @@ return {
                 type = "function"
               },
               getSourceBaseDirectory = {
+                args = {},
                 description = "Returns the full path to the directory containing the .love file. If the game is fused to the LÖVE executable, then the directory containing the executable is returned.\n\nIf love.filesystem.isFused is true, the path returned by this function can be passed to love.filesystem.mount, which will make the directory containing the main game readable by love.filesystem.",
                 link = "https://love2d.org/wiki/love.filesystem.getSourceBaseDirectory",
                 returnTypes = {
@@ -683,6 +706,7 @@ return {
                 type = "function"
               },
               getUserDirectory = {
+                args = {},
                 description = "Returns the path of the user's directory.",
                 link = "https://love2d.org/wiki/love.filesystem.getUserDirectory",
                 returnTypes = {
@@ -693,6 +717,7 @@ return {
                 type = "function"
               },
               getWorkingDirectory = {
+                args = {},
                 description = "Gets the current working directory.",
                 link = "https://love2d.org/wiki/love.filesystem.getWorkingDirectory",
                 returnTypes = {
@@ -743,6 +768,7 @@ return {
                 type = "function"
               },
               isFused = {
+                args = {},
                 description = "Gets whether the game is in fused mode or not.\n\nIf a game is in fused mode, its save directory will be directly in the Appdata directory instead of Appdata/LOVE/. The game will also be able to load C Lua dynamic libraries which are located in the save directory.\n\nA game is in fused mode if the source .love has been fused to the executable (see Game Distribution), or if \"--fused\" has been given as a command-line argument when starting the game.",
                 link = "https://love2d.org/wiki/love.filesystem.isFused",
                 returnTypes = {
@@ -1090,6 +1116,7 @@ return {
             type = "function"
           },
           getVersion = {
+            args = {},
             description = "Gets the current running version of LÖVE.",
             link = "https://love2d.org/wiki/love.getVersion",
             returnTypes = {
@@ -1222,6 +1249,7 @@ return {
                 type = "function",
                 variants = {
                   {
+                    args = {},
                     description = "Clears the screen to the background color in 0.9.2 and earlier, or to transparent black (0, 0, 0, 0) in LÖVE 0.10.0 and newer."
                   },
                   {
@@ -1433,6 +1461,7 @@ return {
                 }
               },
               getBackgroundColor = {
+                args = {},
                 description = "Gets the current background color.",
                 link = "https://love2d.org/wiki/love.graphics.getBackgroundColor",
                 returnTypes = {
@@ -1452,6 +1481,7 @@ return {
                 type = "function"
               },
               getBlendMode = {
+                args = {},
                 description = "Gets the blending mode.",
                 link = "https://love2d.org/wiki/love.graphics.getBlendMode",
                 returnTypes = {
@@ -1467,6 +1497,7 @@ return {
                 type = "function"
               },
               getCanvas = {
+                args = {},
                 description = "Gets the current target Canvas.",
                 link = "https://love2d.org/wiki/love.graphics.getCanvas",
                 returnTypes = {
@@ -1478,6 +1509,7 @@ return {
                 type = "function"
               },
               getCanvasFormats = {
+                args = {},
                 description = "Gets the available Canvas formats, and whether each is supported.",
                 link = "https://love2d.org/wiki/love.graphics.getCanvasFormats",
                 returnTypes = {
@@ -1488,6 +1520,7 @@ return {
                 type = "function"
               },
               getColor = {
+                args = {},
                 description = "Gets the current color.",
                 link = "https://love2d.org/wiki/love.graphics.getColor",
                 returnTypes = {
@@ -1507,6 +1540,7 @@ return {
                 type = "function"
               },
               getColorMask = {
+                args = {},
                 description = "Gets the active color components used when drawing. Normally all 4 components are active unless love.graphics.setColorMask has been used.\n\nThe color mask determines whether individual components of the colors of drawn objects will affect the color of the screen. They affect love.graphics.clear and Canvas:clear as well.",
                 link = "https://love2d.org/wiki/love.graphics.getColorMask",
                 returnTypes = {
@@ -1526,6 +1560,7 @@ return {
                 type = "function"
               },
               getCompressedImageFormats = {
+                args = {},
                 description = "Gets the available compressed image formats, and whether each is supported.",
                 link = "https://love2d.org/wiki/love.graphics.getCompressedImageFormats",
                 returnTypes = {
@@ -1536,6 +1571,7 @@ return {
                 type = "function"
               },
               getDefaultFilter = {
+                args = {},
                 description = "Returns the default scaling filters used with Images, Canvases, and Fonts.",
                 link = "https://love2d.org/wiki/love.graphics.getDefaultFilter",
                 returnTypes = {
@@ -1554,6 +1590,7 @@ return {
                 type = "function"
               },
               getDimensions = {
+                args = {},
                 description = "Gets the width and height of the window.",
                 link = "https://love2d.org/wiki/love.graphics.getDimensions",
                 returnTypes = {
@@ -1567,6 +1604,7 @@ return {
                 type = "function"
               },
               getFont = {
+                args = {},
                 description = "Gets the current Font object.",
                 link = "https://love2d.org/wiki/love.graphics.getFont",
                 returnTypes = {
@@ -1578,6 +1616,7 @@ return {
                 type = "function"
               },
               getHeight = {
+                args = {},
                 description = "Gets the height of the window.",
                 link = "https://love2d.org/wiki/love.graphics.getHeight",
                 returnTypes = {
@@ -1588,6 +1627,7 @@ return {
                 type = "function"
               },
               getLineJoin = {
+                args = {},
                 description = "Gets the line join style.",
                 link = "https://love2d.org/wiki/love.graphics.getLineJoin",
                 returnTypes = {
@@ -1599,6 +1639,7 @@ return {
                 type = "function"
               },
               getLineStyle = {
+                args = {},
                 description = "Gets the line style.",
                 link = "https://love2d.org/wiki/love.graphics.getLineStyle",
                 returnTypes = {
@@ -1610,6 +1651,7 @@ return {
                 type = "function"
               },
               getLineWidth = {
+                args = {},
                 description = "Gets the current line width.",
                 link = "https://love2d.org/wiki/love.graphics.getLineWidth",
                 returnTypes = {
@@ -1620,6 +1662,7 @@ return {
                 type = "function"
               },
               getPointSize = {
+                args = {},
                 description = "Gets the point size.",
                 link = "https://love2d.org/wiki/love.graphics.getPointSize",
                 returnTypes = {
@@ -1630,6 +1673,7 @@ return {
                 type = "function"
               },
               getRendererInfo = {
+                args = {},
                 description = "Gets information about the system's video card and drivers.",
                 link = "https://love2d.org/wiki/love.graphics.getRendererInfo",
                 returnTypes = {
@@ -1649,6 +1693,7 @@ return {
                 type = "function"
               },
               getScissor = {
+                args = {},
                 description = "Gets the current scissor box.",
                 link = "https://love2d.org/wiki/love.graphics.getScissor",
                 returnTypes = {
@@ -1668,6 +1713,7 @@ return {
                 type = "function"
               },
               getShader = {
+                args = {},
                 description = "Returns the current Shader. Returns nil if none is set.",
                 link = "https://love2d.org/wiki/love.graphics.getShader",
                 returnTypes = {
@@ -1679,6 +1725,7 @@ return {
                 type = "function"
               },
               getStats = {
+                args = {},
                 description = "Gets performance-related rendering statistics.",
                 link = "https://love2d.org/wiki/love.graphics.getStats",
                 returnTypes = {
@@ -1689,6 +1736,7 @@ return {
                 type = "function"
               },
               getStencilTest = {
+                args = {},
                 description = "Gets whether stencil testing is enabled.\n\nWhen stencil testing is enabled, the geometry of everything that is drawn will be clipped / stencilled out based on whether it intersects with what has been previously drawn to the stencil buffer.\n\nEach Canvas has its own stencil buffer.",
                 link = "https://love2d.org/wiki/love.graphics.getStencilTest",
                 returnTypes = {
@@ -1702,6 +1750,7 @@ return {
                 type = "function"
               },
               getSupported = {
+                args = {},
                 description = "Gets the optional graphics features and whether they're supported on the system.\n\nSome older or low-end systems don't always support all graphics features.",
                 link = "https://love2d.org/wiki/love.graphics.getSupported",
                 returnTypes = {
@@ -1712,6 +1761,7 @@ return {
                 type = "function"
               },
               getSystemLimits = {
+                args = {},
                 description = "Gets the system-dependent maximum values for love.graphics features.",
                 link = "https://love2d.org/wiki/love.graphics.getSystemLimits",
                 returnTypes = {
@@ -1722,6 +1772,7 @@ return {
                 type = "function"
               },
               getWidth = {
+                args = {},
                 description = "Gets the width of the window.",
                 link = "https://love2d.org/wiki/love.graphics.getWidth",
                 returnTypes = {
@@ -1753,11 +1804,13 @@ return {
                     description = "Limits the drawing area to a specified rectangle."
                   },
                   {
+                    args = {},
                     description = "Disables scissor."
                   }
                 }
               },
               isGammaCorrect = {
+                args = {},
                 description = "Gets whether gamma-correct rendering is supported and enabled. It can be enabled by setting t.gammacorrect = true in love.conf.\n\nNot all devices support gamma-correct rendering, in which case it will be automatically disabled and this function will return false. It is supported on desktop systems which have graphics cards that are capable of using OpenGL 3 / DirectX 10, and iOS devices that can use OpenGL ES 3.",
                 link = "https://love2d.org/wiki/love.graphics.isGammaCorrect",
                 returnTypes = {
@@ -1768,6 +1821,7 @@ return {
                 type = "function"
               },
               isWireframe = {
+                args = {},
                 description = "Gets whether wireframe mode is used when drawing.",
                 link = "https://love2d.org/wiki/love.graphics.isWireframe",
                 returnTypes = {
@@ -2248,6 +2302,7 @@ return {
                 }
               },
               origin = {
+                args = {},
                 description = "Resets the current coordinate transformation.\n\nThis function is always used to reverse any previous calls to love.graphics.rotate, love.graphics.scale, love.graphics.shear or love.graphics.translate. It returns the current transformation state to its defaults.",
                 link = "https://love2d.org/wiki/love.graphics.origin",
                 type = "function"
@@ -2317,11 +2372,13 @@ return {
                 }
               },
               pop = {
+                args = {},
                 description = "Pops the current coordinate transformation from the transformation stack.\n\nThis function is always used to reverse a previous push operation. It returns the current transformation state to what it was before the last preceding push. For an example, see the description of love.graphics.push.",
                 link = "https://love2d.org/wiki/love.graphics.pop",
                 type = "function"
               },
               present = {
+                args = {},
                 description = "Displays the results of drawing operations on the screen.\n\nThis function is used when writing your own love.run function. It presents all the results of your drawing operations on the screen. See the example in love.run for a typical use of this function.",
                 link = "https://love2d.org/wiki/love.graphics.present",
                 type = "function"
@@ -2588,6 +2645,7 @@ return {
                 }
               },
               reset = {
+                args = {},
                 description = "Resets the current graphics settings.\n\nCalling reset makes the current drawing color white, the current background color black, resets any active Canvas or Shader, and removes any scissor settings. It sets the BlendMode to alpha. It also sets both the point and line drawing modes to smooth and their sizes to 1.0.",
                 link = "https://love2d.org/wiki/love.graphics.reset",
                 type = "function"
@@ -2687,6 +2745,7 @@ return {
                     description = "Sets the render target to a specified Canvas. All drawing operations until the next love.graphics.setCanvas call will be redirected to the Canvas and not shown on the screen."
                   },
                   {
+                    args = {},
                     description = "Resets the render target to the screen, i.e. re-enables drawing to the screen."
                   },
                   {
@@ -2758,6 +2817,7 @@ return {
                     description = "Enables color masking for the specified color components."
                   },
                   {
+                    args = {},
                     description = "Disables color masking."
                   }
                 }
@@ -2900,6 +2960,7 @@ return {
                     description = "Limits the drawing area to a specified rectangle."
                   },
                   {
+                    args = {},
                     description = "Disables scissor."
                   }
                 }
@@ -2909,6 +2970,7 @@ return {
                 type = "function",
                 variants = {
                   {
+                    args = {},
                     description = "Sets or resets a Shader as the current pixel effect or vertex shaders. All drawing operations until the next love.graphics.setShader will be drawn using the Shader object specified.\n\nDisables the shaders when called without arguments."
                   },
                   {
@@ -2937,6 +2999,7 @@ return {
                     description = "Configures or disables stencil testing.\n\nWhen stencil testing is enabled, the geometry of everything that is drawn afterward will be clipped / stencilled out based on a comparison between the arguments of this function and the stencil value of each pixel that the geometry touches. The stencil values of pixels are affected via love.graphics.stencil.\n\nEach Canvas has its own per-pixel stencil values."
                   },
                   {
+                    args = {},
                     description = "Disables stencil testing."
                   }
                 }
@@ -3122,6 +3185,7 @@ return {
             description = "Provides an interface to the user's joystick.",
             fields = {
               getJoystickCount = {
+                args = {},
                 description = "Gets the number of connected joysticks.",
                 link = "https://love2d.org/wiki/love.joystick.getJoystickCount",
                 returnTypes = {
@@ -3132,6 +3196,7 @@ return {
                 type = "function"
               },
               getJoysticks = {
+                args = {},
                 description = "Gets a list of connected Joysticks.",
                 link = "https://love2d.org/wiki/love.joystick.getJoysticks",
                 returnTypes = {
@@ -3181,6 +3246,7 @@ return {
                     description = "Saves the virtual gamepad mappings of all Joysticks that are recognized as gamepads and have either been recently used or their gamepad bindings have been modified."
                   },
                   {
+                    args = {},
                     description = "Saves the virtual gamepad mappings of all Joysticks that are recognized as gamepads and have either been recently used or their gamepad bindings have been modified."
                   }
                 }
@@ -3354,6 +3420,7 @@ return {
                 type = "function"
               },
               hasKeyRepeat = {
+                args = {},
                 description = "Gets whether key repeat is enabled.",
                 link = "https://love2d.org/wiki/love.keyboard.hasKeyRepeat",
                 returnTypes = {
@@ -3364,6 +3431,7 @@ return {
                 type = "function"
               },
               hasTextInput = {
+                args = {},
                 description = "Gets whether text input events are enabled.",
                 link = "https://love2d.org/wiki/love.keyboard.hasTextInput",
                 returnTypes = {
@@ -3509,6 +3577,7 @@ return {
             type = "function"
           },
           lowmemory = {
+            args = {},
             description = "Callback function triggered when the system is running out of memory on mobile devices.\n\n Mobile operating systems may forcefully kill the game if it uses too much memory, so any non-critical resource should be removed if possible (by setting all variables referencing the resources to nil, and calling collectgarbage()), when this event is triggered. Sounds and images in particular tend to use the most memory.",
             link = "https://love2d.org/wiki/love.lowmemory",
             type = "function"
@@ -3649,6 +3718,7 @@ return {
                 }
               },
               getRandomSeed = {
+                args = {},
                 description = "Gets the seed of the random number generator.\n\nThe state is split into two numbers due to Lua's use of doubles for all number values - doubles can't accurately represent integer values above 2^53.",
                 link = "https://love2d.org/wiki/love.math.getRandomSeed",
                 returnTypes = {
@@ -3662,6 +3732,7 @@ return {
                 type = "function"
               },
               getRandomState = {
+                args = {},
                 description = "Gets the current state of the random number generator. This returns an opaque implementation-dependent string which is only useful for later use with RandomGenerator:setState.\n\nThis is different from RandomGenerator:getSeed in that getState gets the RandomGenerator's current state, whereas getSeed gets the previously set seed number.\n\nThe value of the state string does not depend on the current operating system.",
                 link = "https://love2d.org/wiki/love.math.getRandomState",
                 returnTypes = {
@@ -3820,6 +3891,7 @@ return {
                 type = "function",
                 variants = {
                   {
+                    args = {},
                     description = "Creates a new RandomGenerator object which is completely independent of other RandomGenerator objects and random functions."
                   },
                   {
@@ -3914,6 +3986,7 @@ return {
                 type = "function",
                 variants = {
                   {
+                    args = {},
                     description = "Get uniformly distributed pseudo-random real number within [0, 1]."
                   },
                   {
@@ -4045,6 +4118,7 @@ return {
             description = "Provides an interface to the user's mouse.",
             fields = {
               getCursor = {
+                args = {},
                 description = "Gets the current Cursor.",
                 link = "https://love2d.org/wiki/love.mouse.getCursor",
                 returnTypes = {
@@ -4056,6 +4130,7 @@ return {
                 type = "function"
               },
               getPosition = {
+                args = {},
                 description = "Returns the current position of the mouse.",
                 link = "https://love2d.org/wiki/love.mouse.getPosition",
                 returnTypes = {
@@ -4069,6 +4144,7 @@ return {
                 type = "function"
               },
               getRelativeMode = {
+                args = {},
                 description = "Gets whether relative mode is enabled for the mouse.\n\nIf relative mode is enabled, the cursor is hidden and doesn't move when the mouse does, but relative mouse motion events are still generated via love.mousemoved. This lets the mouse move in any direction indefinitely without the cursor getting stuck at the edges of the screen.\n\nThe reported position of the mouse is not updated while relative mode is enabled, even when relative mouse motion events are generated.",
                 link = "https://love2d.org/wiki/love.mouse.getRelativeMode",
                 returnTypes = {
@@ -4095,6 +4171,7 @@ return {
                 type = "function"
               },
               getX = {
+                args = {},
                 description = "Returns the current x position of the mouse.",
                 link = "https://love2d.org/wiki/love.mouse.getX",
                 returnTypes = {
@@ -4105,6 +4182,7 @@ return {
                 type = "function"
               },
               getY = {
+                args = {},
                 description = "Returns the current y position of the mouse.",
                 link = "https://love2d.org/wiki/love.mouse.getY",
                 returnTypes = {
@@ -4115,6 +4193,7 @@ return {
                 type = "function"
               },
               hasCursor = {
+                args = {},
                 description = "Gets whether cursor functionality is supported.\n\nIf it isn't supported, calling love.mouse.newCursor and love.mouse.getSystemCursor will cause an error. Mobile devices do not support cursors.",
                 link = "https://love2d.org/wiki/love.mouse.hasCursor",
                 returnTypes = {
@@ -4143,6 +4222,7 @@ return {
                 type = "function"
               },
               isGrabbed = {
+                args = {},
                 description = "Checks if the mouse is grabbed.",
                 link = "https://love2d.org/wiki/love.mouse.isGrabbed",
                 returnTypes = {
@@ -4153,6 +4233,7 @@ return {
                 type = "function"
               },
               isVisible = {
+                args = {},
                 description = "Checks if the cursor is visible.",
                 link = "https://love2d.org/wiki/love.mouse.isVisible",
                 returnTypes = {
@@ -4227,6 +4308,7 @@ return {
                 type = "function",
                 variants = {
                   {
+                    args = {},
                     description = "Sets the current mouse cursor.\n\nResets the current mouse cursor to the default when called without arguments."
                   },
                   {
@@ -4410,6 +4492,7 @@ return {
                 type = "function"
               },
               getMeter = {
+                args = {},
                 description = "Get the scale of the world.\n\nThe world scale is the number of pixels per meter. Try to keep your shape sizes less than 10 times this scale.\n\nThis is important because the physics in Box2D is tuned to work well for objects of size 0.1m up to 10m. All physics coordinates are divided by this number for the physics calculations.",
                 link = "https://love2d.org/wiki/love.physics.getMeter",
                 returnTypes = {
@@ -5246,6 +5329,7 @@ return {
             type = "table"
           },
           quit = {
+            args = {},
             description = "Callback function triggered when the game is closed.",
             link = "https://love2d.org/wiki/love.quit",
             returnTypes = {
@@ -5269,6 +5353,7 @@ return {
             type = "function"
           },
           run = {
+            args = {},
             description = "The main function, containing the main loop. A sensible default is used when left out.",
             link = "https://love2d.org/wiki/love.run",
             type = "function"
@@ -5376,6 +5461,7 @@ return {
             description = "Provides access to information about the user's system.",
             fields = {
               getClipboardText = {
+                args = {},
                 description = "Gets text from the clipboard.",
                 link = "https://love2d.org/wiki/love.system.getClipboardText",
                 returnTypes = {
@@ -5386,6 +5472,7 @@ return {
                 type = "function"
               },
               getOS = {
+                args = {},
                 description = "Gets the current operating system. In general, LÖVE abstracts away the need to know the current operating system, but there are a few cases where it can be useful (especially in combination with os.execute.)",
                 link = "https://love2d.org/wiki/love.system.getOS",
                 returnTypes = {
@@ -5396,6 +5483,7 @@ return {
                 type = "function"
               },
               getPowerInfo = {
+                args = {},
                 description = "Gets information about the system's power supply.",
                 link = "https://love2d.org/wiki/love.system.getPowerInfo",
                 returnTypes = {
@@ -5413,6 +5501,7 @@ return {
                 type = "function"
               },
               getProcessorCount = {
+                args = {},
                 description = "Gets the number of CPU cores in the system.\n\nThe number includes the threads reported if technologies such as Intel's Hyper-threading are enabled. For example, on a 4-core CPU with Hyper-threading, this function will return 8.",
                 link = "https://love2d.org/wiki/love.system.getProcessorCount",
                 returnTypes = {
@@ -5508,6 +5597,7 @@ return {
                 type = "function"
               },
               newChannel = {
+                args = {},
                 description = "Create a new unnamed thread channel.\n\nOne use for them is to pass new unnamed channels to other threads via Channel:push",
                 link = "https://love2d.org/wiki/love.thread.newChannel",
                 returnTypes = {
@@ -5575,6 +5665,7 @@ return {
             description = "Provides an interface to the user's clock.",
             fields = {
               getAverageDelta = {
+                args = {},
                 description = "Returns the average delta time (seconds per frame) over the last second.",
                 link = "https://love2d.org/wiki/love.timer.getAverageDelta",
                 returnTypes = {
@@ -5585,6 +5676,7 @@ return {
                 type = "function"
               },
               getDelta = {
+                args = {},
                 description = "Returns the time between the last two frames.",
                 link = "https://love2d.org/wiki/love.timer.getDelta",
                 returnTypes = {
@@ -5595,6 +5687,7 @@ return {
                 type = "function"
               },
               getFPS = {
+                args = {},
                 description = "Returns the current frames per second.",
                 link = "https://love2d.org/wiki/love.timer.getFPS",
                 returnTypes = {
@@ -5605,6 +5698,7 @@ return {
                 type = "function"
               },
               getTime = {
+                args = {},
                 description = "Returns the value of a timer with an unspecified starting time. This function should only be used to calculate differences between points in time, as the starting time of the timer is unknown.",
                 link = "https://love2d.org/wiki/love.timer.getTime",
                 returnTypes = {
@@ -5625,6 +5719,7 @@ return {
                 type = "function"
               },
               step = {
+                args = {},
                 description = "Measures the time between two frames. Calling this changes the return value of love.timer.getDelta.",
                 link = "https://love2d.org/wiki/love.timer.step",
                 type = "function"
@@ -5670,6 +5765,7 @@ return {
                 type = "function"
               },
               getTouches = {
+                args = {},
                 description = "Gets a list of all active touch-presses.",
                 link = "https://love2d.org/wiki/love.touch.getTouches",
                 returnTypes = {
@@ -5830,6 +5926,7 @@ return {
             description = "Provides an interface for modifying and retrieving information about the program's window.",
             fields = {
               close = {
+                args = {},
                 description = "Closes the window. It can be reopened with love.window.setMode.",
                 link = "https://love2d.org/wiki/love.window.close",
                 type = "function"
@@ -5880,6 +5977,7 @@ return {
                 type = "function"
               },
               getFullscreen = {
+                args = {},
                 description = "Gets whether the window is fullscreen.",
                 link = "https://love2d.org/wiki/love.window.getFullscreen",
                 returnTypes = {
@@ -5910,6 +6008,7 @@ return {
                 type = "function"
               },
               getIcon = {
+                args = {},
                 description = "Gets the window icon.",
                 link = "https://love2d.org/wiki/love.window.getIcon",
                 returnTypes = {
@@ -5921,6 +6020,7 @@ return {
                 type = "function"
               },
               getMode = {
+                args = {},
                 description = "Returns the current display mode.",
                 link = "https://love2d.org/wiki/love.window.getMode",
                 returnTypes = {
@@ -5937,6 +6037,7 @@ return {
                 type = "function"
               },
               getPixelScale = {
+                args = {},
                 description = "Gets the DPI scale factor associated with the window.\n\nThe pixel density inside the window might be greater (or smaller) than the \"size\" of the window. For example on a retina screen in Mac OS X with the highdpi window flag enabled, the window may take up the same physical size as an 800x600 window, but the area inside the window uses 1600x1200 pixels. love.window.getPixelScale() would return 2.0 in that case.\n\nThe love.window.fromPixels and love.window.toPixels functions can also be used to convert between units.\n\nThe highdpi window flag must be enabled to use the full pixel density of a Retina screen on Mac OS X and iOS. The flag currently does nothing on Windows and Linux, and on Android it is effectively always enabled.",
                 link = "https://love2d.org/wiki/love.window.getPixelScale",
                 returnTypes = {
@@ -5947,6 +6048,7 @@ return {
                 type = "function"
               },
               getPosition = {
+                args = {},
                 description = "Gets the position of the window on the screen.\n\nThe window position is in the coordinate space of the display it is currently in.",
                 link = "https://love2d.org/wiki/love.window.getPosition",
                 returnTypes = {
@@ -5963,6 +6065,7 @@ return {
                 type = "function"
               },
               getTitle = {
+                args = {},
                 description = "Gets the window title.",
                 link = "https://love2d.org/wiki/love.window.getTitle",
                 returnTypes = {
@@ -5973,6 +6076,7 @@ return {
                 type = "function"
               },
               hasFocus = {
+                args = {},
                 description = "Checks if the game window has keyboard focus.",
                 link = "https://love2d.org/wiki/love.window.hasFocus",
                 returnTypes = {
@@ -5983,6 +6087,7 @@ return {
                 type = "function"
               },
               hasMouseFocus = {
+                args = {},
                 description = "Checks if the game window has mouse focus.",
                 link = "https://love2d.org/wiki/love.window.hasMouseFocus",
                 returnTypes = {
@@ -5993,6 +6098,7 @@ return {
                 type = "function"
               },
               isDisplaySleepEnabled = {
+                args = {},
                 description = "Gets whether the display is allowed to sleep while the program is running.\n\nDisplay sleep is disabled by default. Some types of input (e.g. joystick button presses) might not prevent the display from sleeping, if display sleep is allowed.",
                 link = "https://love2d.org/wiki/love.window.isDisplaySleepEnabled",
                 returnTypes = {
@@ -6003,6 +6109,7 @@ return {
                 type = "function"
               },
               isMaximized = {
+                args = {},
                 description = "Gets whether the Window is currently maximized.\n\nThe window can be maximized if it is not fullscreen and is resizable, and either the user has pressed the window's Maximize button or love.window.maximize has been called.",
                 link = "https://love2d.org/wiki/love.window.isMaximized",
                 returnTypes = {
@@ -6013,6 +6120,7 @@ return {
                 type = "function"
               },
               isOpen = {
+                args = {},
                 description = "Checks if the window is open.",
                 link = "https://love2d.org/wiki/love.window.isOpen",
                 returnTypes = {
@@ -6023,6 +6131,7 @@ return {
                 type = "function"
               },
               isVisible = {
+                args = {},
                 description = "Checks if the game window is visible.\n\nThe window is considered visible if it's not minimized and the program isn't hidden.",
                 link = "https://love2d.org/wiki/love.window.isVisible",
                 returnTypes = {
@@ -6033,11 +6142,13 @@ return {
                 type = "function"
               },
               maximize = {
+                args = {},
                 description = "Makes the window as large as possible.\n\nThis function has no effect if the window isn't resizable, since it essentially programmatically presses the window's \"maximize\" button.",
                 link = "https://love2d.org/wiki/love.window.maximize",
                 type = "function"
               },
               minimize = {
+                args = {},
                 description = "Minimizes the window to the system's task bar / dock.",
                 link = "https://love2d.org/wiki/love.window.minimize",
                 type = "function"
@@ -6293,6 +6404,11 @@ return {
           type = "function"
         },
         getControlPointCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the number of control points in the Bézier curve.",
           link = "https://love2d.org/wiki/BezierCurve:getControlPointCount",
           returnTypes = {
@@ -6303,6 +6419,11 @@ return {
           type = "function"
         },
         getDegree = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get degree of the Bézier curve. The degree is equal to number-of-control-points - 1.",
           link = "https://love2d.org/wiki/BezierCurve:getDegree",
           returnTypes = {
@@ -6313,6 +6434,11 @@ return {
           type = "function"
         },
         getDerivative = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the derivative of the Bézier curve.\n\nThis function can be used to rotate sprites moving along a curve in the direction of the movement and compute the direction perpendicular to the curve at some parameter t.",
           link = "https://love2d.org/wiki/BezierCurve:getDerivative",
           returnTypes = {
@@ -6620,11 +6746,21 @@ return {
           type = "function"
         },
         destroy = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Explicitly destroys the Body. When you don't have time to wait for garbage collection, this function may be used to free the object immediately, but note that an error will occur if you attempt to use the object after calling this function.",
           link = "https://love2d.org/wiki/Body:destroy",
           type = "function"
         },
         getAngle = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the angle of the body.\n\nThe angle is measured in radians. If you need to transform it to degrees, use math.deg.\n\nA value of 0 radians will mean \"looking to the right\". Although radians increase counter-clockwise, the y-axis points down so it becomes clockwise from our point of view.",
           link = "https://love2d.org/wiki/Body:getAngle",
           returnTypes = {
@@ -6635,6 +6771,11 @@ return {
           type = "function"
         },
         getAngularDamping = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the Angular damping of the Body\n\nThe angular damping is the rate of decrease of the angular velocity over time: A spinning body with no damping and no external forces will continue spinning indefinitely. A spinning body with damping will gradually stop spinning.\n\nDamping is not the same as friction - they can be modelled together. However, only damping is provided by Box2D (and LÖVE).\n\nDamping parameters should be between 0 and infinity, with 0 meaning no damping, and infinity meaning full damping. Normally you will use a damping value between 0 and 0.1.",
           link = "https://love2d.org/wiki/Body:getAngularDamping",
           returnTypes = {
@@ -6645,6 +6786,11 @@ return {
           type = "function"
         },
         getAngularVelocity = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the angular velocity of the Body.\n\nThe angular velocity is the rate of change of angle over time.\n\nIt is changed in World:update by applying torques, off centre forces/impulses, and angular damping. It can be set directly with Body:setAngularVelocity.\n\nIf you need the rate of change of position over time, use Body:getLinearVelocity.",
           link = "https://love2d.org/wiki/Body:getAngularVelocity",
           returnTypes = {
@@ -6655,6 +6801,11 @@ return {
           type = "function"
         },
         getContactList = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets a list of all Contacts attached to the Body.",
           link = "https://love2d.org/wiki/Body:getContactList",
           returnTypes = {
@@ -6665,6 +6816,11 @@ return {
           type = "function"
         },
         getFixtureList = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns a table with all fixtures.",
           link = "https://love2d.org/wiki/Body:getFixtureList",
           returnTypes = {
@@ -6675,6 +6831,11 @@ return {
           type = "function"
         },
         getGravityScale = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the gravity scale factor.",
           link = "https://love2d.org/wiki/Body:getGravityScale",
           returnTypes = {
@@ -6685,6 +6846,11 @@ return {
           type = "function"
         },
         getInertia = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the rotational inertia of the body.\n\nThe rotational inertia is how hard is it to make the body spin.",
           link = "https://love2d.org/wiki/Body:getInertia",
           returnTypes = {
@@ -6695,6 +6861,11 @@ return {
           type = "function"
         },
         getJointList = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns a table containing the Joints attached to this Body.",
           link = "https://love2d.org/wiki/Body:getJointList",
           returnTypes = {
@@ -6705,6 +6876,11 @@ return {
           type = "function"
         },
         getLinearDamping = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the linear damping of the Body.\n\nThe linear damping is the rate of decrease of the linear velocity over time. A moving body with no damping and no external forces will continue moving indefinitely, as is the case in space. A moving body with damping will gradually stop moving.\n\nDamping is not the same as friction - they can be modelled together. However, only damping is provided by Box2D (and LÖVE).",
           link = "https://love2d.org/wiki/Body:getLinearDamping",
           returnTypes = {
@@ -6715,6 +6891,11 @@ return {
           type = "function"
         },
         getLinearVelocity = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the linear velocity of the Body from its center of mass.\n\nThe linear velocity is the rate of change of position over time.\n\nIf you need the rate of change of angle over time, use Body:getAngularVelocity. If you need to get the linear velocity of a point different from the center of mass:\n\nBody:getLinearVelocityFromLocalPoint allows you to specify the point in local coordinates.\n\nBody:getLinearVelocityFromWorldPoint allows you to specify the point in world coordinates.",
           link = "https://love2d.org/wiki/Body:getLinearVelocity",
           returnTypes = {
@@ -6776,6 +6957,11 @@ return {
           type = "function"
         },
         getLocalCenter = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the center of mass position in local coordinates.\n\nUse Body:getWorldCenter to get the center of mass in world coordinates.",
           link = "https://love2d.org/wiki/Body:getLocalCenter",
           returnTypes = {
@@ -6837,6 +7023,11 @@ return {
           type = "function"
         },
         getMass = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the mass of the body.",
           link = "https://love2d.org/wiki/Body:getMass",
           returnTypes = {
@@ -6847,6 +7038,11 @@ return {
           type = "function"
         },
         getMassData = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the mass, its center, and the rotational inertia.",
           link = "https://love2d.org/wiki/Body:getMassData",
           returnTypes = {
@@ -6866,6 +7062,11 @@ return {
           type = "function"
         },
         getPosition = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the position of the body.\n\nNote that this may not be the center of mass of the body.",
           link = "https://love2d.org/wiki/Body:getPosition",
           returnTypes = {
@@ -6879,6 +7080,11 @@ return {
           type = "function"
         },
         getType = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the type of the body.",
           link = "https://love2d.org/wiki/Body:getType",
           returnTypes = {
@@ -6890,6 +7096,11 @@ return {
           type = "function"
         },
         getUserData = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the Lua value associated with this Body.",
           link = "https://love2d.org/wiki/Body:getUserData",
           returnTypes = {
@@ -6901,6 +7112,11 @@ return {
           type = "function"
         },
         getWorld = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the World the body lives in.",
           link = "https://love2d.org/wiki/Body:getWorld",
           returnTypes = {
@@ -6912,6 +7128,11 @@ return {
           type = "function"
         },
         getWorldCenter = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the center of mass position in world coordinates.\n\nUse Body:getLocalCenter to get the center of mass in local coordinates.",
           link = "https://love2d.org/wiki/Body:getWorldCenter",
           returnTypes = {
@@ -7015,6 +7236,11 @@ return {
           type = "function"
         },
         getX = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the x position of the body in world coordinates.",
           link = "https://love2d.org/wiki/Body:getX",
           returnTypes = {
@@ -7025,6 +7251,11 @@ return {
           type = "function"
         },
         getY = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the y position of the body in world coordinates.",
           link = "https://love2d.org/wiki/Body:getY",
           returnTypes = {
@@ -7035,6 +7266,11 @@ return {
           type = "function"
         },
         isActive = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns whether the body is actively used in the simulation.",
           link = "https://love2d.org/wiki/Body:isActive",
           returnTypes = {
@@ -7045,6 +7281,11 @@ return {
           type = "function"
         },
         isAwake = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the sleep status of the body.",
           link = "https://love2d.org/wiki/Body:isAwake",
           returnTypes = {
@@ -7055,6 +7296,11 @@ return {
           type = "function"
         },
         isBullet = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the bullet status of a body.\n\nThere are two methods to check for body collisions:\n\nat their location when the world is updated (default)\n\nusing continuous collision detection (CCD)\n\nThe default method is efficient, but a body moving very quickly may sometimes jump over another body without producing a collision. A body that is set as a bullet will use CCD. This is less efficient, but is guaranteed not to jump when moving quickly.\n\nNote that static bodies (with zero mass) always use CCD, so your walls will not let a fast moving body pass through even if it is not a bullet.",
           link = "https://love2d.org/wiki/Body:isBullet",
           returnTypes = {
@@ -7065,6 +7311,11 @@ return {
           type = "function"
         },
         isDestroyed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether the Body is destroyed. Destroyed bodies cannot be used.",
           link = "https://love2d.org/wiki/Body:isDestroyed",
           returnTypes = {
@@ -7075,6 +7326,11 @@ return {
           type = "function"
         },
         isFixedRotation = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns whether the body rotation is locked.",
           link = "https://love2d.org/wiki/Body:isFixedRotation",
           returnTypes = {
@@ -7085,6 +7341,11 @@ return {
           type = "function"
         },
         isSleepingAllowed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the sleeping behaviour of the body.",
           link = "https://love2d.org/wiki/Body:isSleepingAllowed",
           returnTypes = {
@@ -7095,6 +7356,11 @@ return {
           type = "function"
         },
         resetMassData = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Resets the mass of the body by recalculating it from the mass properties of the fixtures.",
           link = "https://love2d.org/wiki/Body:resetMassData",
           type = "function"
@@ -7376,6 +7642,11 @@ return {
     Canvas = {
       fields = {
         getDimensions = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the width and height of the Canvas.",
           link = "https://love2d.org/wiki/Canvas:getDimensions",
           returnTypes = {
@@ -7389,6 +7660,11 @@ return {
           type = "function"
         },
         getFilter = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the filter mode of the Canvas.",
           link = "https://love2d.org/wiki/Canvas:getFilter",
           returnTypes = {
@@ -7407,6 +7683,11 @@ return {
           type = "function"
         },
         getFormat = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the texture format of the Canvas.",
           link = "https://love2d.org/wiki/Canvas:getFormat",
           returnTypes = {
@@ -7418,6 +7699,11 @@ return {
           type = "function"
         },
         getHeight = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the height of the Canvas.",
           link = "https://love2d.org/wiki/Canvas:getHeight",
           returnTypes = {
@@ -7428,6 +7714,11 @@ return {
           type = "function"
         },
         getMSAA = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the number of multisample antialiasing (MSAA) samples used when drawing to the Canvas.\n\nThis may be different than the number used as an argument to love.graphics.newCanvas if the system running LÖVE doesn't support that number.",
           link = "https://love2d.org/wiki/Canvas:getMSAA",
           returnTypes = {
@@ -7438,6 +7729,11 @@ return {
           type = "function"
         },
         getWidth = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the width of the Canvas.",
           link = "https://love2d.org/wiki/Canvas:getWidth",
           returnTypes = {
@@ -7448,6 +7744,11 @@ return {
           type = "function"
         },
         getWrap = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the wrapping properties of a Canvas.\n\nThis function returns the currently set horizontal and vertical wrapping modes for the Canvas.",
           link = "https://love2d.org/wiki/Canvas:getWrap",
           returnTypes = {
@@ -7473,6 +7774,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Generates ImageData from the contents of the Canvas."
             },
             {
@@ -7620,6 +7926,11 @@ return {
           type = "function"
         },
         getPoints = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns all points of the shape.",
           link = "https://love2d.org/wiki/ChainShape:getPoints",
           returnTypes = {
@@ -7642,6 +7953,11 @@ return {
           type = "function"
         },
         getPreviousVertex = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the vertex that establishes a connection to the previous shape.\n\nSetting next and previous ChainShape vertices can help prevent unwanted collisions when a flat shape slides along the edge and moves over to the new shape.",
           link = "https://love2d.org/wiki/ChainShape:getPreviousVertex",
           returnTypes = {
@@ -7655,6 +7971,11 @@ return {
           type = "function"
         },
         getVertexCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the number of vertices the shape has.",
           link = "https://love2d.org/wiki/ChainShape:getVertexCount",
           returnTypes = {
@@ -7711,11 +8032,21 @@ return {
     Channel = {
       fields = {
         clear = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Clears all the messages in the Channel queue.",
           link = "https://love2d.org/wiki/Channel:clear",
           type = "function"
         },
         demand = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Retrieves the value of a Channel message and removes it from the message queue.\n\nIt waits until a message is in the queue then returns the message value.",
           link = "https://love2d.org/wiki/Channel:demand",
           returnTypes = {
@@ -7727,6 +8058,11 @@ return {
           type = "function"
         },
         getCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Retrieves the number of messages in the thread Channel queue.",
           link = "https://love2d.org/wiki/Channel:getCount",
           returnTypes = {
@@ -7737,6 +8073,11 @@ return {
           type = "function"
         },
         peek = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Retrieves the value of a Channel message, but leaves it in the queue.\n\nIt returns nil if there's no message in the queue.",
           link = "https://love2d.org/wiki/Channel:peek",
           returnTypes = {
@@ -7777,6 +8118,11 @@ return {
           type = "function"
         },
         pop = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Retrieves the value of a Channel message and removes it from the message queue.\n\nIt returns nil if there are no messages in the queue.",
           link = "https://love2d.org/wiki/Channel:pop",
           returnTypes = {
@@ -7828,6 +8174,11 @@ return {
     CircleShape = {
       fields = {
         getPoint = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the center point of the circle shape.",
           link = "https://love2d.org/wiki/CircleShape:getPoint",
           returnTypes = {
@@ -7841,6 +8192,11 @@ return {
           type = "function"
         },
         getRadius = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the radius of the circle shape.",
           link = "https://love2d.org/wiki/CircleShape:getRadius",
           returnTypes = {
@@ -7894,6 +8250,11 @@ return {
     CompressedData = {
       fields = {
         getFormat = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the compression format of the CompressedData.",
           link = "https://love2d.org/wiki/CompressedData:getFormat",
           returnTypes = {
@@ -7931,6 +8292,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Gets the width and height of the CompressedImageData."
             },
             {
@@ -7947,6 +8313,11 @@ return {
           }
         },
         getFormat = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the format of the CompressedImageData.",
           link = "https://love2d.org/wiki/CompressedImageData:getFormat",
           returnTypes = {
@@ -7967,6 +8338,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Gets the height of the CompressedImageData."
             },
             {
@@ -7983,6 +8359,11 @@ return {
           }
         },
         getMipmapCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the number of mipmap levels in the CompressedImageData. The base mipmap level (original image) is included in the count.",
           link = "https://love2d.org/wiki/CompressedImageData:getMipmapCount",
           returnTypes = {
@@ -8002,6 +8383,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Gets the width of the CompressedImageData."
             },
             {
@@ -8032,6 +8418,11 @@ return {
     Contact = {
       fields = {
         getFixtures = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the two Fixtures that hold the shapes that are in contact.",
           link = "https://love2d.org/wiki/Contact:getFixtures",
           returnTypes = {
@@ -8047,6 +8438,11 @@ return {
           type = "function"
         },
         getFriction = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the friction between two shapes that are in contact.",
           link = "https://love2d.org/wiki/Contact:getFriction",
           returnTypes = {
@@ -8057,6 +8453,11 @@ return {
           type = "function"
         },
         getNormal = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the normal vector between two shapes that are in contact.\n\nThis function returns the coordinates of a unit vector that points from the first shape to the second.",
           link = "https://love2d.org/wiki/Contact:getNormal",
           returnTypes = {
@@ -8070,6 +8471,11 @@ return {
           type = "function"
         },
         getPositions = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the contact points of the two colliding fixtures. There can be one or two points.",
           link = "https://love2d.org/wiki/Contact:getPositions",
           returnTypes = {
@@ -8089,6 +8495,11 @@ return {
           type = "function"
         },
         getRestitution = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the restitution between two shapes that are in contact.",
           link = "https://love2d.org/wiki/Contact:getRestitution",
           returnTypes = {
@@ -8099,6 +8510,11 @@ return {
           type = "function"
         },
         isEnabled = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns whether the contact is enabled. The collision will be ignored if a contact gets disabled in the preSolve callback.",
           link = "https://love2d.org/wiki/Contact:isEnabled",
           returnTypes = {
@@ -8109,6 +8525,11 @@ return {
           type = "function"
         },
         isTouching = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns whether the two colliding fixtures are touching each other.",
           link = "https://love2d.org/wiki/Contact:isTouching",
           returnTypes = {
@@ -8119,11 +8540,21 @@ return {
           type = "function"
         },
         resetFriction = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Resets the contact friction to the mixture value of both fixtures.",
           link = "https://love2d.org/wiki/Contact:resetFriction",
           type = "function"
         },
         resetRestitution = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Resets the contact restitution to the mixture value of both fixtures.",
           link = "https://love2d.org/wiki/Contact:resetRestitution",
           type = "function"
@@ -8182,6 +8613,11 @@ return {
     Cursor = {
       fields = {
         getType = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the type of the Cursor.",
           link = "https://love2d.org/wiki/Cursor:getType",
           returnTypes = {
@@ -8207,6 +8643,11 @@ return {
     Data = {
       fields = {
         getPointer = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets a pointer to the Data.",
           link = "https://love2d.org/wiki/Data:getPointer",
           returnTypes = {
@@ -8218,6 +8659,11 @@ return {
           type = "function"
         },
         getSize = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the size of the Data.",
           link = "https://love2d.org/wiki/Data:getSize",
           returnTypes = {
@@ -8228,6 +8674,11 @@ return {
           type = "function"
         },
         getString = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the full Data as a string.",
           link = "https://love2d.org/wiki/Data:getString",
           returnTypes = {
@@ -8252,6 +8703,11 @@ return {
     Decoder = {
       fields = {
         getBitDepth = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the number of bits per sample.",
           link = "https://love2d.org/wiki/Decoder:getBitDepth",
           returnTypes = {
@@ -8262,6 +8718,11 @@ return {
           type = "function"
         },
         getChannels = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the number of channels in the stream.",
           link = "https://love2d.org/wiki/Decoder:getChannels",
           returnTypes = {
@@ -8272,6 +8733,11 @@ return {
           type = "function"
         },
         getDuration = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the duration of the sound file. It may not always be sample-accurate, and it may return -1 if the duration cannot be determined at all.",
           link = "https://love2d.org/wiki/Decoder:getDuration",
           returnTypes = {
@@ -8282,6 +8748,11 @@ return {
           type = "function"
         },
         getSampleRate = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the sample rate of the Decoder.",
           link = "https://love2d.org/wiki/Decoder:getSampleRate",
           returnTypes = {
@@ -8306,6 +8777,11 @@ return {
     DistanceJoint = {
       fields = {
         getDampingRatio = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the damping ratio.",
           link = "https://love2d.org/wiki/DistanceJoint:getDampingRatio",
           returnTypes = {
@@ -8316,6 +8792,11 @@ return {
           type = "function"
         },
         getFrequency = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the response speed.",
           link = "https://love2d.org/wiki/DistanceJoint:getFrequency",
           returnTypes = {
@@ -8326,6 +8807,11 @@ return {
           type = "function"
         },
         getLength = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the equilibrium distance between the two Bodies.",
           link = "https://love2d.org/wiki/DistanceJoint:getLength",
           returnTypes = {
@@ -8402,6 +8888,11 @@ return {
     EdgeShape = {
       fields = {
         getNextVertex = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the vertex that establishes a connection to the next shape.\n\nSetting next and previous EdgeShape vertices can help prevent unwanted collisions when a flat shape slides along the edge and moves over to the new shape.",
           link = "https://love2d.org/wiki/EdgeShape:getNextVertex",
           returnTypes = {
@@ -8415,6 +8906,11 @@ return {
           type = "function"
         },
         getPoints = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the local coordinates of the edge points.",
           link = "https://love2d.org/wiki/EdgeShape:getPoints",
           returnTypes = {
@@ -8434,6 +8930,11 @@ return {
           type = "function"
         },
         getPreviousVertex = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the vertex that establishes a connection to the previous shape.\n\nSetting next and previous EdgeShape vertices can help prevent unwanted collisions when a flat shape slides along the edge and moves over to the new shape.",
           link = "https://love2d.org/wiki/EdgeShape:getPreviousVertex",
           returnTypes = {
@@ -8493,6 +8994,11 @@ return {
     File = {
       fields = {
         close = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Closes a file.",
           link = "https://love2d.org/wiki/File:close",
           returnTypes = {
@@ -8503,6 +9009,11 @@ return {
           type = "function"
         },
         flush = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Flushes any buffered written data in the file to the disk.",
           link = "https://love2d.org/wiki/File:flush",
           returnTypes = {
@@ -8516,6 +9027,11 @@ return {
           type = "function"
         },
         getBuffer = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the buffer mode of a file.",
           link = "https://love2d.org/wiki/File:getBuffer",
           returnTypes = {
@@ -8530,6 +9046,11 @@ return {
           type = "function"
         },
         getFilename = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the filename that the File object was created with. If the file object originated from the love.filedropped callback, the filename will be the full platform-dependent file path.",
           link = "https://love2d.org/wiki/File:getFilename",
           returnTypes = {
@@ -8540,6 +9061,11 @@ return {
           type = "function"
         },
         getMode = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the FileMode the file has been opened with.",
           link = "https://love2d.org/wiki/File:getMode",
           returnTypes = {
@@ -8551,6 +9077,11 @@ return {
           type = "function"
         },
         getSize = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the file size.",
           link = "https://love2d.org/wiki/File:getSize",
           returnTypes = {
@@ -8561,6 +9092,11 @@ return {
           type = "function"
         },
         isEOF = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether end-of-file has been reached.",
           link = "https://love2d.org/wiki/File:isEOF",
           returnTypes = {
@@ -8571,6 +9107,11 @@ return {
           type = "function"
         },
         isOpen = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether the file is open.",
           link = "https://love2d.org/wiki/File:isOpen",
           returnTypes = {
@@ -8581,6 +9122,11 @@ return {
           type = "function"
         },
         lines = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Iterate over all the lines in a file",
           link = "https://love2d.org/wiki/File:lines",
           returnTypes = {
@@ -8674,6 +9220,11 @@ return {
           type = "function"
         },
         tell = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the position in the file.",
           link = "https://love2d.org/wiki/File:tell",
           returnTypes = {
@@ -8720,6 +9271,11 @@ return {
     FileData = {
       fields = {
         getExtension = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the extension of the FileData.",
           link = "https://love2d.org/wiki/FileData:getExtension",
           returnTypes = {
@@ -8730,6 +9286,11 @@ return {
           type = "function"
         },
         getFilename = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the filename of the FileData.",
           link = "https://love2d.org/wiki/FileData:getFilename",
           returnTypes = {
@@ -8754,11 +9315,21 @@ return {
     Fixture = {
       fields = {
         destroy = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Destroys the fixture",
           link = "https://love2d.org/wiki/Fixture:destroy",
           type = "function"
         },
         getBody = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the body to which the fixture is attached.",
           link = "https://love2d.org/wiki/Fixture:getBody",
           returnTypes = {
@@ -8798,6 +9369,11 @@ return {
           type = "function"
         },
         getCategory = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the categories the fixture belongs to.",
           link = "https://love2d.org/wiki/Fixture:getCategory",
           returnTypes = {
@@ -8814,6 +9390,11 @@ return {
           type = "function"
         },
         getDensity = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the density of the fixture.",
           link = "https://love2d.org/wiki/Fixture:getDensity",
           returnTypes = {
@@ -8824,6 +9405,11 @@ return {
           type = "function"
         },
         getFilterData = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the filter data of the fixture. Categories and masks are encoded as the bits of a 16-bit integer.",
           link = "https://love2d.org/wiki/Fixture:getFilterData",
           returnTypes = {
@@ -8840,6 +9426,11 @@ return {
           type = "function"
         },
         getFriction = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the friction of the fixture.",
           link = "https://love2d.org/wiki/Fixture:getFriction",
           returnTypes = {
@@ -8850,6 +9441,11 @@ return {
           type = "function"
         },
         getGroupIndex = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the group the fixture belongs to. Fixtures with the same group will always collide if the group is positive or never collide if it's negative. The group zero means no group.\n\nThe groups range from -32768 to 32767.",
           link = "https://love2d.org/wiki/Fixture:getGroupIndex",
           returnTypes = {
@@ -8860,6 +9456,11 @@ return {
           type = "function"
         },
         getMask = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the category mask of the fixture.",
           link = "https://love2d.org/wiki/Fixture:getMask",
           returnTypes = {
@@ -8876,6 +9477,11 @@ return {
           type = "function"
         },
         getMassData = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the mass, its center and the rotational inertia.",
           link = "https://love2d.org/wiki/Fixture:getMassData",
           returnTypes = {
@@ -8895,6 +9501,11 @@ return {
           type = "function"
         },
         getRestitution = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the restitution of the fixture.",
           link = "https://love2d.org/wiki/Fixture:getRestitution",
           returnTypes = {
@@ -8905,6 +9516,11 @@ return {
           type = "function"
         },
         getShape = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the shape of the fixture. This shape is a reference to the actual data used in the simulation. It's possible to change its values between timesteps.\n\nDo not call any functions on this shape after the parent fixture has been destroyed. This shape will point to an invalid memory address and likely cause crashes if you interact further with it.",
           link = "https://love2d.org/wiki/Fixture:getShape",
           returnTypes = {
@@ -8916,6 +9532,11 @@ return {
           type = "function"
         },
         getUserData = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the Lua value associated with this fixture.\n\nUse this function in one thread only.",
           link = "https://love2d.org/wiki/Fixture:getUserData",
           returnTypes = {
@@ -8927,6 +9548,11 @@ return {
           type = "function"
         },
         isDestroyed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether the Fixture is destroyed. Destroyed fixtures cannot be used.",
           link = "https://love2d.org/wiki/Fixture:isDestroyed",
           returnTypes = {
@@ -8937,6 +9563,11 @@ return {
           type = "function"
         },
         isSensor = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns whether the fixture is a sensor.",
           link = "https://love2d.org/wiki/Fixture:isSensor",
           returnTypes = {
@@ -9157,6 +9788,11 @@ return {
     Font = {
       fields = {
         getAscent = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the ascent of the Font. The ascent spans the distance between the baseline and the top of the glyph that reaches farthest from the baseline.",
           link = "https://love2d.org/wiki/Font:getAscent",
           returnTypes = {
@@ -9167,6 +9803,11 @@ return {
           type = "function"
         },
         getBaseline = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the baseline of the Font. Most scripts share the notion of a baseline: an imaginary horizontal line on which characters rest. In some scripts, parts of glyphs lie below the baseline.",
           link = "https://love2d.org/wiki/Font:getBaseline",
           returnTypes = {
@@ -9177,6 +9818,11 @@ return {
           type = "function"
         },
         getDescent = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the descent of the Font. The descent spans the distance between the baseline and the lowest descending glyph in a typeface.",
           link = "https://love2d.org/wiki/Font:getDescent",
           returnTypes = {
@@ -9187,6 +9833,11 @@ return {
           type = "function"
         },
         getFilter = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the filter mode for a font.",
           link = "https://love2d.org/wiki/Font:getFilter",
           returnTypes = {
@@ -9205,6 +9856,11 @@ return {
           type = "function"
         },
         getHeight = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the height of the Font. The height of the font is the size including any spacing; the height which it will need.",
           link = "https://love2d.org/wiki/Font:getHeight",
           returnTypes = {
@@ -9215,6 +9871,11 @@ return {
           type = "function"
         },
         getLineHeight = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the line height. This will be the value previously set by Font:setLineHeight, or 1.0 by default.",
           link = "https://love2d.org/wiki/Font:getLineHeight",
           returnTypes = {
@@ -9364,6 +10025,11 @@ return {
     FrictionJoint = {
       fields = {
         getMaxForce = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the maximum friction force in Newtons.",
           link = "https://love2d.org/wiki/FrictionJoint:getMaxForce",
           returnTypes = {
@@ -9374,6 +10040,11 @@ return {
           type = "function"
         },
         getMaxTorque = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the maximum friction torque in Newton-meters.",
           link = "https://love2d.org/wiki/FrictionJoint:getMaxTorque",
           returnTypes = {
@@ -9424,6 +10095,11 @@ return {
     GearJoint = {
       fields = {
         getJoints = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the Joints connected by this GearJoint.",
           link = "https://love2d.org/wiki/GearJoint:getJoints",
           returnTypes = {
@@ -9439,6 +10115,11 @@ return {
           type = "function"
         },
         getRatio = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the ratio of a gear joint.",
           link = "https://love2d.org/wiki/GearJoint:getRatio",
           returnTypes = {
@@ -9486,14 +10167,29 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Gets the original ImageData or CompressedImageData used to create the Image.\n\nAll Images keep a reference to the Data that was used to create the Image. The Data is used to refresh the Image when love.window.setMode or Image:refresh is called."
             },
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Gets the original ImageData or CompressedImageData used to create the Image.\n\nAll Images keep a reference to the Data that was used to create the Image. The Data is used to refresh the Image when love.window.setMode or Image:refresh is called."
             }
           }
         },
         getDimensions = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the width and height of the Image.",
           link = "https://love2d.org/wiki/Image:getDimensions",
           returnTypes = {
@@ -9507,6 +10203,11 @@ return {
           type = "function"
         },
         getFilter = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the filter mode for an image.",
           link = "https://love2d.org/wiki/Image:getFilter",
           returnTypes = {
@@ -9522,6 +10223,11 @@ return {
           type = "function"
         },
         getFlags = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the flags used when the image was created.",
           link = "https://love2d.org/wiki/Image:getFlags",
           returnTypes = {
@@ -9532,6 +10238,11 @@ return {
           type = "function"
         },
         getHeight = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the height of the Image.",
           link = "https://love2d.org/wiki/Image:getHeight",
           returnTypes = {
@@ -9542,6 +10253,11 @@ return {
           type = "function"
         },
         getMipmapFilter = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the mipmap filter mode for an Image.",
           link = "https://love2d.org/wiki/Image:getMipmapFilter",
           returnTypes = {
@@ -9556,6 +10272,11 @@ return {
           type = "function"
         },
         getWidth = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the width of the Image.",
           link = "https://love2d.org/wiki/Image:getWidth",
           returnTypes = {
@@ -9566,6 +10287,11 @@ return {
           type = "function"
         },
         getWrap = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the wrapping properties of an Image.\n\nThis function returns the currently set horizontal and vertical wrapping modes for the image.",
           link = "https://love2d.org/wiki/Image:getWrap",
           returnTypes = {
@@ -9585,6 +10311,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Reloads the Image's contents from the ImageData or CompressedImageData used to create the image."
             },
             {
@@ -9646,6 +10377,11 @@ return {
               description = "Sets the mipmap filter mode for an Image.\n\nMipmapping is useful when drawing an image at a reduced scale. It can improve performance and reduce aliasing issues.\n\nIn 0.10.0 and newer, the Image must be created with the mipmaps flag enabled for the mipmap filter to have any effect."
             },
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Disables mipmap filtering."
             }
           }
@@ -9705,6 +10441,11 @@ return {
           type = "function"
         },
         getDimensions = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the width and height of the ImageData in pixels.",
           link = "https://love2d.org/wiki/ImageData:getDimensions",
           returnTypes = {
@@ -9718,6 +10459,11 @@ return {
           type = "function"
         },
         getHeight = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the height of the ImageData in pixels.",
           link = "https://love2d.org/wiki/ImageData:getHeight",
           returnTypes = {
@@ -9758,6 +10504,11 @@ return {
           type = "function"
         },
         getWidth = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the width of the ImageData in pixels.",
           link = "https://love2d.org/wiki/ImageData:getWidth",
           returnTypes = {
@@ -9854,11 +10605,21 @@ return {
     Joint = {
       fields = {
         destroy = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Explicitly destroys the Joint. When you don't have time to wait for garbage collection, this function may be used to free the object immediately, but note that an error will occur if you attempt to use the object after calling this function.",
           link = "https://love2d.org/wiki/Joint:destroy",
           type = "function"
         },
         getAnchors = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the anchor points of the joint.",
           link = "https://love2d.org/wiki/Joint:getAnchors",
           returnTypes = {
@@ -9878,6 +10639,11 @@ return {
           type = "function"
         },
         getBodies = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the bodies that the Joint is attached to.",
           link = "https://love2d.org/wiki/Joint:getBodies",
           returnTypes = {
@@ -9893,6 +10659,11 @@ return {
           type = "function"
         },
         getCollideConnected = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether the connected Bodies collide.",
           link = "https://love2d.org/wiki/Joint:getCollideConnected",
           returnTypes = {
@@ -9903,6 +10674,11 @@ return {
           type = "function"
         },
         getReactionForce = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the reaction force on Body 2 at the joint anchor.",
           link = "https://love2d.org/wiki/Joint:getReactionForce",
           returnTypes = {
@@ -9934,6 +10710,11 @@ return {
           type = "function"
         },
         getType = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets a string representing the type.",
           link = "https://love2d.org/wiki/Joint:getType",
           returnTypes = {
@@ -9945,6 +10726,11 @@ return {
           type = "function"
         },
         getUserData = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the Lua value associated with this Joint.",
           link = "https://love2d.org/wiki/Joint:getUserData",
           returnTypes = {
@@ -9956,6 +10742,11 @@ return {
           type = "function"
         },
         isDestroyed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether the Joint is destroyed. Destroyed joints cannot be used.",
           link = "https://love2d.org/wiki/Joint:isDestroyed",
           returnTypes = {
@@ -9993,6 +10784,11 @@ return {
     Joystick = {
       fields = {
         getAxes = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the direction of each axis.",
           link = "https://love2d.org/wiki/Joystick:getAxes",
           returnTypes = {
@@ -10027,6 +10823,11 @@ return {
           type = "function"
         },
         getAxisCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the number of axes on the joystick.",
           link = "https://love2d.org/wiki/Joystick:getAxisCount",
           returnTypes = {
@@ -10037,6 +10838,11 @@ return {
           type = "function"
         },
         getButtonCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the number of buttons on the joystick.",
           link = "https://love2d.org/wiki/Joystick:getButtonCount",
           returnTypes = {
@@ -10047,6 +10853,11 @@ return {
           type = "function"
         },
         getGUID = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets a stable GUID unique to the type of the physical joystick which does not change over time. For example, all Sony Dualshock 3 controllers in OS X have the same GUID. The value is platform-dependent.",
           link = "https://love2d.org/wiki/Joystick:getGUID",
           returnTypes = {
@@ -10135,6 +10946,11 @@ return {
           type = "function"
         },
         getHatCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the number of hats on the joystick.",
           link = "https://love2d.org/wiki/Joystick:getHatCount",
           returnTypes = {
@@ -10145,6 +10961,11 @@ return {
           type = "function"
         },
         getID = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the joystick's unique identifier. The identifier will remain the same for the life of the game, even when the Joystick is disconnected and reconnected, but it will change when the game is re-launched.",
           link = "https://love2d.org/wiki/Joystick:getID",
           returnTypes = {
@@ -10158,6 +10979,11 @@ return {
           type = "function"
         },
         getName = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the name of the joystick.",
           link = "https://love2d.org/wiki/Joystick:getName",
           returnTypes = {
@@ -10168,6 +10994,11 @@ return {
           type = "function"
         },
         getVibration = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the current vibration motor strengths on a Joystick with rumble support.",
           link = "https://love2d.org/wiki/Joystick:getVibration",
           returnTypes = {
@@ -10181,6 +11012,11 @@ return {
           type = "function"
         },
         isConnected = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether the Joystick is connected.",
           link = "https://love2d.org/wiki/Joystick:isConnected",
           returnTypes = {
@@ -10209,6 +11045,11 @@ return {
           type = "function"
         },
         isGamepad = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether the Joystick is recognized as a gamepad. If this is the case, the Joystick's buttons and axes can be used in a standardized manner across different operating systems and joystick models via Joystick:getGamepadAxis and related functions.\n\nLÖVE automatically recognizes most popular controllers with a similar layout to the Xbox 360 controller as gamepads, but you can add more with love.joystick.setGamepadMapping.",
           link = "https://love2d.org/wiki/Joystick:isGamepad",
           returnTypes = {
@@ -10237,6 +11078,11 @@ return {
           type = "function"
         },
         isVibrationSupported = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether the Joystick supports vibration.",
           link = "https://love2d.org/wiki/Joystick:isVibrationSupported",
           returnTypes = {
@@ -10270,6 +11116,11 @@ return {
               description = "Sets the vibration motor speeds on a Joystick with rumble support."
             },
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Sets the vibration motor speeds on a Joystick with rumble support."
             },
             {
@@ -10322,6 +11173,11 @@ return {
           type = "function"
         },
         getDrawMode = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the mode used when drawing the Mesh.",
           link = "https://love2d.org/wiki/Mesh:getDrawMode",
           returnTypes = {
@@ -10333,6 +11189,11 @@ return {
           type = "function"
         },
         getDrawRange = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the range of vertices used when drawing the Mesh.\n\nIf the Mesh's draw range has not been set previously with Mesh:setDrawRange, this function will return nil.",
           link = "https://love2d.org/wiki/Mesh:getDrawRange",
           returnTypes = {
@@ -10346,6 +11207,11 @@ return {
           type = "function"
         },
         getTexture = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the texture (Image or Canvas) used when drawing the Mesh.",
           link = "https://love2d.org/wiki/Mesh:getTexture",
           returnTypes = {
@@ -10420,6 +11286,11 @@ return {
           type = "function"
         },
         getVertexCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the total number of vertices in the Mesh.",
           link = "https://love2d.org/wiki/Mesh:getVertexCount",
           returnTypes = {
@@ -10430,6 +11301,11 @@ return {
           type = "function"
         },
         getVertexFormat = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the vertex format that the Mesh was created with.",
           link = "https://love2d.org/wiki/Mesh:getVertexFormat",
           returnTypes = {
@@ -10440,6 +11316,11 @@ return {
           type = "function"
         },
         getVertexMap = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the vertex map for the Mesh. The vertex map describes the order in which the vertices are used when the Mesh is drawn. The vertices, vertex map, and mesh draw mode work together to determine what exactly is displayed on the screen.\n\nIf no vertex map has been set previously via Mesh:setVertexMap, then this function will return nil in LÖVE 0.10.0+, or an empty table in 0.9.2 and older.",
           link = "https://love2d.org/wiki/Mesh:getVertexMap",
           returnTypes = {
@@ -10515,6 +11396,11 @@ return {
               description = "Restricts the drawn vertices of the Mesh to a subset of the total.\n\nIf a vertex map is used with the Mesh, this method will set a subset of the values in the vertex map array to use, instead of a subset of the total vertices in the Mesh.\n\nFor example, if Mesh:setVertexMap(1, 2, 3, 1, 3, 4) and Mesh:setDrawRange(4, 6) are called, vertices 1, 3, and 4 will be drawn."
             },
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Allows all vertices in the Mesh to be drawn."
             }
           }
@@ -10524,6 +11410,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Sets the texture (Image or Canvas) used when drawing the Mesh.\n\nWhen called without an argument disables the texture. Untextured meshes have a white color by default."
             },
             {
@@ -10731,6 +11622,11 @@ return {
     MotorJoint = {
       fields = {
         getAngularOffset = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the target angular offset between the two Bodies the Joint is attached to.",
           link = "https://love2d.org/wiki/MotorJoint:getAngularOffset",
           returnTypes = {
@@ -10741,6 +11637,11 @@ return {
           type = "function"
         },
         getLinearOffset = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the target linear offset between the two Bodies the Joint is attached to.",
           link = "https://love2d.org/wiki/MotorJoint:getLinearOffset",
           returnTypes = {
@@ -10797,6 +11698,11 @@ return {
     MouseJoint = {
       fields = {
         getDampingRatio = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the damping ratio.",
           link = "https://love2d.org/wiki/MouseJoint:getDampingRatio",
           returnTypes = {
@@ -10807,6 +11713,11 @@ return {
           type = "function"
         },
         getFrequency = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the frequency.",
           link = "https://love2d.org/wiki/MouseJoint:getFrequency",
           returnTypes = {
@@ -10817,6 +11728,11 @@ return {
           type = "function"
         },
         getMaxForce = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the highest allowed force.",
           link = "https://love2d.org/wiki/MouseJoint:getMaxForce",
           returnTypes = {
@@ -10827,6 +11743,11 @@ return {
           type = "function"
         },
         getTarget = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the target point.",
           link = "https://love2d.org/wiki/MouseJoint:getTarget",
           returnTypes = {
@@ -10909,6 +11830,11 @@ return {
     Object = {
       fields = {
         type = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the type of the object as a string.",
           link = "https://love2d.org/wiki/Object:type",
           returnTypes = {
@@ -10942,6 +11868,11 @@ return {
     ParticleSystem = {
       fields = {
         clone = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Creates an identical copy of the ParticleSystem in the stopped state.\n\nCloned ParticleSystem inherit all the set-able state of the original ParticleSystem, but they are initialized stopped.",
           link = "https://love2d.org/wiki/ParticleSystem:clone",
           returnTypes = {
@@ -10966,6 +11897,11 @@ return {
           type = "function"
         },
         getAreaSpread = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the area-based spawn parameters for the particles.",
           link = "https://love2d.org/wiki/ParticleSystem:getAreaSpread",
           returnTypes = {
@@ -10983,6 +11919,11 @@ return {
           type = "function"
         },
         getBufferSize = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the size of the buffer (the max allowed amount of particles in the system).",
           link = "https://love2d.org/wiki/ParticleSystem:getBufferSize",
           returnTypes = {
@@ -10993,6 +11934,11 @@ return {
           type = "function"
         },
         getColors = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets a series of colors to apply to the particle sprite. The particle system will interpolate between each color evenly over the particle's lifetime. Color modulation needs to be activated for this function to have any effect.\n\nArguments are passed in groups of four, representing the components of the desired RGBA value. At least one color must be specified. A maximum of eight may be used.",
           link = "https://love2d.org/wiki/ParticleSystem:getColors",
           returnTypes = {
@@ -11027,6 +11973,11 @@ return {
           type = "function"
         },
         getCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the amount of particles that are currently in the system.",
           link = "https://love2d.org/wiki/ParticleSystem:getCount",
           returnTypes = {
@@ -11037,6 +11988,11 @@ return {
           type = "function"
         },
         getDirection = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the direction the particles will be emitted in.",
           link = "https://love2d.org/wiki/ParticleSystem:getDirection",
           returnTypes = {
@@ -11047,6 +12003,11 @@ return {
           type = "function"
         },
         getEmissionRate = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the amount of particles emitted per second.",
           link = "https://love2d.org/wiki/ParticleSystem:getEmissionRate",
           returnTypes = {
@@ -11057,6 +12018,11 @@ return {
           type = "function"
         },
         getEmitterLifetime = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets how long the particle system should emit particles (if -1 then it emits particles forever).",
           link = "https://love2d.org/wiki/ParticleSystem:getEmitterLifetime",
           returnTypes = {
@@ -11067,6 +12033,11 @@ return {
           type = "function"
         },
         getInsertMode = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the mode to use when the ParticleSystem adds new particles.",
           link = "https://love2d.org/wiki/ParticleSystem:getInsertMode",
           returnTypes = {
@@ -11078,6 +12049,11 @@ return {
           type = "function"
         },
         getLinearAcceleration = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the linear acceleration (acceleration along the x and y axes) for particles.\n\nEvery particle created will accelerate along the x and y axes between xmin,ymin and xmax,ymax.",
           link = "https://love2d.org/wiki/ParticleSystem:getLinearAcceleration",
           returnTypes = {
@@ -11097,6 +12073,11 @@ return {
           type = "function"
         },
         getLinearDamping = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the amount of linear damping (constant deceleration) for particles.",
           link = "https://love2d.org/wiki/ParticleSystem:getLinearDamping",
           returnTypes = {
@@ -11110,6 +12091,11 @@ return {
           type = "function"
         },
         getOffset = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the offget position which the particle sprite is rotated around. If this function is not used, the particles rotate around their center.",
           link = "https://love2d.org/wiki/ParticleSystem:getOffset",
           returnTypes = {
@@ -11123,6 +12109,11 @@ return {
           type = "function"
         },
         getParticleLifetime = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the life of the particles.",
           link = "https://love2d.org/wiki/ParticleSystem:getParticleLifetime",
           returnTypes = {
@@ -11136,6 +12127,11 @@ return {
           type = "function"
         },
         getPosition = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the position of the emitter.",
           link = "https://love2d.org/wiki/ParticleSystem:getPosition",
           returnTypes = {
@@ -11149,6 +12145,11 @@ return {
           type = "function"
         },
         getQuads = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the series of Quads used for the particle sprites.",
           link = "https://love2d.org/wiki/ParticleSystem:getQuads",
           returnTypes = {
@@ -11159,6 +12160,11 @@ return {
           type = "function"
         },
         getRadialAcceleration = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the radial acceleration (away from the emitter).",
           link = "https://love2d.org/wiki/ParticleSystem:getRadialAcceleration",
           returnTypes = {
@@ -11172,6 +12178,11 @@ return {
           type = "function"
         },
         getRotation = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the rotation of the image upon particle creation (in radians).",
           link = "https://love2d.org/wiki/ParticleSystem:getRotation",
           returnTypes = {
@@ -11185,6 +12196,11 @@ return {
           type = "function"
         },
         getSizeVariation = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the degree of variation (0 meaning no variation and 1 meaning full variation between start and end).",
           link = "https://love2d.org/wiki/ParticleSystem:getSizeVariation",
           returnTypes = {
@@ -11195,6 +12211,11 @@ return {
           type = "function"
         },
         getSizes = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets a series of sizes by which to scale a particle sprite. 1.0 is normal size. The particle system will interpolate between each size evenly over the particle's lifetime.\n\nAt least one size must be specified. A maximum of eight may be used.",
           link = "https://love2d.org/wiki/ParticleSystem:getSizes",
           returnTypes = {
@@ -11211,6 +12232,11 @@ return {
           type = "function"
         },
         getSpeed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the speed of the particles.",
           link = "https://love2d.org/wiki/ParticleSystem:getSpeed",
           returnTypes = {
@@ -11224,6 +12250,11 @@ return {
           type = "function"
         },
         getSpin = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the spin of the sprite.",
           link = "https://love2d.org/wiki/ParticleSystem:getSpin",
           returnTypes = {
@@ -11237,6 +12268,11 @@ return {
           type = "function"
         },
         getSpinVariation = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the degree of variation (0 meaning no variation and 1 meaning full variation between start and end).",
           link = "https://love2d.org/wiki/ParticleSystem:getSpinVariation",
           returnTypes = {
@@ -11247,6 +12283,11 @@ return {
           type = "function"
         },
         getSpread = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the amount of spread for the system.",
           link = "https://love2d.org/wiki/ParticleSystem:getSpread",
           returnTypes = {
@@ -11257,6 +12298,11 @@ return {
           type = "function"
         },
         getTangentialAcceleration = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the tangential acceleration (acceleration perpendicular to the particle's direction).",
           link = "https://love2d.org/wiki/ParticleSystem:getTangentialAcceleration",
           returnTypes = {
@@ -11270,6 +12316,11 @@ return {
           type = "function"
         },
         getTexture = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the Image or Canvas which is to be emitted.",
           link = "https://love2d.org/wiki/ParticleSystem:getTexture",
           returnTypes = {
@@ -11281,6 +12332,11 @@ return {
           type = "function"
         },
         hasRelativeRotation = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether particle angles and rotations are relative to their velocities. If enabled, particles are aligned to the angle of their velocities and rotate relative to that angle.",
           link = "https://love2d.org/wiki/ParticleSystem:hasRelativeRotation",
           returnTypes = {
@@ -11291,6 +12347,11 @@ return {
           type = "function"
         },
         isActive = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Checks whether the particle system is actively emitting particles.",
           link = "https://love2d.org/wiki/ParticleSystem:isActive",
           returnTypes = {
@@ -11301,6 +12362,11 @@ return {
           type = "function"
         },
         isPaused = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Checks whether the particle system is paused.",
           link = "https://love2d.org/wiki/ParticleSystem:isPaused",
           returnTypes = {
@@ -11311,6 +12377,11 @@ return {
           type = "function"
         },
         isStopped = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Checks whether the particle system is stopped.",
           link = "https://love2d.org/wiki/ParticleSystem:isStopped",
           returnTypes = {
@@ -11337,11 +12408,21 @@ return {
           type = "function"
         },
         pause = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Pauses the particle emitter.",
           link = "https://love2d.org/wiki/ParticleSystem:pause",
           type = "function"
         },
         reset = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Resets the particle emitter, removing any existing particles and resetting the lifetime counter.",
           link = "https://love2d.org/wiki/ParticleSystem:reset",
           type = "function"
@@ -11758,11 +12839,21 @@ return {
           type = "function"
         },
         start = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Starts the particle emitter.",
           link = "https://love2d.org/wiki/ParticleSystem:start",
           type = "function"
         },
         stop = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Stops the particle emitter, resetting the lifetime counter.",
           link = "https://love2d.org/wiki/ParticleSystem:stop",
           type = "function"
@@ -11795,6 +12886,11 @@ return {
     PolygonShape = {
       fields = {
         getPoints = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the local coordinates of the polygon's vertices.\n\nThis function has a variable number of return values. It can be used in a nested fashion with love.graphics.polygon.\n\nThis function may have up to 16 return values, since it returns two values for each vertex in the polygon. In other words, it can return the coordinates of up to 8 points.",
           link = "https://love2d.org/wiki/PolygonShape:getPoints",
           returnTypes = {
@@ -11831,6 +12927,11 @@ return {
     PrismaticJoint = {
       fields = {
         getAxis = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the world-space axis vector of the Prismatic Joint.",
           link = "https://love2d.org/wiki/PrismaticJoint:getAxis",
           returnTypes = {
@@ -11844,6 +12945,11 @@ return {
           type = "function"
         },
         getJointSpeed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the current joint angle speed.",
           link = "https://love2d.org/wiki/PrismaticJoint:getJointSpeed",
           returnTypes = {
@@ -11854,6 +12960,11 @@ return {
           type = "function"
         },
         getJointTranslation = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the current joint translation.",
           link = "https://love2d.org/wiki/PrismaticJoint:getJointTranslation",
           returnTypes = {
@@ -11864,6 +12975,11 @@ return {
           type = "function"
         },
         getLimits = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the joint limits.",
           link = "https://love2d.org/wiki/PrismaticJoint:getLimits",
           returnTypes = {
@@ -11877,6 +12993,11 @@ return {
           type = "function"
         },
         getLowerLimit = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the lower limit.",
           link = "https://love2d.org/wiki/PrismaticJoint:getLowerLimit",
           returnTypes = {
@@ -11887,6 +13008,11 @@ return {
           type = "function"
         },
         getMaxMotorForce = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the maximum motor force.",
           link = "https://love2d.org/wiki/PrismaticJoint:getMaxMotorForce",
           returnTypes = {
@@ -11897,6 +13023,11 @@ return {
           type = "function"
         },
         getMotorForce = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the current motor force.",
           link = "https://love2d.org/wiki/PrismaticJoint:getMotorForce",
           returnTypes = {
@@ -11907,6 +13038,11 @@ return {
           type = "function"
         },
         getMotorSpeed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the motor speed.",
           link = "https://love2d.org/wiki/PrismaticJoint:getMotorSpeed",
           returnTypes = {
@@ -11917,6 +13053,11 @@ return {
           type = "function"
         },
         getUpperLimit = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the upper limit.",
           link = "https://love2d.org/wiki/PrismaticJoint:getUpperLimit",
           returnTypes = {
@@ -11927,6 +13068,11 @@ return {
           type = "function"
         },
         hasLimitsEnabled = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Checks whether the limits are enabled.",
           link = "https://love2d.org/wiki/PrismaticJoint:hasLimitsEnabled",
           returnTypes = {
@@ -11937,6 +13083,11 @@ return {
           type = "function"
         },
         isMotorEnabled = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Checks whether the motor is enabled.",
           link = "https://love2d.org/wiki/PrismaticJoint:isMotorEnabled",
           returnTypes = {
@@ -12055,6 +13206,11 @@ return {
     PulleyJoint = {
       fields = {
         getConstant = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the total length of the rope.",
           link = "https://love2d.org/wiki/PulleyJoint:getConstant",
           returnTypes = {
@@ -12065,6 +13221,11 @@ return {
           type = "function"
         },
         getGroundAnchors = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the ground anchor positions in world coordinates.",
           link = "https://love2d.org/wiki/PulleyJoint:getGroundAnchors",
           returnTypes = {
@@ -12084,6 +13245,11 @@ return {
           type = "function"
         },
         getLengthA = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the current length of the rope segment attached to the first body.",
           link = "https://love2d.org/wiki/PulleyJoint:getLengthA",
           returnTypes = {
@@ -12094,6 +13260,11 @@ return {
           type = "function"
         },
         getLengthB = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the current length of the rope segment attached to the second body.",
           link = "https://love2d.org/wiki/PulleyJoint:getLengthB",
           returnTypes = {
@@ -12104,6 +13275,11 @@ return {
           type = "function"
         },
         getMaxLengths = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the maximum lengths of the rope segments.",
           link = "https://love2d.org/wiki/PulleyJoint:getMaxLengths",
           returnTypes = {
@@ -12117,6 +13293,11 @@ return {
           type = "function"
         },
         getRatio = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the pulley ratio.",
           link = "https://love2d.org/wiki/PulleyJoint:getRatio",
           returnTypes = {
@@ -12183,6 +13364,11 @@ return {
     Quad = {
       fields = {
         getTextureDimensions = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets reference texture dimensions initially specified in love.graphics.newQuad.",
           link = "https://love2d.org/wiki/Quad:getTextureDimensions",
           returnTypes = {
@@ -12196,6 +13382,11 @@ return {
           type = "function"
         },
         getViewport = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the current viewport of this Quad.",
           link = "https://love2d.org/wiki/Quad:getViewport",
           returnTypes = {
@@ -12251,6 +13442,11 @@ return {
     RandomGenerator = {
       fields = {
         getSeed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the state of the random number generator.\n\nThe state is split into two numbers due to Lua's use of doubles for all number values - doubles can't accurately represent integer values above 2^53.",
           link = "https://love2d.org/wiki/RandomGenerator:getSeed",
           returnTypes = {
@@ -12264,6 +13460,11 @@ return {
           type = "function"
         },
         getState = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the current state of the random number generator. This returns an opaque implementation-dependent string which is only useful for later use with RandomGenerator:setState.\n\nThis is different from RandomGenerator:getSeed in that getState gets the RandomGenerator's current state, whereas getSeed gets the previously set seed number.\n\nThe value of the state string does not depend on the current operating system.",
           link = "https://love2d.org/wiki/RandomGenerator:getState",
           returnTypes = {
@@ -12283,6 +13484,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Get uniformly distributed pseudo-random number within [0, 1]."
             },
             {
@@ -12395,6 +13601,11 @@ return {
     RevoluteJoint = {
       fields = {
         getJointAngle = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the current joint angle.",
           link = "https://love2d.org/wiki/RevoluteJoint:getJointAngle",
           returnTypes = {
@@ -12405,6 +13616,11 @@ return {
           type = "function"
         },
         getJointSpeed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the current joint angle speed.",
           link = "https://love2d.org/wiki/RevoluteJoint:getJointSpeed",
           returnTypes = {
@@ -12415,6 +13631,11 @@ return {
           type = "function"
         },
         getLimits = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the joint limits.",
           link = "https://love2d.org/wiki/RevoluteJoint:getLimits",
           returnTypes = {
@@ -12428,6 +13649,11 @@ return {
           type = "function"
         },
         getLowerLimit = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the lower limit.",
           link = "https://love2d.org/wiki/RevoluteJoint:getLowerLimit",
           returnTypes = {
@@ -12438,6 +13664,11 @@ return {
           type = "function"
         },
         getMaxMotorTorque = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the maximum motor force.",
           link = "https://love2d.org/wiki/RevoluteJoint:getMaxMotorTorque",
           returnTypes = {
@@ -12448,6 +13679,11 @@ return {
           type = "function"
         },
         getMotorSpeed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the motor speed.",
           link = "https://love2d.org/wiki/RevoluteJoint:getMotorSpeed",
           returnTypes = {
@@ -12458,6 +13694,11 @@ return {
           type = "function"
         },
         getMotorTorque = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the current motor force.",
           link = "https://love2d.org/wiki/RevoluteJoint:getMotorTorque",
           returnTypes = {
@@ -12468,6 +13709,11 @@ return {
           type = "function"
         },
         getUpperLimit = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the upper limit.",
           link = "https://love2d.org/wiki/RevoluteJoint:getUpperLimit",
           returnTypes = {
@@ -12478,6 +13724,11 @@ return {
           type = "function"
         },
         hasLimitsEnabled = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Checks whether limits are enabled.",
           link = "https://love2d.org/wiki/RevoluteJoint:hasLimitsEnabled",
           returnTypes = {
@@ -12488,6 +13739,11 @@ return {
           type = "function"
         },
         isMotorEnabled = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Checks whether the motor is enabled.",
           link = "https://love2d.org/wiki/RevoluteJoint:isMotorEnabled",
           returnTypes = {
@@ -12606,6 +13862,11 @@ return {
     RopeJoint = {
       fields = {
         getMaxLength = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the maximum length of a RopeJoint.",
           link = "https://love2d.org/wiki/RopeJoint:getMaxLength",
           returnTypes = {
@@ -12655,6 +13916,11 @@ return {
           type = "function"
         },
         getWarnings = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns any warning and error messages from compiling the shader code. This can be used for debugging your shaders if there's anything the graphics hardware doesn't like.",
           link = "https://love2d.org/wiki/Shader:getWarnings",
           returnTypes = {
@@ -12850,6 +14116,11 @@ return {
           type = "function"
         },
         getChildCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the number of children the shape has.",
           link = "https://love2d.org/wiki/Shape:getChildCount",
           returnTypes = {
@@ -12860,6 +14131,11 @@ return {
           type = "function"
         },
         getRadius = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the radius of the shape.",
           link = "https://love2d.org/wiki/Shape:getRadius",
           returnTypes = {
@@ -12870,6 +14146,11 @@ return {
           type = "function"
         },
         getType = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets a string representing the Shape. This function can be useful for conditional debug drawing.",
           link = "https://love2d.org/wiki/Shape:getType",
           returnTypes = {
@@ -12965,6 +14246,11 @@ return {
     SoundData = {
       fields = {
         getBitDepth = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the number of bits per sample.",
           link = "https://love2d.org/wiki/SoundData:getBitDepth",
           returnTypes = {
@@ -12975,6 +14261,11 @@ return {
           type = "function"
         },
         getChannels = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the number of channels in the stream.",
           link = "https://love2d.org/wiki/SoundData:getChannels",
           returnTypes = {
@@ -12985,6 +14276,11 @@ return {
           type = "function"
         },
         getDuration = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the duration of the sound data.",
           link = "https://love2d.org/wiki/SoundData:getDuration",
           returnTypes = {
@@ -13013,6 +14309,11 @@ return {
           type = "function"
         },
         getSampleCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the number of samples per channel of the SoundData.",
           link = "https://love2d.org/wiki/SoundData:getSampleCount",
           returnTypes = {
@@ -13023,6 +14324,11 @@ return {
           type = "function"
         },
         getSampleRate = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the sample rate of the SoundData.",
           link = "https://love2d.org/wiki/SoundData:getSampleRate",
           returnTypes = {
@@ -13063,6 +14369,11 @@ return {
     Source = {
       fields = {
         clone = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Creates an identical copy of the Source in the stopped state.\n\nStatic Sources will use significantly less memory and take much less time to be created if Source:clone is used to create them instead of love.audio.newSource, so this method should be preferred when making multiple Sources which play the same sound.\n\nCloned Sources inherit all the set-able state of the original Source, but they are initialized stopped.",
           link = "https://love2d.org/wiki/Source:clone",
           returnTypes = {
@@ -13074,6 +14385,11 @@ return {
           type = "function"
         },
         getAttenuationDistances = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the reference and maximum distance of the source.",
           link = "https://love2d.org/wiki/Source:getAttenuationDistances",
           returnTypes = {
@@ -13087,6 +14403,11 @@ return {
           type = "function"
         },
         getChannels = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the number of channels in the Source. Only 1-channel (mono) Sources can use directional and positional effects.",
           link = "https://love2d.org/wiki/Source:getChannels",
           returnTypes = {
@@ -13097,6 +14418,11 @@ return {
           type = "function"
         },
         getCone = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the Source's directional volume cones. Together with Source:setDirection, the cone angles allow for the Source's volume to vary depending on its direction.",
           link = "https://love2d.org/wiki/Source:getCone",
           returnTypes = {
@@ -13113,6 +14439,11 @@ return {
           type = "function"
         },
         getDirection = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the direction of the Source.",
           link = "https://love2d.org/wiki/Source:getDirection",
           returnTypes = {
@@ -13148,6 +14479,11 @@ return {
           type = "function"
         },
         getPitch = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the current pitch of the Source.",
           link = "https://love2d.org/wiki/Source:getPitch",
           returnTypes = {
@@ -13158,6 +14494,11 @@ return {
           type = "function"
         },
         getPosition = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the position of the Source.",
           link = "https://love2d.org/wiki/Source:getPosition",
           returnTypes = {
@@ -13174,6 +14515,11 @@ return {
           type = "function"
         },
         getRolloff = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the rolloff factor of the source.",
           link = "https://love2d.org/wiki/Source:getRolloff",
           returnTypes = {
@@ -13184,6 +14530,11 @@ return {
           type = "function"
         },
         getType = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the type (static or stream) of the Source.",
           link = "https://love2d.org/wiki/Source:getType",
           returnTypes = {
@@ -13195,6 +14546,11 @@ return {
           type = "function"
         },
         getVelocity = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the velocity of the Source.",
           link = "https://love2d.org/wiki/Source:getVelocity",
           returnTypes = {
@@ -13211,6 +14567,11 @@ return {
           type = "function"
         },
         getVolume = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the current volume of the Source.",
           link = "https://love2d.org/wiki/Source:getVolume",
           returnTypes = {
@@ -13221,6 +14582,11 @@ return {
           type = "function"
         },
         getVolumeLimits = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the volume limits of the source.",
           link = "https://love2d.org/wiki/Source:getVolumeLimits",
           returnTypes = {
@@ -13234,6 +14600,11 @@ return {
           type = "function"
         },
         isLooping = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns whether the Source will loop.",
           link = "https://love2d.org/wiki/Source:isLooping",
           returnTypes = {
@@ -13244,6 +14615,11 @@ return {
           type = "function"
         },
         isPaused = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns whether the Source is paused.",
           link = "https://love2d.org/wiki/Source:isPaused",
           returnTypes = {
@@ -13254,6 +14630,11 @@ return {
           type = "function"
         },
         isPlaying = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns whether the Source is playing.",
           link = "https://love2d.org/wiki/Source:isPlaying",
           returnTypes = {
@@ -13264,6 +14645,11 @@ return {
           type = "function"
         },
         isStopped = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns whether the Source is stopped.",
           link = "https://love2d.org/wiki/Source:isStopped",
           returnTypes = {
@@ -13274,11 +14660,21 @@ return {
           type = "function"
         },
         pause = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Pauses the Source.",
           link = "https://love2d.org/wiki/Source:pause",
           type = "function"
         },
         play = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Starts playing the Source.",
           link = "https://love2d.org/wiki/Source:play",
           returnTypes = {
@@ -13289,11 +14685,21 @@ return {
           type = "function"
         },
         resume = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Resumes a paused Source.",
           link = "https://love2d.org/wiki/Source:resume",
           type = "function"
         },
         rewind = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Rewinds a Source.",
           link = "https://love2d.org/wiki/Source:rewind",
           type = "function"
@@ -13477,6 +14883,11 @@ return {
           type = "function"
         },
         stop = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Stops a Source.",
           link = "https://love2d.org/wiki/Source:stop",
           type = "function"
@@ -13629,16 +15040,31 @@ return {
           type = "function"
         },
         clear = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Removes all sprites from the buffer.",
           link = "https://love2d.org/wiki/SpriteBatch:clear",
           type = "function"
         },
         flush = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Immediately sends all new and modified sprite data in the batch to the graphics card.",
           link = "https://love2d.org/wiki/SpriteBatch:flush",
           type = "function"
         },
         getBufferSize = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the maximum number of sprites the SpriteBatch can hold.",
           link = "https://love2d.org/wiki/SpriteBatch:getBufferSize",
           returnTypes = {
@@ -13649,6 +15075,11 @@ return {
           type = "function"
         },
         getColor = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the color that will be used for the next add and set operations.\n\nIf no color has been set with SpriteBatch:setColor or the current SpriteBatch color has been cleared, this method will return nil.",
           link = "https://love2d.org/wiki/SpriteBatch:getColor",
           returnTypes = {
@@ -13668,6 +15099,11 @@ return {
           type = "function"
         },
         getCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the amount of sprites currently in the SpriteBatch.",
           link = "https://love2d.org/wiki/SpriteBatch:getCount",
           returnTypes = {
@@ -13678,6 +15114,11 @@ return {
           type = "function"
         },
         getTexture = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the Image or Canvas used by the SpriteBatch.",
           link = "https://love2d.org/wiki/SpriteBatch:getTexture",
           returnTypes = {
@@ -13826,6 +15267,11 @@ return {
               description = "Sets the color that will be used for the next add and set operations. Calling the function without arguments will clear the color.\n\nIn version [[0.9.2]] and older, the global color set with love.graphics.setColor will not work on the SpriteBatch if any of the sprites has its own color."
             },
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Disables all per-sprite colors for this SpriteBatch."
             }
           }
@@ -14076,6 +15522,11 @@ return {
           }
         },
         clear = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Clears the contents of the Text object.",
           link = "https://love2d.org/wiki/Text:clear",
           type = "function"
@@ -14093,6 +15544,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Gets the width and height of the text in pixels."
             },
             {
@@ -14109,6 +15565,11 @@ return {
           }
         },
         getFont = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the Font used with the Text object.",
           link = "https://love2d.org/wiki/Text:getFont",
           returnTypes = {
@@ -14129,6 +15590,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Gets the height of the text in pixels."
             },
             {
@@ -14154,6 +15620,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Gets the width of the text in pixels."
             },
             {
@@ -14196,6 +15667,11 @@ return {
               description = "Replaces the contents of the Text object with a new unformatted string."
             },
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Clears the contents of the Text object."
             }
           }
@@ -14252,6 +15728,11 @@ return {
               description = "Replaces the contents of the Text object with a new formatted string."
             },
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Clears the contents of the Text object."
             }
           }
@@ -14284,6 +15765,11 @@ return {
     Thread = {
       fields = {
         getError = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Retrieves the error string from the thread if it produced an error.",
           link = "https://love2d.org/wiki/Thread:getError",
           returnTypes = {
@@ -14294,6 +15780,11 @@ return {
           type = "function"
         },
         isRunning = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns whether the thread is currently running.\n\nThreads which are not running can be (re)started with Thread:start.",
           link = "https://love2d.org/wiki/Thread:isRunning",
           returnTypes = {
@@ -14308,6 +15799,11 @@ return {
           type = "function",
           variants = {
             {
+              args = {
+                {
+                  name = "self"
+                }
+              },
               description = "Starts the thread.\n\nThreads can be restarted after they have completed their execution."
             },
             {
@@ -14330,6 +15826,11 @@ return {
           }
         },
         wait = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Wait for a thread to finish. This call will block until the thread finishes.",
           link = "https://love2d.org/wiki/Thread:wait",
           type = "function"
@@ -14349,6 +15850,11 @@ return {
     Video = {
       fields = {
         getDimensions = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the width and height of the Video in pixels.",
           link = "https://love2d.org/wiki/Video:getDimensions",
           returnTypes = {
@@ -14362,6 +15868,11 @@ return {
           type = "function"
         },
         getFilter = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the scaling filters used when drawing the Video.",
           link = "https://love2d.org/wiki/Video:getFilter",
           returnTypes = {
@@ -14380,6 +15891,11 @@ return {
           type = "function"
         },
         getHeight = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the height of the Video in pixels.",
           link = "https://love2d.org/wiki/Video:getHeight",
           returnTypes = {
@@ -14390,6 +15906,11 @@ return {
           type = "function"
         },
         getSource = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the audio Source used for playing back the video's audio. May return nil if the video has no audio, or if Video:setSource is called with a nil argument.",
           link = "https://love2d.org/wiki/Video:getSource",
           returnTypes = {
@@ -14401,6 +15922,11 @@ return {
           type = "function"
         },
         getStream = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the VideoStream object used for decoding and controlling the video.",
           link = "https://love2d.org/wiki/Video:getStream",
           returnTypes = {
@@ -14412,6 +15938,11 @@ return {
           type = "function"
         },
         getWidth = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the width of the Video in pixels.",
           link = "https://love2d.org/wiki/Video:getWidth",
           returnTypes = {
@@ -14422,6 +15953,11 @@ return {
           type = "function"
         },
         isPlaying = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether the Video is currently playing.",
           link = "https://love2d.org/wiki/Video:isPlaying",
           returnTypes = {
@@ -14432,16 +15968,31 @@ return {
           type = "function"
         },
         pause = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Pauses the Video.",
           link = "https://love2d.org/wiki/Video:pause",
           type = "function"
         },
         play = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Starts playing the Video. In order for the video to appear onscreen it must be drawn with love.graphics.draw.",
           link = "https://love2d.org/wiki/Video:play",
           type = "function"
         },
         rewind = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Rewinds the Video to the beginning.",
           link = "https://love2d.org/wiki/Video:rewind",
           type = "function"
@@ -14534,6 +16085,11 @@ return {
     WeldJoint = {
       fields = {
         getDampingRatio = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the damping ratio of the joint.",
           link = "https://love2d.org/wiki/WeldJoint:getDampingRatio",
           returnTypes = {
@@ -14544,6 +16100,11 @@ return {
           type = "function"
         },
         getFrequency = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the frequency.",
           link = "https://love2d.org/wiki/WeldJoint:getFrequency",
           returnTypes = {
@@ -14594,6 +16155,11 @@ return {
     WheelJoint = {
       fields = {
         getAxis = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets the world-space axis vector of the Wheel Joint.",
           link = "https://love2d.org/wiki/WheelJoint:getAxis",
           returnTypes = {
@@ -14607,6 +16173,11 @@ return {
           type = "function"
         },
         getJointSpeed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the current joint translation speed.",
           link = "https://love2d.org/wiki/WheelJoint:getJointSpeed",
           returnTypes = {
@@ -14617,6 +16188,11 @@ return {
           type = "function"
         },
         getJointTranslation = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the current joint translation.",
           link = "https://love2d.org/wiki/WheelJoint:getJointTranslation",
           returnTypes = {
@@ -14627,6 +16203,11 @@ return {
           type = "function"
         },
         getMaxMotorTorque = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the maximum motor torque.",
           link = "https://love2d.org/wiki/WheelJoint:getMaxMotorTorque",
           returnTypes = {
@@ -14637,6 +16218,11 @@ return {
           type = "function"
         },
         getMotorSpeed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the speed of the motor.",
           link = "https://love2d.org/wiki/WheelJoint:getMotorSpeed",
           returnTypes = {
@@ -14665,6 +16251,11 @@ return {
           type = "function"
         },
         getSpringDampingRatio = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the damping ratio.",
           link = "https://love2d.org/wiki/WheelJoint:getSpringDampingRatio",
           returnTypes = {
@@ -14675,6 +16266,11 @@ return {
           type = "function"
         },
         getSpringFrequency = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the spring frequency.",
           link = "https://love2d.org/wiki/WheelJoint:getSpringFrequency",
           returnTypes = {
@@ -14764,11 +16360,21 @@ return {
     World = {
       fields = {
         destroy = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Destroys the world, taking all bodies, joints, fixtures and their shapes with it.\n\nAn error will occur if you attempt to use any of the destroyed objects after calling this function.",
           link = "https://love2d.org/wiki/World:destroy",
           type = "function"
         },
         getBodyCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the number of bodies in the world.",
           link = "https://love2d.org/wiki/World:getBodyCount",
           returnTypes = {
@@ -14779,6 +16385,11 @@ return {
           type = "function"
         },
         getBodyList = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns a table with all bodies.",
           link = "https://love2d.org/wiki/World:getBodyList",
           returnTypes = {
@@ -14789,6 +16400,11 @@ return {
           type = "function"
         },
         getCallbacks = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns functions for the callbacks during the world update.",
           link = "https://love2d.org/wiki/World:getCallbacks",
           returnTypes = {
@@ -14808,6 +16424,11 @@ return {
           type = "function"
         },
         getContactCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the number of contacts in the world.",
           link = "https://love2d.org/wiki/World:getContactCount",
           returnTypes = {
@@ -14818,6 +16439,11 @@ return {
           type = "function"
         },
         getContactFilter = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the function for collision filtering.",
           link = "https://love2d.org/wiki/World:getContactFilter",
           returnTypes = {
@@ -14828,6 +16454,11 @@ return {
           type = "function"
         },
         getContactList = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns a table with all contacts.",
           link = "https://love2d.org/wiki/World:getContactList",
           returnTypes = {
@@ -14838,6 +16469,11 @@ return {
           type = "function"
         },
         getGravity = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the gravity of the world.",
           link = "https://love2d.org/wiki/World:getGravity",
           returnTypes = {
@@ -14851,6 +16487,11 @@ return {
           type = "function"
         },
         getJointCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Get the number of joints in the world.",
           link = "https://love2d.org/wiki/World:getJointCount",
           returnTypes = {
@@ -14861,6 +16502,11 @@ return {
           type = "function"
         },
         getJointList = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns a table with all joints.",
           link = "https://love2d.org/wiki/World:getJointList",
           returnTypes = {
@@ -14871,6 +16517,11 @@ return {
           type = "function"
         },
         isDestroyed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Gets whether the World is destroyed. Destroyed worlds cannot be used.",
           link = "https://love2d.org/wiki/World:isDestroyed",
           returnTypes = {
@@ -14881,6 +16532,11 @@ return {
           type = "function"
         },
         isLocked = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns if the world is updating its state.\n\nThis will return true inside the callbacks from World:setCallbacks.",
           link = "https://love2d.org/wiki/World:isLocked",
           returnTypes = {
@@ -14891,6 +16547,11 @@ return {
           type = "function"
         },
         isSleepingAllowed = {
+          args = {
+            {
+              name = "self"
+            }
+          },
           description = "Returns the sleep behaviour of the world.",
           link = "https://love2d.org/wiki/World:isSleepingAllowed",
           returnTypes = {
