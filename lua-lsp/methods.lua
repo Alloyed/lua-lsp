@@ -433,6 +433,7 @@ local function getp(doc, t, k, isDefinition)
 	elseif value.tag == "Arg" then
 		-- deref an argument
 		-- we know it's a method call, deref as such
+		-- luacheck: ignore 542
 		if key[1] == "self" then
 		end
 	end
