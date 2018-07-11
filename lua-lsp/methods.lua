@@ -171,6 +171,7 @@ local function make_items(k, val, isVariant, isInvoke)
 						val_is_method = true
 					else
 						local realname = name.displayName or name[1] or name.name
+						assert(realname)
 						table.insert(sig, realname)
 					end
 
