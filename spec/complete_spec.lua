@@ -292,6 +292,41 @@ return nonexistent.a
 		end, {"_test"})
 	end)
 
+	it("can resolve varargs", function()
+		mock_loop(function(rpc)
+			local text =  [[
+function my_fun(...)
+	return { ... }
+end
+return my_f
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 3, character = 11}
+			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
+				assert.equal(1, #out.items)
+				assert.same({
+					detail = '<function>',
+					label  = 'my_fun(...) ',
+					insertText = 'my_fun',
+				}, out.items[1])
+				callme = true
+			end)
+			assert.truthy(callme)
+		end)
+	end)
+
+
 	it("can resolve simple function returns", function()
 		mock_loop(function(rpc)
 			local text =  [[

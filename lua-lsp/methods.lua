@@ -166,14 +166,11 @@ local function make_items(k, val, isVariant, isInvoke)
 					-- method
 					if name.tag == "Dots" then
 						table.insert(sig, "...")
-					end
-
-					if isInvoke and not val_is_method then
+					elseif isInvoke and not val_is_method then
 						-- eat the first argument if it's not vararg
 						val_is_method = true
 					else
 						local realname = name.displayName or name[1] or name.name
-						assert(realname)
 						table.insert(sig, realname)
 					end
 
