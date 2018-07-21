@@ -309,4 +309,37 @@ return a.jeff
 			end)
 		end)
 	end)
+
+	it("handles missing documents ", function()
+		mock_loop(function(rpc)
+			local text = [[
+local a = require'fake1'
+return a.jeff
+]]
+			local doc = {
+				uri = "file:///tmp/fake2.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+
+			--[[ FIXME: This currently produces an error, which is bad.
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line = 1, character = 10} -- a.jeff
+			}, function(out)
+				assert.equal(doc1.uri, out.uri)
+				assert.same({line=1, character=2}, out.range.start)
+			end)
+			--]]
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line = 1, character = 8} -- a
+			}, function(out)
+				assert.equal(doc.uri, out.uri)
+				assert.same({line=0, character=6}, out.range.start)
+			end)
+		end)
+	end)
 end)

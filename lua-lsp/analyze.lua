@@ -310,7 +310,7 @@ local function gen_scopes(len, ast, uri)
 		end
 	end
 
-	local function save_return(a, expr)
+	local function save_return(a, return_node)
 		-- move the return value up to the closest enclosing scope
 		local mt
 		repeat
@@ -320,7 +320,11 @@ local function gen_scopes(len, ast, uri)
 			setmetatable(a, mt)
 		until mt.origin
 		mt._return = mt._return or {}
-		table.insert(mt._return, clean_value(expr))
+		local cleaned_exprs = {}
+		for _, return_expr in ipairs(return_node) do
+			table.insert(cleaned_exprs, clean_value(return_expr))
+		end
+		table.insert(mt._return, cleaned_exprs)
 	end
 
 	local function visit_expr(node, a)
@@ -411,17 +415,10 @@ local function gen_scopes(len, ast, uri)
 				end
 			end
 		elseif node.tag == "Return" then
-			local exprlist = node[1]
-			if exprlist and exprlist.tag then
-				local expr = exprlist
+			for _, expr in ipairs(node) do
 				visit_expr(expr, a)
-				save_return(a, expr)
-			elseif exprlist then
-				for _, expr in ipairs(exprlist) do
-					visit_expr(expr, a)
-					save_return(a, expr)
-				end
 			end
+			save_return(a, node)
 		elseif node.tag == "Local" then
 			local namelist,exprlist = node[1], node[2]
 			if exprlist then

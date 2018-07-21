@@ -134,6 +134,17 @@ local function merge_(a, b)
 	for k, v in pairs(b) do a[k] = v end
 end
 
+local function deduplicate_(tbl)
+	local used = {}
+	for i=#tbl, 1, -1 do
+		if used[tbl[i]] then
+			table.remove(tbl, i)
+		else
+			used[tbl[i]] = true
+		end
+	end
+end
+
 -- this is starting to get silly.
 local function make_items(k, val, isVariant, isInvoke)
 	local item = { label = k }
@@ -197,39 +208,36 @@ local function make_items(k, val, isVariant, isInvoke)
 			end
 
 			local ret = ""
-			local literals = {
-				String = "string", Number = "number", True = "bool",
-				False = "bool", Nil = "nil"
-			}
 			if val.scope then
 				local scope_mt = getmetatable(val.scope)
 				if scope_mt._return then
-					local types, values, noValues = {}, {}, false
-					for _, r in ipairs(scope_mt._return) do
-						if literals[r.tag] then
-							table.insert(types, literals[r.tag])
-							if not r[1] then
-								noValues = true
+					local sites = {}
+					for _, site in ipairs(scope_mt._return) do
+						local types, values, noValues = {}, {}, false
+						for _, r in ipairs(site) do
+							if r.tag == "Literal" then
+								table.insert(types, string.lower(r.tag))
+								table.insert(values, string.lower(r.value))
 							elseif r.tag == "String" then
-								table.insert(values, string.format("%q", r[1]))
-							elseif r.tag == "Number" then
-								table.insert(values, tostring(r[1]))
+								table.insert(types, "string")
+								table.insert(values, string.format("%q", r.value))
+							elseif r.tag == "Id" then
+								table.insert(types, r[1])
+								noValues = true
+							else
+								-- not useful types
+								--table.insert(types, r.tag)
+								noValues = true
 							end
-						elseif r.tag == "Id" then
-							table.insert(types, r[1])
-							noValues = true
+						end
+						if noValues then
+							table.insert(sites, table.concat(types, ", "))
 						else
-							-- not useful types
-							--table.insert(types, r.tag)
-							noValues = true
+							table.insert(sites, table.concat(values, ", "))
 						end
 					end
-					if noValues then
-						ret = table.concat(types, " | ")
-					else
-						ret = table.concat(values, "|")
-					end
-					--ret = "?"
+					deduplicate_(sites)
+					ret = table.concat(sites, " | ")
 				end
 			elseif val.returns then
 				ret = {}
@@ -387,12 +395,12 @@ local function getp(doc, t, k, isDefinition)
 
 	if value.tag == "Require" then
 		-- Resolve the return value of this module
-		local ref = analyze.module(value.module)
+		local ref = assert(analyze.module(value.module))
 		doc = ref
 		if ref then
 			-- start at file scope
 			local mt = ref.scopes and getmetatable(ref.scopes[2])
-			local ret = mt and mt._return and mt._return[1]
+			local ret = mt and mt._return and mt._return[1][1]
 			if ret and ret.tag == "Id" then
 				local _
 				_, value, doc = definition_of(ref, ret)
@@ -412,9 +420,9 @@ local function getp(doc, t, k, isDefinition)
 		key, v, doc = definition_of(doc, value.ref)
 		if v.scope then
 			local mt = v.scope and getmetatable(v.scope)
-			local rets = mt and mt._return or {}
+			local rets = mt and mt._return or {{}}
 			--for _, ret in ipairs(rets) do
-			local ret = rets[1]
+			local ret = rets[1][1]
 			-- overload. FIXME: this mutates the original which does
 			-- not make sense if its a copy
 			if ret.scope then
