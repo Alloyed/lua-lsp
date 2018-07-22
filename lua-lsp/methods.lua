@@ -279,7 +279,6 @@ local function make_items(k, val, isVariant, isInvoke)
 		end
 	end
 
-	item.kind = nil
 	return {item}
 end
 

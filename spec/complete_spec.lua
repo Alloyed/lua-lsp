@@ -44,7 +44,7 @@ describe("textDocument/completion", function()
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "mySymbol"}}
+					items = {{label = "mySymbol", kind = 6}}
 				}, out)
 				callme = true
 			end)
@@ -65,7 +65,7 @@ describe("textDocument/completion", function()
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "symbolA"},{label="symbolB"}}
+					items = {{label = "symbolA", kind = 6},{label="symbolB", kind = 6}}
 				}, out)
 				callme = true
 			end)
@@ -86,7 +86,7 @@ describe("textDocument/completion", function()
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "symbolC"}}
+					items = {{label = "symbolC", kind = 6}}
 				}, out)
 				callme = true
 			end)
@@ -119,7 +119,8 @@ return t
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = '<table>',
-					label  = 'tbl'
+					label  = 'tbl',
+					kind = 6,
 				}, out.items[1])
 				callme = true
 			end)
@@ -140,7 +141,7 @@ return t
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{detail = '"a"', label = "string"}}
+					items = {{detail = '"a"', label = "string", kind = 6}}
 				}, out)
 				callme = true
 			end)
@@ -155,7 +156,7 @@ return t
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{detail = '"a"', label = "string"}}
+					items = {{detail = '"a"', label = "string", kind = 6}}
 				}, out)
 				callme = true
 			end)
@@ -187,7 +188,8 @@ return tbl.a
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = 'M<mymod>',
-					label  = 'tbl'
+					label  = 'tbl',
+					kind = 9,
 				}, out.items[1])
 				callme = true
 			end)
@@ -219,7 +221,8 @@ return mystr.t
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = 'True',
-					label  = 'test_example'
+					label  = 'test_example',
+					kind = 6,
 				}, out.items[1])
 				callme = true
 			end)
@@ -250,7 +253,8 @@ return mytbl.j
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = '1',
-					label  = 'jeff'
+					label  = 'jeff',
+					kind = 6,
 				}, out.items[1])
 				callme = true
 			end)
@@ -319,6 +323,7 @@ return my_f
 					detail = '<function>',
 					label  = 'my_fun(...) ',
 					insertText = 'my_fun',
+					kind = 3,
 				}, out.items[1])
 				callme = true
 			end)
@@ -353,7 +358,8 @@ return mytbl.f
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = '"a"',
-					label  = 'field'
+					label  = 'field',
+					kind = 6,
 				}, out.items[1])
 				callme = true
 			end)
