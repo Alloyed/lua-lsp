@@ -357,7 +357,7 @@ return my_f
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = '<function>',
-					label  = 'my_fun(...) ',
+					label  = 'my_fun(...) -> <table>',
 					insertText = 'my_fun',
 					kind = completionKinds.Function,
 				}, out.items[1])

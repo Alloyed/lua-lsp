@@ -213,24 +213,27 @@ local function make_completion_items(k, val, isField, isInvoke, isVariant)
 				if scope_mt._return then
 					local sites = {}
 					for _, site in ipairs(scope_mt._return) do
-						local types, values, noValues = {}, {}, false
+						local types, values, missingValues = {}, {}, false
 						for _, r in ipairs(site) do
 							if r.tag == "Literal" then
-								table.insert(types, string.lower(r.tag))
+								local typename = ("<%s>"):format(r.tag:lower())
+								table.insert(types, typename)
 								table.insert(values, string.lower(r.value))
 							elseif r.tag == "String" then
-								table.insert(types, "string")
+								table.insert(types, "<string>")
 								table.insert(values, string.format("%q", r.value))
 							elseif r.tag == "Id" then
 								table.insert(types, r[1])
-								noValues = true
+								missingValues = true
 							else
 								-- not useful types
-								--table.insert(types, r.tag)
-								noValues = true
+								local typename = ("<%s>"):format(r.tag:lower())
+								table.insert(types, typename)
+								missingValues = true
 							end
 						end
-						if noValues then
+
+						if missingValues then
 							table.insert(sites, table.concat(types, ", "))
 						else
 							table.insert(sites, table.concat(values, ", "))

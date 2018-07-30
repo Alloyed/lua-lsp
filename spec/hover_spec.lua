@@ -136,6 +136,60 @@ end
 		end)
 	end)
 
+	it("handles table returns #atm", function()
+		mock_loop(function(rpc)
+			local text =  [[
+local function myfun()
+	return {}
+end
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/hover", {
+				textDocument = doc,
+				position = {line = 0, character = 16}
+			}, function(out)
+				assert.same({
+					contents = {'myfun() -> <table>\n'}
+				}, out)
+				callme = true
+			end)
+			assert.truthy(callme)
+		end)
+	end)
+
+	it("handles function returns", function()
+		mock_loop(function(rpc)
+			local text =  [[
+local function myfun()
+	return function() end
+end
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/hover", {
+				textDocument = doc,
+				position = {line = 0, character = 16}
+			}, function(out)
+				assert.same({
+					contents = {'myfun() -> <function>\n'}
+				}, out)
+				callme = true
+			end)
+			assert.truthy(callme)
+		end)
+	end)
+
 	it("handles named returns", function()
 		mock_loop(function(rpc)
 			local text =  [[
