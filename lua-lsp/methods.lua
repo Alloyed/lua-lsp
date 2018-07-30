@@ -34,7 +34,7 @@ function method_handlers.initialize(params, id)
 				save = { includeText = true },
 			},
 			hoverProvider = true,
-			documentSymbolProvider = false,
+			documentSymbolProvider = true,
 			--referencesProvider = false,
 			--documentHighlightProvider = false,
 			--workspaceSymbolProvider = false,
@@ -146,7 +146,7 @@ local function deduplicate_(tbl)
 end
 
 -- this is starting to get silly.
-local function make_items(k, val, isVariant, isInvoke)
+local function make_completion_items(k, val, isField, isInvoke, isVariant)
 	local item = { label = k }
 
 	if val then
@@ -157,12 +157,12 @@ local function make_items(k, val, isVariant, isInvoke)
 				merge_(fakeval, val)
 				fakeval.variants = nil
 				merge_(fakeval, variant)
-				local i = make_items(k, fakeval, true, isInvoke)
+				local i = make_completion_items(k, fakeval, isField, isInvoke, true)
 				table.insert(items, i[1])
 			end
 			return items
 		end
-		item.kind = completionKinds.Variable
+		item.kind = isField and completionKinds.Field or completionKinds.Variable
 		if val.tag == "Require" then
 			-- this is a module
 			item.kind = completionKinds.Module
@@ -561,7 +561,8 @@ method_handlers["textDocument/completion"] = function(params, id)
 					if type(iname) == "string" and
 						iname:sub(1, _iword:len()) == _iword then
 
-						local subitems = make_items(iname, val, false, is_method)
+						local is_field = true
+						local subitems = make_completion_items(iname, val, is_method, is_field)
 						for _, item in ipairs(subitems) do
 							table.insert(items, item)
 						end
@@ -585,7 +586,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 			if not used[iname] and (node.global or node.posEnd < pos) then
 				used[iname] = true
 				if iname:sub(1, word:len()) == word then
-					for _, item in ipairs(make_items(iname, val)) do
+					for _, item in ipairs(make_completion_items(iname, val)) do
 						table.insert(items, item)
 					end
 				end
@@ -659,13 +660,16 @@ method_handlers["textDocument/hover"] = function(params, id)
 	if symbol then
 		local contents = {}
 
-		local item = make_items(word, value, false, word:find(":"))
-		item = item[1]
+		local is_field = word:find("[:.]")
+		local is_method = word:find(":")
+		local items = make_completion_items(word, value, is_field, is_method)
 
 		if value.tag == "Function" then
+			local item = items[1]
 			table.insert(contents, item.label.."\n")
 			table.insert(contents, item.documentation)
 		end
+
 		return rpc.respond(id, {
 			contents = contents
 		})

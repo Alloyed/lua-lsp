@@ -1,5 +1,26 @@
 local mock_loop = require 'spec.mock_loop'
 
+local completionKinds = {
+	Text = 1,
+	Method = 2,
+	Function = 3,
+	Constructor = 4,
+	Field = 5,
+	Variable = 6,
+	Class = 7,
+	Interface = 8,
+	Module = 9,
+	Property = 10,
+	Unit = 11,
+	Value = 12,
+	Enum = 13,
+	Keyword = 14,
+	Snippet = 15,
+	Color = 16,
+	File = 17,
+	Reference = 18,
+}
+
 describe("textDocument/completion", function()
 	it("returns nothing with no symbols", function()
 		mock_loop(function(rpc)
@@ -44,7 +65,9 @@ describe("textDocument/completion", function()
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "mySymbol", kind = 6}}
+					items = {
+						{label = "mySymbol", kind = completionKinds.Variable}
+					}
 				}, out)
 				callme = true
 			end)
@@ -65,7 +88,10 @@ describe("textDocument/completion", function()
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "symbolA", kind = 6},{label="symbolB", kind = 6}}
+					items = {
+						{label = "symbolA", kind = completionKinds.Variable},
+						{label="symbolB", kind = completionKinds.Variable}
+					}
 				}, out)
 				callme = true
 			end)
@@ -86,7 +112,9 @@ describe("textDocument/completion", function()
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "symbolC", kind = 6}}
+					items = {
+						{label = "symbolC", kind = completionKinds.Variable}
+					}
 				}, out)
 				callme = true
 			end)
@@ -120,7 +148,7 @@ return t
 				assert.same({
 					detail = '<table>',
 					label  = 'tbl',
-					kind = 6,
+					kind = completionKinds.Variable,
 				}, out.items[1])
 				callme = true
 			end)
@@ -141,7 +169,11 @@ return t
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{detail = '"a"', label = "string", kind = 6}}
+					items = {{
+						detail = '"a"',
+						label = "string",
+						kind = completionKinds.Variable
+					}}
 				}, out)
 				callme = true
 			end)
@@ -156,7 +188,11 @@ return t
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{detail = '"a"', label = "string", kind = 6}}
+					items = {{
+						detail = '"a"',
+						label = "string",
+						kind = completionKinds.Variable
+					}}
 				}, out)
 				callme = true
 			end)
@@ -189,7 +225,7 @@ return tbl.a
 				assert.same({
 					detail = 'M<mymod>',
 					label  = 'tbl',
-					kind = 9,
+					kind = completionKinds.Module,
 				}, out.items[1])
 				callme = true
 			end)
@@ -222,7 +258,7 @@ return mystr.t
 				assert.same({
 					detail = 'True',
 					label  = 'test_example',
-					kind = 6,
+					kind = completionKinds.Variable,
 				}, out.items[1])
 				callme = true
 			end)
@@ -254,7 +290,7 @@ return mytbl.j
 				assert.same({
 					detail = '1',
 					label  = 'jeff',
-					kind = 6,
+					kind = completionKinds.Variable,
 				}, out.items[1])
 				callme = true
 			end)
@@ -323,7 +359,7 @@ return my_f
 					detail = '<function>',
 					label  = 'my_fun(...) ',
 					insertText = 'my_fun',
-					kind = 3,
+					kind = completionKinds.Function,
 				}, out.items[1])
 				callme = true
 			end)
@@ -359,7 +395,7 @@ return mytbl.f
 				assert.same({
 					detail = '"a"',
 					label  = 'field',
-					kind = 6,
+					kind = completionKinds.Variable,
 				}, out.items[1])
 				callme = true
 			end)
