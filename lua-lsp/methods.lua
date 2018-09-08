@@ -16,6 +16,7 @@ function method_handlers.initialize(params, id)
 	log.setTraceLevel(params.trace or "off")
 	log.info("Config.root = %q", Config.root)
 	analyze.load_completerc(Config.root)
+	analyze.load_luacheckrc(Config.root)
 	--ClientCapabilities = params.capabilities
 	Initialized = true
 
@@ -33,7 +34,7 @@ function method_handlers.initialize(params, id)
 				save = { includeText = true },
 			},
 			hoverProvider = true,
-			documentSymbolProvider = false,
+			documentSymbolProvider = true,
 			--referencesProvider = false,
 			--documentHighlightProvider = false,
 			--workspaceSymbolProvider = false,
@@ -133,8 +134,19 @@ local function merge_(a, b)
 	for k, v in pairs(b) do a[k] = v end
 end
 
+local function deduplicate_(tbl)
+	local used = {}
+	for i=#tbl, 1, -1 do
+		if used[tbl[i]] then
+			table.remove(tbl, i)
+		else
+			used[tbl[i]] = true
+		end
+	end
+end
+
 -- this is starting to get silly.
-local function make_items(k, val, isVariant, isInvoke)
+local function make_completion_items(k, val, isField, isInvoke, isVariant)
 	local item = { label = k }
 
 	if val then
@@ -145,12 +157,12 @@ local function make_items(k, val, isVariant, isInvoke)
 				merge_(fakeval, val)
 				fakeval.variants = nil
 				merge_(fakeval, variant)
-				local i = make_items(k, fakeval, true, isInvoke)
+				local i = make_completion_items(k, fakeval, isField, isInvoke, true)
 				table.insert(items, i[1])
 			end
 			return items
 		end
-		item.kind = completionKinds.Variable
+		item.kind = isField and completionKinds.Field or completionKinds.Variable
 		if val.tag == "Require" then
 			-- this is a module
 			item.kind = completionKinds.Module
@@ -165,9 +177,7 @@ local function make_items(k, val, isVariant, isInvoke)
 					-- method
 					if name.tag == "Dots" then
 						table.insert(sig, "...")
-					end
-
-					if isInvoke and not val_is_method then
+					elseif isInvoke and not val_is_method then
 						-- eat the first argument if it's not vararg
 						val_is_method = true
 					else
@@ -198,39 +208,39 @@ local function make_items(k, val, isVariant, isInvoke)
 			end
 
 			local ret = ""
-			local literals = {
-				String = "string", Number = "number", True = "bool",
-				False = "bool", Nil = "nil"
-			}
 			if val.scope then
 				local scope_mt = getmetatable(val.scope)
 				if scope_mt._return then
-					local types, values, noValues = {}, {}, false
-					for _, r in ipairs(scope_mt._return) do
-						if literals[r.tag] then
-							table.insert(types, literals[r.tag])
-							if not r[1] then
-								noValues = true
+					local sites = {}
+					for _, site in ipairs(scope_mt._return) do
+						local types, values, missingValues = {}, {}, false
+						for _, r in ipairs(site) do
+							if r.tag == "Literal" then
+								local typename = ("<%s>"):format(r.tag:lower())
+								table.insert(types, typename)
+								table.insert(values, string.lower(r.value))
 							elseif r.tag == "String" then
-								table.insert(values, string.format("%q", r[1]))
-							elseif r.tag == "Number" then
-								table.insert(values, tostring(r[1]))
+								table.insert(types, "<string>")
+								table.insert(values, string.format("%q", r.value))
+							elseif r.tag == "Id" then
+								table.insert(types, r[1])
+								missingValues = true
+							else
+								-- not useful types
+								local typename = ("<%s>"):format(r.tag:lower())
+								table.insert(types, typename)
+								missingValues = true
 							end
-						elseif r.tag == "Id" then
-							table.insert(types, r[1])
-							noValues = true
+						end
+
+						if missingValues then
+							table.insert(sites, table.concat(types, ", "))
 						else
-							-- not useful types
-							--table.insert(types, r.tag)
-							noValues = true
+							table.insert(sites, table.concat(values, ", "))
 						end
 					end
-					if noValues then
-						ret = table.concat(types, " | ")
-					else
-						ret = table.concat(values, "|")
-					end
-					--ret = "?"
+					deduplicate_(sites)
+					ret = table.concat(sites, " | ")
 				end
 			elseif val.returns then
 				ret = {}
@@ -272,7 +282,6 @@ local function make_items(k, val, isVariant, isInvoke)
 		end
 	end
 
-	item.kind = nil
 	return {item}
 end
 
@@ -372,11 +381,12 @@ end
 
 local definition_of
 --- Get pair(), and unpack them automatically
+-- @returns key, value, document
 local function getp(doc, t, k, isDefinition)
 	-- luacheck: ignore 542
 	local pair = t and t[k]
 	if not pair then
-		log("no pair for %q in %_", k, t)
+		log.debug("no pair for %q in %_", k, t)
 		return nil
 	end
 	local key, value = unpack(pair)
@@ -387,11 +397,12 @@ local function getp(doc, t, k, isDefinition)
 
 	if value.tag == "Require" then
 		-- Resolve the return value of this module
-		local ref = analyze.module(value.module)
+		local ref = assert(analyze.module(value.module))
 		doc = ref
 		if ref then
-			local mt = ref.scopes and getmetatable(ref.scopes[1])
-			local ret = mt and mt._return and mt._return[1]
+			-- start at file scope
+			local mt = ref.scopes and getmetatable(ref.scopes[2])
+			local ret = mt and mt._return and mt._return[1][1]
 			if ret and ret.tag == "Id" then
 				local _
 				_, value, doc = definition_of(ref, ret)
@@ -403,16 +414,17 @@ local function getp(doc, t, k, isDefinition)
 		-- We're resolving a string as a table, this means look at the
 		-- string metatable. This is encoded as looking for a global named
 		-- "string", which is true in the default lua impl, but can be
-		-- broken by crazy users doing setmetatable("", new_string)
+		-- broken by crazy users doing setmetatable("", new_string), which we
+		-- don't actually handle.
 		key, value, doc = definition_of(doc, {tag="Id", "string", pos=-1})
 	elseif value.tag == "Call" or value.tag == "Invoke" then
 		local v
 		key, v, doc = definition_of(doc, value.ref)
 		if v.scope then
 			local mt = v.scope and getmetatable(v.scope)
-			local rets = mt and mt._return or {}
+			local rets = mt and mt._return or {{}}
 			--for _, ret in ipairs(rets) do
-			local ret = rets[1]
+			local ret = rets[1][1]
 			-- overload. FIXME: this mutates the original which does
 			-- not make sense if its a copy
 			if ret.scope then
@@ -524,7 +536,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 	local line, char, pos = line_for(document, params.position)
 	local word = line.text:sub(1, char-1):match("[A-Za-z_][%w_.:]*$")
 	if not word then
-		log("%q: %_", line.text:sub(1, char-1), word)
+		log.debug("%q: %_", line.text:sub(1, char-1), word)
 	end
 
 	local items = {}
@@ -536,7 +548,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 			items = {}
 		})
 	end
-	log("looking for %q", word)
+	log.debug("looking for %q in scope id %d", word, getmetatable(scope).id)
 
 	if word:find("[:.]") then
 		local path_ids, _ = split_path(word)
@@ -547,12 +559,13 @@ method_handlers["textDocument/completion"] = function(params, id)
 			local last = ii == #path_ids
 			if last then
 				local is_method = not not word:find(":")
-				log("Is method? %_", is_method)
+				log.debug("Is method? %_", is_method)
 				for iname, _, val in iter_scope(_scope) do
 					if type(iname) == "string" and
 						iname:sub(1, _iword:len()) == _iword then
 
-						local subitems = make_items(iname, val, false, is_method)
+						local is_field = true
+						local subitems = make_completion_items(iname, val, is_method, is_field)
 						for _, item in ipairs(subitems) do
 							table.insert(items, item)
 						end
@@ -573,10 +586,10 @@ method_handlers["textDocument/completion"] = function(params, id)
 	else
 		-- variable scope
 		for iname, node, val in iter_scope(scope) do
-			if not used[iname] and node.posEnd < pos then
+			if not used[iname] and (node.global or node.posEnd < pos) then
 				used[iname] = true
 				if iname:sub(1, word:len()) == word then
-					for _, item in ipairs(make_items(iname, val)) do
+					for _, item in ipairs(make_completion_items(iname, val)) do
 						table.insert(items, item)
 					end
 				end
@@ -598,25 +611,28 @@ method_handlers["textDocument/definition"] = function(params, id)
 	local _, word_e = line.text:sub(char, -1):find("[%w_]*")
 	word_e = word_e + char - 1
 	local word = line.text:sub(word_s, word_e)
-	log("definition for %q", word)
+	log.debug("definition for %q", word)
 
 	local symbol, _, doc2 = definition_of(params.textDocument, params.position)
 
-	if not symbol or symbol.canGoto == false then
+	if not symbol or symbol.file == "__NONE__" then
 		-- symbol not found
-		log("Symbol not found: %q", word)
+		log.warning("Symbol not found: %q", word)
+		if symbol then
+			log.warning("did find: %t", symbol)
+		end
 		return rpc.respond(id, json.null)
 	end
 
 	local doc = document
 	if doc ~= doc2 then
-		log("defined in external file %q", doc2.uri)
+		log.debug("defined in external file %q", doc2.uri)
 	end
 
 	local sub = doc2.text:sub(symbol.pos, symbol.posEnd)
 	local word_end = word:match("([^.:]+)$")
 	local a, b = string.find(sub, word_end, 1, true)
-	log("find %q in %q", word_end, sub)
+	log.debug("find %q in %q", word_end, sub)
 	if not a then
 		error(("failed to find %q in %q\nword from %q")
 		:format(word_end, sub, doc2.uri))
@@ -641,19 +657,22 @@ method_handlers["textDocument/hover"] = function(params, id)
 	local _, word_e = line.text:sub(char, -1):find("[%w_]*")
 	word_e = word_e + char - 1
 	local word = line.text:sub(word_s, word_e)
-	log("hover for %q", word)
+	log.debug("hover for %q", word)
 
 	local symbol, value = definition_of(params.textDocument, params.position)
 	if symbol then
 		local contents = {}
 
-		local item = make_items(word, value, false, word:find(":"))
-		item = item[1]
+		local is_field = word:find("[:.]")
+		local is_method = word:find(":")
+		local items = make_completion_items(word, value, is_field, is_method)
 
 		if value.tag == "Function" then
+			local item = items[1]
 			table.insert(contents, item.label.."\n")
 			table.insert(contents, item.documentation)
 		end
+
 		return rpc.respond(id, {
 			contents = contents
 		})
@@ -673,10 +692,11 @@ method_handlers["textDocument/documentSymbol"] = function(params, id)
 	-- FIXME: report table keys too, like a.b.c
 	-- also consider making a linear list of symbols we can just iterate
 	-- through
-	for _, scope in ipairs(document.scopes) do
+	for i=1, #document.scopes do
+		local scope = document.scopes[i]
 		for _, pair in pairs(scope) do
 			local symbol, _ = unpack(pair)
-			if symbol.canGoto ~= false then
+			if symbol.file ~= "__NONE__" then
 				table.insert(symbols, {
 					name = symbol[1],
 					kind = 13,
@@ -697,7 +717,10 @@ method_handlers["textDocument/formatting"] = function(params, id)
 	end
 
 	local format = require 'lua-lsp.formatting'
-	local new = format.format(doc.text,{indent = indent})
+	local new = format.format(doc.text, {
+		indent = indent,
+		maxChars = 120,
+	})
 
 	rpc.respond(id, {
 		{
@@ -733,7 +756,7 @@ end
 method_handlers["workspace/didChangeConfiguration"] = function(params)
 	assert(params.settings)
 	merge_(Config, params.settings)
-	log("Config loaded, new config: %t", Config)
+	log.info("Config loaded, new config: %t", Config)
 end
 
 function method_handlers.shutdown(_, id)

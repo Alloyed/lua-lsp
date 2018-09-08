@@ -1,4 +1,9 @@
 local mock_loop = require 'spec.mock_loop'
+
+local function not_empty(t)
+	assert.not_same({}, t)
+end
+
 describe("textDocument/didOpen", function()
 	it("triggers", function()
 		mock_loop(function(rpc, s_rpc)
@@ -64,7 +69,7 @@ describe("textDocument/definition", function()
 		end)
 	end)
 
-	it("handles multiple symbols", function()
+	it("handles multiple symbols #tmp", function()
 		mock_loop(function(rpc)
 			local text =  "local jack\nlocal diane\n return jack, diane\n"
 			local doc = {
@@ -77,6 +82,7 @@ describe("textDocument/definition", function()
 				textDocument = doc,
 				position = {line = 2, character = 8} -- jack
 			}, function(out)
+				not_empty(out)
 				assert.same({line=0, character=6}, out.range.start)
 			end)
 
@@ -84,6 +90,7 @@ describe("textDocument/definition", function()
 				textDocument = doc,
 				position = {line = 2, character = 14} -- diane
 			}, function(out)
+				not_empty(out)
 				assert.same({line=1, character=6}, out.range.start)
 			end)
 		end)
@@ -106,6 +113,7 @@ describe("textDocument/definition", function()
 				textDocument = doc,
 				position = {line = 3, character = 8} -- jackv2
 			}, function(out)
+				not_empty(out)
 				assert.same({line=2, character=6}, out.range.start)
 			end)
 
@@ -113,6 +121,7 @@ describe("textDocument/definition", function()
 				textDocument = doc,
 				position = {line = 1, character = 0} -- jackv1
 			}, function(out)
+				not_empty(out)
 				assert.same({line=0, character=6}, out.range.start)
 			end)
 		end)
@@ -135,6 +144,7 @@ return jack.diane + jack.jill
 				textDocument = doc,
 				position = {line=2, character=12} -- jack.diane
 			}, function(out)
+				not_empty(out)
 				assert.same({line=0, character=15}, out.range.start)
 			end)
 
@@ -142,6 +152,7 @@ return jack.diane + jack.jill
 				textDocument = doc,
 				position = {line = 2, character = 25} -- jack.jill
 			}, function(out)
+				not_empty(out)
 				assert.same({line=1, character=5}, out.range.start)
 			end)
 		end)
@@ -166,6 +177,7 @@ return jack.diane() + jack.jill() + jack:little_ditty()
 				textDocument = doc,
 				position = {line=3, character=12} -- jack.diane
 			}, function(out)
+				not_empty(out)
 				assert.same({line=0, character=15}, out.range.start)
 			end)
 
@@ -180,6 +192,7 @@ return jack.diane() + jack.jill() + jack:little_ditty()
 				textDocument = doc,
 				position = {line=3, character=41} -- jack:little_ditty
 			}, function(out)
+				not_empty(out)
 				assert.same({line=2, character=14}, out.range.start)
 			end)
 		end)
@@ -200,6 +213,7 @@ return jack.diane() + jack.jill() + jack:little_ditty()
 				textDocument = doc,
 				position = {line = 1, character = 8} -- jackv2
 			}, function(out)
+				not_empty(out)
 				assert.same({line=0, character=13}, out.range.start)
 			end)
 		end)
@@ -219,6 +233,7 @@ return jack.diane() + jack.jill() + jack:little_ditty()
 				textDocument = doc,
 				position = {line = 1, character = 8} -- jackv2
 			}, function(out)
+				not_empty(out)
 				assert.same({line=0, character=7}, out.range.start)
 			end)
 		end)
@@ -245,6 +260,7 @@ return jack.diane() + jack.jill() + jack:little_ditty()
 				textDocument = doc,
 				position = {line = 2, character = 8} -- jackv2
 			}, function(out)
+				not_empty(out)
 				assert.same({line=0, character=6}, out.range.start)
 			end)
 		end)
@@ -283,6 +299,39 @@ return a.jeff
 				assert.equal(doc1.uri, out.uri)
 				assert.same({line=1, character=2}, out.range.start)
 			end)
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line = 1, character = 8} -- a
+			}, function(out)
+				assert.equal(doc.uri, out.uri)
+				assert.same({line=0, character=6}, out.range.start)
+			end)
+		end)
+	end)
+
+	it("handles missing documents ", function()
+		mock_loop(function(rpc)
+			local text = [[
+local a = require'fake1'
+return a.jeff
+]]
+			local doc = {
+				uri = "file:///tmp/fake2.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+
+			--[[ FIXME: This currently produces an error, which is bad.
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = {line = 1, character = 10} -- a.jeff
+			}, function(out)
+				assert.equal(doc1.uri, out.uri)
+				assert.same({line=1, character=2}, out.range.start)
+			end)
+			--]]
 
 			rpc.request("textDocument/definition", {
 				textDocument = doc,

@@ -3,6 +3,7 @@ return function(fn, builtins)
 	local unpack  = table.unpack or unpack
 	_G.Types = {}
 	_G.Documents = {}
+	_G.Globals = nil
 	_G.Config = {
 		packagePath={"/tmp/?.lua"},
 		builtins = builtins or {},

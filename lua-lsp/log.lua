@@ -136,6 +136,7 @@ function log.debug(...)
 		--})
 	end
 end
+log.d = log.debug
 
 setmetatable(log, {
 	__call = function(_, ...)

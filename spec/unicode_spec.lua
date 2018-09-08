@@ -61,5 +61,9 @@ describe("utf8 bytes <-> utf16 code units", function()
 		s = "🤔🤔🤔🤔"
 		assert.equal(9, unicode.to_bytes(s, 4))
 		assert.equal(4, unicode.to_codeunits(s, 9))
+
+		s = "ℤ is the set of integers"
+		assert.equal(6, unicode.to_bytes(s, 3))
+		assert.equal(3, unicode.to_codeunits(s, 6))
 	end)
 end)

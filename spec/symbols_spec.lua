@@ -76,6 +76,7 @@ describe("textDocument/documentSymbol", function()
 			rpc.request("textDocument/documentSymbol", {
 				textDocument = doc,
 			}, function(out)
+				assert.not_same({}, out)
 				local set = {}
 				for _, o in ipairs(out) do set[o.name] = o.kind end
 				assert.same({

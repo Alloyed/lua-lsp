@@ -14,11 +14,20 @@ describe("log.fmt", function()
 		log.fmt("%_ %_", t1, t2))
 	end)
 	it("handles %t", function()
-		assert.equal('{ "a", "b", "c" }',
-		log.fmt("%t", {"a", "b", "c"}))
+		assert.equal(
+			'{ "a", "b", "c" }',
+			log.fmt("%t", {"a", "b", "c"}))
 
-		assert.equal('{ 1,\n  <metatable> = {}\n} { 2 }',
-		log.fmt("%t %t", setmetatable({1}, {}), {2}))
+		assert.equal(
+			'{ 1,\n  <metatable> = {}\n} { 2 }',
+			log.fmt("%t %t", setmetatable({1}, {}), {2}))
+
+		local totable = {totable = function()
+			return {13}
+		end}
+		assert.equal(
+			'12 { 13 }',
+			log.fmt("%t %t", 12, totable))
 	end)
 	it("handles numeric args", function()
 		assert.equal("12 nil",
@@ -90,5 +99,18 @@ describe("log levels", function()
 		log.error("e")
 
 		assert.stub(log.file.write).was.called(5)
+	end)
+
+	it("can fatal error", function()
+		log.setTraceLevel("verbose")
+		log.file = {write = function() end}
+		io.write = log.file.write
+		stub(log.file, "write")
+
+		assert.has_error(function()
+			log.fatal("e")
+		end)
+
+		assert.stub(log.file.write).was.called(1)
 	end)
 end)

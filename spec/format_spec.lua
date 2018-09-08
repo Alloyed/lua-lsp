@@ -1,9 +1,18 @@
 local mock_loop = require 'spec.mock_loop'
 local fmt = require 'lua-lsp.formatting'
 
-if fmt.driver == "noop" then return end
+local match = string.match
+local function trim(s)
+  return match(s,'^()%s*$') and '' or match(s,'^%s*(.*%S)')
+end
+
 
 describe("textDocument/formatting", function()
+	if fmt.driver == "noop" then
+		pending("can't run: No formatter installed", function() end)
+		return
+	end
+
 	it("works", function()
 		mock_loop(function(rpc)
 			-- luacheck: push ignore
@@ -42,6 +51,10 @@ end
 					start={line=0, character=0},
 					["end"]={line=6, character=3}
 				}, out.range)
+				-- LCF does not do a final empty line, so trim to get rid of
+				-- the difference
+				formatted = trim(formatted)
+				out.newText = trim(out.newText)
 				assert.same(formatted, out.newText)
 				callme = true
 			end)
@@ -50,6 +63,11 @@ end
 	end)
 end)
 describe("textDocument/rangeFormatting", function()
+	if fmt.driver == "noop" then
+		pending("can't run: No formatter installed", function() end)
+		return
+	end
+
 	it("works", function()
 		mock_loop(function(rpc)
 			-- luacheck: push ignore

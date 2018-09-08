@@ -1,5 +1,26 @@
 local mock_loop = require 'spec.mock_loop'
 
+local completionKinds = {
+	Text = 1,
+	Method = 2,
+	Function = 3,
+	Constructor = 4,
+	Field = 5,
+	Variable = 6,
+	Class = 7,
+	Interface = 8,
+	Module = 9,
+	Property = 10,
+	Unit = 11,
+	Value = 12,
+	Enum = 13,
+	Keyword = 14,
+	Snippet = 15,
+	Color = 16,
+	File = 17,
+	Reference = 18,
+}
+
 describe("textDocument/completion", function()
 	it("returns nothing with no symbols", function()
 		mock_loop(function(rpc)
@@ -44,7 +65,9 @@ describe("textDocument/completion", function()
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "mySymbol"}}
+					items = {
+						{label = "mySymbol", kind = completionKinds.Variable}
+					}
 				}, out)
 				callme = true
 			end)
@@ -65,7 +88,10 @@ describe("textDocument/completion", function()
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "symbolA"},{label="symbolB"}}
+					items = {
+						{label = "symbolA", kind = completionKinds.Variable},
+						{label="symbolB", kind = completionKinds.Variable}
+					}
 				}, out)
 				callme = true
 			end)
@@ -86,7 +112,9 @@ describe("textDocument/completion", function()
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{label = "symbolC"}}
+					items = {
+						{label = "symbolC", kind = completionKinds.Variable}
+					}
 				}, out)
 				callme = true
 			end)
@@ -119,7 +147,8 @@ return t
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = '<table>',
-					label  = 'tbl'
+					label  = 'tbl',
+					kind = completionKinds.Variable,
 				}, out.items[1])
 				callme = true
 			end)
@@ -140,7 +169,11 @@ return t
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{detail = '"a"', label = "string"}}
+					items = {{
+						detail = '"a"',
+						label = "string",
+						kind = completionKinds.Variable
+					}}
 				}, out)
 				callme = true
 			end)
@@ -155,7 +188,11 @@ return t
 				end)
 				assert.same({
 					isIncomplete = false,
-					items = {{detail = '"a"', label = "string"}}
+					items = {{
+						detail = '"a"',
+						label = "string",
+						kind = completionKinds.Variable
+					}}
 				}, out)
 				callme = true
 			end)
@@ -187,7 +224,8 @@ return tbl.a
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = 'M<mymod>',
-					label  = 'tbl'
+					label  = 'tbl',
+					kind = completionKinds.Module,
 				}, out.items[1])
 				callme = true
 			end)
@@ -219,7 +257,8 @@ return mystr.t
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = 'True',
-					label  = 'test_example'
+					label  = 'test_example',
+					kind = completionKinds.Variable,
 				}, out.items[1])
 				callme = true
 			end)
@@ -250,7 +289,8 @@ return mytbl.j
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = '1',
-					label  = 'jeff'
+					label  = 'jeff',
+					kind = completionKinds.Variable,
 				}, out.items[1])
 				callme = true
 			end)
@@ -292,6 +332,42 @@ return nonexistent.a
 		end, {"_test"})
 	end)
 
+	it("can resolve varargs", function()
+		mock_loop(function(rpc)
+			local text =  [[
+function my_fun(...)
+	return { ... }
+end
+return my_f
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 3, character = 11}
+			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
+				assert.equal(1, #out.items)
+				assert.same({
+					detail = '<function>',
+					label  = 'my_fun(...) -> <table>',
+					insertText = 'my_fun',
+					kind = completionKinds.Function,
+				}, out.items[1])
+				callme = true
+			end)
+			assert.truthy(callme)
+		end)
+	end)
+
+
 	it("can resolve simple function returns", function()
 		mock_loop(function(rpc)
 			local text =  [[
@@ -318,7 +394,8 @@ return mytbl.f
 				assert.equal(1, #out.items)
 				assert.same({
 					detail = '"a"',
-					label  = 'field'
+					label  = 'field',
+					kind = completionKinds.Variable,
 				}, out.items[1])
 				callme = true
 			end)

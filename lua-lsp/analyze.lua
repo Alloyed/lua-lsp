@@ -12,7 +12,7 @@ local TOPLEVEL = {}
 --- turn a luacomplete type into a lsp value
 local function translate_luacomplete(into, data)
 	local function visit_field(key, value, scope)
-		local Id = {tag = "Id", key, pos=0, posEnd=0, canGoto = false}
+		local Id = {tag = "Id", key, pos=0, posEnd=0, file = "__NONE__"}
 		if value.type == "table" then
 			local fields
 			if key == TOPLEVEL then
@@ -73,18 +73,48 @@ local function set(...)
 	return t
 end
 
-local function gen_scopes(len, ast)
-	local scopes = {setmetatable({},{pos=0, posEnd=len+1, origin="file"})}
-	for _, builtin in ipairs(Config.builtins) do
-		local info = require('lua-lsp.data.'..builtin)
-		if info.global then
-			translate_luacomplete(scopes[1], info.global)
+local GLOBAL_SCOPE = 1
+local FILE_SCOPE   = 2
+
+local function gen_scopes(len, ast, uri)
+	if not Globals then
+		-- FIXME: we need to teach the rest of the system that it's okay for a
+		-- scopes to not have positions
+		Globals = setmetatable({},{
+			id=GLOBAL_SCOPE, pos=0, posEnd=math.huge, origin="global"
+		})
+		Globals._G = {{
+			"_G",
+			tag = "Id",
+			pos = 0,
+			posEnd = 0,
+			file = "__NONE__",
+			global = true,
+		}, {
+			tag = "Table",
+			pos = 0,
+			posEnd = 0,
+			scope = Globals,
+		}}
+		for _, builtin in ipairs(Config.builtins) do
+			local info = require('lua-lsp.data.'..builtin)
+			if info.global then
+				translate_luacomplete(Globals, info.global)
+			end
+		end
+
+		if Config.complete and Config.complete.global then
+			translate_luacomplete(Globals, Config.complete.global)
 		end
 	end
 
-	if Config.complete and Config.complete.global then
-		translate_luacomplete(scopes[1], Config.complete.global)
-	end
+	local scopes = {
+		Globals,
+		setmetatable({},{
+			__index = Globals, id=FILE_SCOPE,
+			pos=0, posEnd=len+1, origin="file"
+		}),
+	}
 
 	local visit_stat
 
@@ -99,6 +129,7 @@ local function gen_scopes(len, ast)
 				tag = value.tag == "String" and "String" or "Literal",
 				pos = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 				value = value[1] or value.tag
 			}
 		elseif value.tag == "Table" then
@@ -106,6 +137,7 @@ local function gen_scopes(len, ast)
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 				scope = value.scope or {},
 			}
 		elseif value.tag == "Call" then
@@ -129,6 +161,7 @@ local function gen_scopes(len, ast)
 				tag    = value.tag,
 				pos    = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 				ref    = value[1],
 				_value = value
 			}
@@ -138,6 +171,7 @@ local function gen_scopes(len, ast)
 				tag    = value.tag,
 				pos    = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 				ref    = value[1],
 				_value = value
 			}
@@ -146,6 +180,7 @@ local function gen_scopes(len, ast)
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 				scope = value.scope,
 				arguments = value[1],
 				signature = nil
@@ -155,12 +190,15 @@ local function gen_scopes(len, ast)
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
 			}
 		elseif value.tag == "Id" then
 			return { value[1],
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
+				file = uri,
+				global = value.global,
 			}
 		end
 		--log("unknown obj %t1", value)
@@ -266,11 +304,13 @@ local function gen_scopes(len, ast)
 			a[k][2] = clean_value(value)
 		else
 			-- this is a new global var
-			scopes[1][k] = {key, clean_value(value)}
+			key.global = true
+			key.file   = uri
+			scopes[GLOBAL_SCOPE][k] = {key, clean_value(value)}
 		end
 	end
 
-	local function save_return(a, expr)
+	local function save_return(a, return_node)
 		-- move the return value up to the closest enclosing scope
 		local mt
 		repeat
@@ -280,7 +320,11 @@ local function gen_scopes(len, ast)
 			setmetatable(a, mt)
 		until mt.origin
 		mt._return = mt._return or {}
-		table.insert(mt._return, clean_value(expr))
+		local cleaned_exprs = {}
+		for _, return_expr in ipairs(return_node) do
+			table.insert(cleaned_exprs, clean_value(return_expr))
+		end
+		table.insert(mt._return, cleaned_exprs)
 	end
 
 	local function visit_expr(node, a)
@@ -371,17 +415,10 @@ local function gen_scopes(len, ast)
 				end
 			end
 		elseif node.tag == "Return" then
-			local exprlist = node[1]
-			if exprlist and exprlist.tag then
-				local expr = exprlist
+			for _, expr in ipairs(node) do
 				visit_expr(expr, a)
-				save_return(a, expr)
-			elseif exprlist then
-				for _, expr in ipairs(exprlist) do
-					visit_expr(expr, a)
-					save_return(a, expr)
-				end
 			end
+			save_return(a, node)
 		elseif node.tag == "Local" then
 			local namelist,exprlist = node[1], node[2]
 			if exprlist then
@@ -439,11 +476,11 @@ local function gen_scopes(len, ast)
 				end
 			end
 		elseif node.tag == "Comment" then
-			log("found comment <%d, %d>", node.pos, node.posEnd)
+			log.debug("found comment <%d, %d>", node.pos, node.posEnd)
 		end
 	end
 
-	visit_stat(ast, scopes[1])
+	visit_stat(ast, scopes[FILE_SCOPE])
 	return scopes
 end
 
@@ -560,7 +597,7 @@ function analyze.refresh(document)
 	if ast then
 		document.ast = ast
 		document.validtext = document.text
-		document.scopes = gen_scopes(#document.text, document.ast)
+		document.scopes = gen_scopes(#document.text, document.ast, document.uri)
 		try_luacheck(document)
 	else
 		document.dirty = lcp{document.text, document.validtext}
@@ -667,7 +704,7 @@ local function add_types(new_types)
 	end
 end
 
---- load a .luacompleterc file into Config, for later using
+--- load a .luacompleterc file into Config, for later use
 function analyze.load_completerc(root)
 	local f = io.open(root.."/.luacompleterc")
 	if f then
@@ -707,6 +744,29 @@ function analyze.load_completerc(root)
 			end
 		else
 			log.warning(".luacompleterc: %s", tostring(err))
+		end
+	end
+end
+
+--- Create table from vararg, skipping nil values
+local function skip(...)
+	local t = {}
+	for i=1, select('#', ...) do
+		-- nil values won't increment length
+		t[#t+1] = select(i, ...)
+	end
+	return t
+end
+
+--- Load a .luacheckrc into Config for later use
+function analyze.load_luacheckrc(root)
+	if luacheck then
+		local cfg = require 'luacheck.config'
+		-- stack_configs is not in release builds of luacheck yet
+		if cfg.stack_configs then
+			local default = cfg.load_config()
+			local current = cfg.load_config(root.."/.luacheckrc")
+			Config.luacheckrc = cfg.stack_configs(skip(default, current))
 		end
 	end
 end
