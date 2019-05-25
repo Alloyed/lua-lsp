@@ -17,5 +17,5 @@ TREE="/tmp/lsptest"
 eval $($LUAROCKS path --tree="$TREE")
 $LUAROCKS make --tree="$TREE"
 cd "$TREE/.."
-$LUA -l lua-lsp.loop -e "print('loaded succesfully!')os.exit(0)"
+$LUA -l tarantool-lsp.loop -e "print('loaded succesfully!')os.exit(0)"
 rm -r "$TREE"

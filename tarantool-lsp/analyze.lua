@@ -1,8 +1,8 @@
 -- Analysis engine
-local parser       = require 'lua-lsp.lua-parser.parser'
-local log          = require 'lua-lsp.log'
-local rpc          = require 'lua-lsp.rpc'
-local json         = require 'dkjson'
+local parser       = require 'tarantool-lsp.lua-parser.parser'
+local log          = require 'tarantool-lsp.log'
+local rpc          = require 'tarantool-lsp.rpc'
+local json         = require 'json'
 local ok, luacheck = pcall(require, 'luacheck')
 if not ok then luacheck = nil end
 
@@ -97,7 +97,7 @@ local function gen_scopes(len, ast, uri)
 			scope = Globals,
 		}}
 		for _, builtin in ipairs(Config.builtins) do
-			local info = require('lua-lsp.data.'..builtin)
+			local info = require('tarantool-lsp.data.'..builtin)
 			if info.global then
 				translate_luacomplete(Globals, info.global)
 			end
@@ -593,7 +593,9 @@ function analyze.refresh(document)
 	document.lines = lines
 
 	local start_time = os.clock()
+	log.info('ast start build! %s %s', document.text, document.uri)
 	local ast, err = parser.parse(document.text, document.uri, Config.language)
+	log.info('ast builded!')
 	if ast then
 		document.ast = ast
 		document.validtext = document.text
@@ -728,7 +730,7 @@ function analyze.load_completerc(root)
 			end
 
 			for _, builtin in ipairs(Config.builtins) do
-				local info = require('lua-lsp.data.'..builtin)
+				local info = require('tarantool-lsp.data.'..builtin)
 				if info.namedTypes then
 					add_types(info.namedTypes)
 				end

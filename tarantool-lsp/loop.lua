@@ -1,14 +1,14 @@
-local rpc             = require 'lua-lsp.rpc'
-local log             = require 'lua-lsp.log'
-local method_handlers = require 'lua-lsp.methods'
+local rpc             = require 'tarantool-lsp.rpc'
+local log             = require 'tarantool-lsp.log'
+local method_handlers = require 'tarantool-lsp.methods'
 
 _G.Types = _G.Types or {}
 _G.Documents = _G.Documents or {}
 _G.Globals = _G.Globals -- defined in analyze.lua
 -- selfish default
 _G.Config = _G.Config or {
-	language = "5.3",
-	builtins = {"5_3"},
+	language = "5.1",
+	builtins = {"5_1"},
 	packagePath = {"./?.lua"},
 	debugMode = false,
 	_useNativeLuacheck = false -- underscore means "experimental" here
@@ -21,19 +21,19 @@ end
 
 local function reload_all()
 	for name, _ in pairs(package.loaded) do
-		if name:find("^lua%-lsp") and name ~= 'lua-lsp.log' then
+		if name:find("^lua%-lsp") and name ~= 'tarantool-lsp.log' then
 			package.loaded[name] = nil
 		end
 	end
 	log.verbose("===========================")
-	method_handlers = require 'lua-lsp.methods'
+	method_handlers = require 'tarantool-lsp.methods'
 end
 
 local function main(_)
 	while not Shutdown do
 		-- header
 		local data, err = rpc.decode()
-
+		log.info('new request %t', data)
 		if _G.Config.debugMode then
 			reload_all()
 		end
@@ -70,6 +70,8 @@ local function main(_)
 			log("client error:%s", data.error.message)
 		end
 	end
+
+	os.exit(0)
 end
 
 return main

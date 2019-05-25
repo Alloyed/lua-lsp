@@ -435,10 +435,10 @@ G["5.3"] = { V"Lua",
            + P"r" / "\r"
            + P"t" / "\t"
            + P"v" / "\v"
- 
+
            + P"\n" / "\n"
            + P"\r" / "\n"
- 
+
            + P"\\" / "\\"
            + P"\"" / "\""
            + P"\'" / "\'"
@@ -450,7 +450,7 @@ G["5.3"] = { V"Lua",
            + P"u" * expect("{", "OBraceUEsc")
                   * expect(C(xdigit^1), "DigitUEsc") * Cc(16)
                   * expect("}", "CBraceUEsc")
-                  / tonumber 
+                  / tonumber
                   / (utf8 and utf8.char or string.char)  -- true max is \u{10FFFF}
                                                          -- utf8.char needs Lua 5.3
                                                          -- string.char works only until \u{FF}
@@ -593,7 +593,7 @@ G["luajit"].Long     = (S"Uu"^-1) * S"Ll" * S"Ll";
 
 local parser = {}
 
-local validator = require("lua-lsp.lua-parser.validator")
+local validator = require("tarantool-lsp.lua-parser.validator")
 local validate = validator.validate
 local syntaxerror = validator.syntaxerror
 
@@ -603,11 +603,13 @@ function parser.parse(subject, filename, version)
   end
   local errorinfo = { subject = subject, filename = filename }
   lpeg.setmaxstack(1000)
-  local ast, label, errpos = lpeg.match(G[version], subject, nil, errorinfo)
+  local ast, label, errpos = lpeg.match(G["5.3"], subject, nil, errorinfo)
+  require('log').info('hello')
   if not ast then
     local errmsg = labels[label][2]
     return ast, syntaxerror(errorinfo, errpos, errmsg)
   end
+
   return validate(ast, errorinfo)
 end
 

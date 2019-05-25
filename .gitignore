@@ -1,2 +1,13 @@
 test.lua
 .luacheckcache
+
+# Tarantool-specific files
+**/**.snap
+**/**.xlog
+/.rocks
+
+# Logging
+log.txt
+**/**.log
+work_log.md
+

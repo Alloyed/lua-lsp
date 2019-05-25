@@ -8,7 +8,7 @@ describe("textDocument/didOpen", function()
 	it("triggers", function()
 		mock_loop(function(rpc, s_rpc)
 			spy.on(s_rpc, "notify")
-			local methods = require 'lua-lsp.methods'
+			local methods = require 'tarantool-lsp.methods'
 			local opened = spy.on(methods, "textDocument/didOpen")
 			local text =  "local jeff = nil \n return jeff"
 			rpc.notify("textDocument/didOpen", {

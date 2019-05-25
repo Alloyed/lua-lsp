@@ -1,5 +1,5 @@
 -- luacheck: ignore 122
-local log = require 'lua-lsp.log'
+local log = require 'tarantool-lsp.log'
 
 describe("log.fmt", function()
 	it("handles %_", function()

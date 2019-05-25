@@ -1,7 +1,7 @@
 --- This wraps over the existing lua code formatters. There's no actively
 --  maintained solution that solves everyone's problems, unfortunately.
 
-local log = require 'lua-lsp.log'
+local log = require 'tarantool-lsp.log'
 
 local drivers = {}
 

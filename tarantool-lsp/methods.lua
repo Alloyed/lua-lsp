@@ -1,9 +1,9 @@
 -- the actual meat and potatos of the app
-local analyze = require 'lua-lsp.analyze'
-local rpc     = require 'lua-lsp.rpc'
-local log     = require 'lua-lsp.log'
-local utf     = require 'lua-lsp.unicode'
-local json    = require 'dkjson'
+local analyze = require 'tarantool-lsp.analyze'
+local rpc     = require 'tarantool-lsp.rpc'
+local log     = require 'tarantool-lsp.log'
+local utf     = require 'tarantool-lsp.unicode'
+local json    = require 'json'
 local unpack  = table.unpack or unpack
 
 local method_handlers = {}
@@ -13,13 +13,15 @@ function method_handlers.initialize(params, id)
 		error("already initialized!")
 	end
 	Config.root  = params.rootPath or params.rootUri
-	log.setTraceLevel(params.trace or "off")
+	-- Some LSP clients doen't provide capabilities for change 'trace' option
+	-- and user options can override
+	log.setTraceLevel(params.initializationOptions and params.initializationOptions.trace
+					  or params.trace or "off")
 	log.info("Config.root = %q", Config.root)
 	analyze.load_completerc(Config.root)
 	analyze.load_luacheckrc(Config.root)
 	--ClientCapabilities = params.capabilities
 	Initialized = true
-
 	-- hopefully this is modest enough
 	return rpc.respond(id, {
 		capabilities = {
@@ -297,6 +299,7 @@ local function iter_scope(scope)
 		end
 	end)
 end
+
 
 local function make_position(document, pos)
 	-- HACK: I'm not entirely sure why the AST is spitting out indexes larger
@@ -597,6 +600,11 @@ method_handlers["textDocument/completion"] = function(params, id)
 		end
 	end
 
+	-- Add Tarantool box.* space fields
+	for key, _ in pairs(box) do
+		table.insert(items, { label = key} )
+	end
+
 	return rpc.respond(id, {
 		isIncomplete = false,
 		items = items
@@ -716,7 +724,7 @@ method_handlers["textDocument/formatting"] = function(params, id)
 		indent = string.rep(" ", params.options.tabSize)
 	end
 
-	local format = require 'lua-lsp.formatting'
+	local format = require 'tarantool-lsp.formatting'
 	local new = format.format(doc.text, {
 		indent = indent,
 		maxChars = 120,
@@ -736,7 +744,7 @@ method_handlers["textDocument/rangeFormatting"] = function(params, id)
 	if params.options.insertSpaces then
 		indent = string.rep(" ", params.options.tabSize)
 	end
-	local format = require 'lua-lsp.formatting'
+	local format = require 'tarantool-lsp.formatting'
 	local new = format.format(doc.text,{indent = indent})
 
 	local _, _, sidx = line_for(doc, params.range.start)

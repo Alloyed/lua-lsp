@@ -1,5 +1,5 @@
 local mock_loop = require 'spec.mock_loop'
-local fmt = require 'lua-lsp.formatting'
+local fmt = require 'tarantool-lsp.formatting'
 
 local match = string.match
 local function trim(s)

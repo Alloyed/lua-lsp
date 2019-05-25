@@ -13,7 +13,7 @@ return function(fn, builtins)
 	_G.Initialized = false
 
 	local s_rpc = {}
-	package.loaded['lua-lsp.rpc'] = s_rpc
+	package.loaded['tarantool-lsp.rpc'] = s_rpc
 	function s_rpc.respond(id, result)
 		Args = {{id=id, result = result}}
 	end
@@ -30,7 +30,7 @@ return function(fn, builtins)
 	end
 	function s_rpc.finish()
 	end
-	local method_handlers = require 'lua-lsp.methods'
+	local method_handlers = require 'tarantool-lsp.methods'
 
 	local c_rpc = {next_id = 0}
 	function c_rpc.respond(_, _)
@@ -77,4 +77,3 @@ return function(fn, builtins)
 		end
 	end
 end
-

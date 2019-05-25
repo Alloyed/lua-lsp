@@ -1,11 +1,12 @@
-local rpc     = require 'lua-lsp.rpc'
+local rpc     = require 'tarantool-lsp.rpc'
 local inspect = require 'inspect'
+
+-- Using logger wrapper for LSP server log supports
+local tnt_logger = require 'log'
 
 local log = {}
 
-log.file = io.stderr
-
-log.enabled = { default = false, verbose = false }
+log.enabled = { default = true, verbose = true }
 
 local function pack(...)
 	return {n = select('#', ...), ...}
@@ -68,7 +69,7 @@ local message_types = { error = 1, warning = 2, info = 3, log = 4 }
 function log.info(...)
 	if log.enabled.default then
 		local msg = log.fmt(...)
-		log.file:write(msg, "\n")
+		tnt_logger.info(msg)
 
 		rpc.notify("window/logMessage", {
 			message = msg,
@@ -80,7 +81,7 @@ end
 function log.warning(...)
 	if log.enabled.default then
 		local msg = log.fmt(...)
-		log.file:write(msg, "\n")
+		tnt_logger.warn(msg)
 
 		rpc.notify("window/logMessage", {
 			message = msg,
@@ -92,7 +93,7 @@ end
 function log.error(...)
 	if log.enabled.default then
 		local msg = log.fmt(...)
-		log.file:write(msg, "\n")
+		tnt_logger.error(msg)
 
 		rpc.notify("window/logMessage", {
 			message = msg,
@@ -110,7 +111,7 @@ end
 function log.verbose(...)
 	if log.enabled.verbose then
 		local msg = log.fmt(...)
-		log.file:write(msg, "\n")
+		tnt_logger.verbose(msg)
 
 		rpc.notify("window/logMessage", {
 			message = msg,
@@ -128,7 +129,7 @@ function log.debug(...)
 			info.short_src,
 			info.currentline)
 
-		log.file:write(pre, msg, "\n")
+		tnt_logger.debug(pre, msg, "\n")
 
 		--rpc.notify("window/logMessage", {
 		--	message = msg,
@@ -148,7 +149,7 @@ setmetatable(log, {
 			info.short_src,
 			info.currentline)
 
-			log.file:write(pre, msg, "\n")
+			tnt_logger.verbose(pre, msg)
 
 			--rpc.notify("window/logMessage", {
 			--	message = msg,
@@ -159,4 +160,3 @@ setmetatable(log, {
 })
 
 return log
-

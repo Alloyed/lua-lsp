@@ -1,4 +1,4 @@
-local unicode = require 'lua-lsp.unicode'
+local unicode = require 'tarantool-lsp.unicode'
 
 local unpack = unpack or table.unpack
 

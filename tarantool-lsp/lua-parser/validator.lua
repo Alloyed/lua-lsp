@@ -1,7 +1,7 @@
 --[[
 This module impements a validator for the AST
 ]]
-local scope = require "lua-lsp.lua-parser.scope"
+local scope = require "tarantool-lsp.lua-parser.scope"
 
 local lineno = scope.lineno
 local new_scope, end_scope = scope.new_scope, scope.end_scope

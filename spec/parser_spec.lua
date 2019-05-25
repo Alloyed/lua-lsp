@@ -45,7 +45,7 @@ describe("lua-parser in mock loop", function()
 	end)
 end)
 
-local parser = require 'lua-lsp.lua-parser.parser'
+local parser = require 'tarantool-lsp.lua-parser.parser'
 
 describe("lua-parser version differences:", function()
 	it("cdata numbers", function()
