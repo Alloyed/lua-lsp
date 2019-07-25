@@ -33,7 +33,6 @@ local function main(_)
 	while not Shutdown do
 		-- header
 		local data, err = rpc.decode()
-		log.info('new request %t', data)
 		if _G.Config.debugMode then
 			reload_all()
 		end

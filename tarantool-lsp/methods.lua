@@ -6,6 +6,7 @@ local utf     = require 'tarantool-lsp.unicode'
 local json    = require 'json'
 local unpack  = table.unpack or unpack
 
+local console = require('console')
 local method_handlers = {}
 
 function method_handlers.initialize(params, id)
@@ -600,9 +601,20 @@ method_handlers["textDocument/completion"] = function(params, id)
 		end
 	end
 
-	-- Add Tarantool box.* space fields
-	for key, _ in pairs(box) do
-		table.insert(items, { label = key} )
+	local current_line = document.lines[params.position.line + 1]["text"]
+
+	local left_part = current_line:sub(0, params.position.character)
+	local last_token = left_part:match("[^%s]*$")
+	if last_token then
+		log.info('token %s', last_token)
+		local completions = console.completion_handler(last_token, 0, last_token:len()) or {}
+		for _, val in ipairs(completions) do
+			table.insert(items, {
+				label = val,
+				-- documentation = "box.cfg{} option",
+				detail = "detail information"
+			})
+		end
 	end
 
 	return rpc.respond(id, {

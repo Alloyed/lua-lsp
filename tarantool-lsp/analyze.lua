@@ -593,9 +593,9 @@ function analyze.refresh(document)
 	document.lines = lines
 
 	local start_time = os.clock()
-	log.info('ast start build! %s %s', document.text, document.uri)
+	-- log.info('ast start build! %s %s', document.text, document.uri)
 	local ast, err = parser.parse(document.text, document.uri, Config.language)
-	log.info('ast builded!')
+	-- log.info('ast builded!')
 	if ast then
 		document.ast = ast
 		document.validtext = document.text
