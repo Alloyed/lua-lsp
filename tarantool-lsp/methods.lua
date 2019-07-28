@@ -6,11 +6,12 @@ local utf     = require 'tarantool-lsp.unicode'
 local json    = require 'json'
 local unpack  = table.unpack or unpack
 
+local fun = require('fun')
 local console = require('console')
 local method_handlers = {}
 
 function method_handlers.initialize(params, id)
-	if Initialized then
+	if _G.Initialized then
 		error("already initialized!")
 	end
 	Config.root  = params.rootPath or params.rootUri
@@ -602,15 +603,25 @@ method_handlers["textDocument/completion"] = function(params, id)
 	end
 
 	local current_line = document.lines[params.position.line + 1]["text"]
-
 	local left_part = current_line:sub(0, params.position.character)
-	local last_token = left_part:match("[^%s]*$")
+	local last_token = left_part:match("[%w.:_]*$")
 	if last_token then
-		log.info('token %s', last_token)
 		local completions = console.completion_handler(last_token, 0, last_token:len()) or {}
-		for _, val in ipairs(completions) do
+		-- Completion handler returns input string at the first element
+		for _, cmplt in fun.tail(completions) do
+			local showedCmplt = cmplt
+			local insertedCmplt = cmplt
+			local cmpltKind = completionKinds["Field"]
+
+			if cmplt:find("[(]") then
+				cmpltKind = completionKinds["Function"]
+				showedCmplt = cmplt:gsub("%(", "")
+			end
+
 			table.insert(items, {
-				label = val,
+				label = showedCmplt,
+				kind = cmpltKind,
+				insertText = insertedCmplt,
 				-- documentation = "box.cfg{} option",
 				detail = "detail information"
 			})

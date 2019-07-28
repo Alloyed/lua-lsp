@@ -604,7 +604,6 @@ function parser.parse(subject, filename, version)
   local errorinfo = { subject = subject, filename = filename }
   lpeg.setmaxstack(1000)
   local ast, label, errpos = lpeg.match(G["5.3"], subject, nil, errorinfo)
-  require('log').info('hello')
   if not ast then
     local errmsg = labels[label][2]
     return ast, syntaxerror(errorinfo, errpos, errmsg)
