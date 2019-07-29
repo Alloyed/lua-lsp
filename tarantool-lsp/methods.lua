@@ -3,6 +3,7 @@ local analyze = require 'tarantool-lsp.analyze'
 local rpc     = require 'tarantool-lsp.rpc'
 local log     = require 'tarantool-lsp.log'
 local utf     = require 'tarantool-lsp.unicode'
+local docs 	  = require('tarantool-lsp.doc_manager')
 local json    = require 'json'
 local unpack  = table.unpack or unpack
 
@@ -22,6 +23,13 @@ function method_handlers.initialize(params, id)
 	log.info("Config.root = %q", Config.root)
 	analyze.load_completerc(Config.root)
 	analyze.load_luacheckrc(Config.root)
+
+	local ok, err = docs:init()
+	if err ~= nil then
+		log.info("Docs subsystem error: %s", err)
+	end
+	-- log.info("AAAA %t", docs.terms)
+
 	--ClientCapabilities = params.capabilities
 	Initialized = true
 	-- hopefully this is modest enough
@@ -608,6 +616,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 	if last_token then
 		local completions = console.completion_handler(last_token, 0, last_token:len()) or {}
 		-- Completion handler returns input string at the first element
+		-- TODO: Take completions from DOCs
 		for _, cmplt in fun.tail(completions) do
 			local showedCmplt = cmplt
 			local insertedCmplt = cmplt
@@ -618,12 +627,15 @@ method_handlers["textDocument/completion"] = function(params, id)
 				showedCmplt = cmplt:gsub("%(", "")
 			end
 
+			-- if docs:get(showedCmplt) then
+			-- 	log.info(docs:get(showedCmplt))
+			-- end
 			table.insert(items, {
 				label = showedCmplt,
 				kind = cmpltKind,
 				insertText = insertedCmplt,
-				-- documentation = "box.cfg{} option",
-				detail = "detail information"
+				documentation = docs:get(showedCmplt),
+				detail = docs:get(showedCmplt)
 			})
 		end
 	end
