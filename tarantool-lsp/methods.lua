@@ -614,22 +614,28 @@ method_handlers["textDocument/completion"] = function(params, id)
 	local left_part = current_line:sub(0, params.position.character)
 	local last_token = left_part:match("[%w.:_]*$")
 	if last_token then
-		local completions = console.completion_handler(last_token, 0, last_token:len()) or {}
-		-- Completion handler returns input string at the first element
-		-- TODO: Take completions from DOCs
-		for _, cmplt in fun.tail(completions) do
+		local raw_completions = {}
+		local ADD_COMPLETION = function(cmplt)
+			raw_completions[cmplt] = true
+		end
+
+		-- [?] Completion handler returns input string at the first element
+		local tnt_completions = console.completion_handler(last_token, 0, last_token:len()) or {}
+		local doc_completions = docs:getCompletions(last_token)
+		fun.each(ADD_COMPLETION, fun.tail(tnt_completions))
+		fun.each(ADD_COMPLETION, doc_completions)
+
+		for _, cmplt in fun.map(function(cmplt) return cmplt end, raw_completions) do
 			local showedCmplt = cmplt
 			local insertedCmplt = cmplt
 			local cmpltKind = completionKinds["Field"]
 
+			-- TODO: Maybe obtain type information from doc (function, module ...)
 			if cmplt:find("[(]") then
 				cmpltKind = completionKinds["Function"]
 				showedCmplt = cmplt:gsub("%(", "")
 			end
 
-			-- if docs:get(showedCmplt) then
-			-- 	log.info(docs:get(showedCmplt))
-			-- end
 			table.insert(items, {
 				label = showedCmplt,
 				kind = cmpltKind,

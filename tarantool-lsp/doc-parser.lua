@@ -14,7 +14,6 @@ local function parseFunction(scope, moduleName)
     local is, ie, termName = scope:find("^([%w.:_]+)")
     scope = scope:match("%([^\n]*%)\n\n(.*)", ie)
 
-    -- log.info("module name = %s ----- scope: %s", moduleName, scope)
     local termDescription = scope:match("^(.*)\n%s*\n%s*%:%w+[%s%w%-]*%:")
     -- Temporaly solution
     if not termDescription then

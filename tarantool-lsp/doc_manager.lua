@@ -69,7 +69,58 @@ function DocumentationManager:init()
     -- end
 
     self.terms = parseDocs(filepath)
+
+    local unsorted = {}
+    for k, _ in pairs(self.terms) do
+        table.insert(unsorted, k)
+    end
+    table.sort(unsorted)
+    self.termsSorted = unsorted
+
     return true
+end
+
+function DocumentationManager:getCompletions(str)
+    local similar = false
+    local completions = {}
+
+    local function deep_level(str)
+        local lvl = 0
+        for delim in str:gmatch("%.") do
+            lvl = lvl + 1
+        end
+
+        return lvl
+    end
+
+    local str_deep_level = deep_level(str)
+
+    local function is_completion(term)
+        local is = term:find(str)
+        if is then
+            if str_deep_level < deep_level(term) then
+                return false
+            end
+
+            return true
+        end
+
+        return false
+    end
+
+    for _, term in ipairs(self.termsSorted) do
+        if is_completion(term) then
+            if not similar then
+                similar = true
+            end
+
+            table.insert(completions, term)
+        elseif similar then
+            break
+        end
+    end
+
+    return completions
 end
 
 function DocumentationManager:get(term)
