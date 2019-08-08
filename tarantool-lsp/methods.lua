@@ -3,7 +3,7 @@ local analyze = require 'tarantool-lsp.analyze'
 local rpc     = require 'tarantool-lsp.rpc'
 local log     = require 'tarantool-lsp.log'
 local utf     = require 'tarantool-lsp.unicode'
-local docs 	  = require('tarantool-lsp.doc_manager')
+local docs 	  = require('tarantool-lsp.doc-manager')
 local json    = require 'json'
 local unpack  = table.unpack or unpack
 
@@ -623,25 +623,32 @@ method_handlers["textDocument/completion"] = function(params, id)
 		local tnt_completions = console.completion_handler(last_token, 0, last_token:len()) or {}
 		local doc_completions = docs:getCompletions(last_token)
 		fun.each(ADD_COMPLETION, fun.tail(tnt_completions))
-		fun.each(ADD_COMPLETION, doc_completions)
+		fun.each(ADD_COMPLETION, fun.remove_if(function(cmplt)
+			if raw_completions[cmplt .. '('] then
+				return false
+			end
+
+			return true
+		end, doc_completions))
 
 		for _, cmplt in fun.map(function(cmplt) return cmplt end, raw_completions) do
 			local showedCmplt = cmplt
 			local insertedCmplt = cmplt
 			local cmpltKind = completionKinds["Field"]
 
-			-- TODO: Maybe obtain type information from doc (function, module ...)
 			if cmplt:find("[(]") then
 				cmpltKind = completionKinds["Function"]
 				showedCmplt = cmplt:gsub("%(", "")
 			end
 
+			local doc = docs:get(showedCmplt)
+
 			table.insert(items, {
 				label = showedCmplt,
-				kind = cmpltKind,
+				kind = doc and doc.type or cmpltKind,
 				insertText = insertedCmplt,
-				documentation = docs:get(showedCmplt),
-				detail = docs:get(showedCmplt)
+				documentation = doc and doc.description,
+				detail = doc and doc.brief
 			})
 		end
 	end

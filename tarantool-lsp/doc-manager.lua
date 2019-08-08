@@ -45,9 +45,13 @@ local function parseDocs(doc_path)
     for _, doc_file in ipairs(docs) do
         local f = fio.open(doc_file, { 'O_RDONLY' })
         local text = f:read()
-        parser.parseDocFile(text, terms)
+        local ok, trace = xpcall(parser.parseDocFile, debug.traceback, text, terms)
 
         f:close()
+        if not ok then
+            log.error("Error parse %s file. Traceback: %s. Exit...", trace, doc_file)
+            os.exit(1)
+        end
     end
 
     return terms
@@ -86,7 +90,7 @@ function DocumentationManager:getCompletions(str)
 
     local function deep_level(str)
         local lvl = 0
-        for delim in str:gmatch("%.") do
+        for delim in str:gmatch("[.:]") do
             lvl = lvl + 1
         end
 
@@ -96,7 +100,7 @@ function DocumentationManager:getCompletions(str)
     local str_deep_level = deep_level(str)
 
     local function is_completion(term)
-        local is = term:find(str)
+        local is = term:match("^" .. str)
         if is then
             if str_deep_level < deep_level(term) then
                 return false
