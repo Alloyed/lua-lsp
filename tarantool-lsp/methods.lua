@@ -28,7 +28,6 @@ function method_handlers.initialize(params, id)
 	if err ~= nil then
 		log.info("Docs subsystem error: %s", err)
 	end
-	-- log.info("AAAA %t", docs.terms)
 
 	--ClientCapabilities = params.capabilities
 	Initialized = true

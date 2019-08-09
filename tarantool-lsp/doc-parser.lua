@@ -35,8 +35,9 @@ local function parseFunction(scope, moduleName)
     local is, ie, funcName = scope:find("^([%w.:_]+)")
     scope = scope:match("%([^\n]*%)\n\n(.*)", ie)
 
+    -- NOTE: Scope based regexp
     local termDescription = scope:match("^(.*)\n%s*\n%s*%:%w+[%s%w%-]*%:")
-    -- Temporaly solution
+    -- Temporally solution
     if not termDescription then
         termDescription = scope
     end
@@ -52,13 +53,10 @@ end
 local function parseIndex(scope)
     local is, ie = scope:find("%+[%=]+%+[%=]+%+\n")
     local index_rows = scope:sub(ie + 1, scope:len())
-
     local index = {}
+
     local ROW_SEPARATOR = "%+[%-]+%+[%-]+%+\n"
     local TEXT_REGEXP = "[%w.,:()%s'`+/-]+"
-    local FUNC_REGEXP = "[%w.()]+"
-    -- local WORD_REGEXP = "[%w.,:()'`+/-]+"
-    -- local SENTENCE_REGEXP = "[" .. WORD_REGEXP .. "%s?]*"
     local FUNC_REGEXP = "[%w._()]+"
     local ROW_REGEXP = "[%s]*%|[%s]*%:ref%:%`(" .. FUNC_REGEXP .. ")"
 
@@ -79,37 +77,64 @@ local function parseIndex(scope)
     return index
 end
 
--- Parse only functions
-local function parseDocFile(text, terms)
-    local function findNextTerm(text, pos)
-        local terms = {
-            -- Directives
-            { pattern = "%.%. module%:%:", name = "module" },
-            { pattern = "%.%. function%:%:", name = "function" },
+local function findNextTerm(text, pos, searchedTerm)
+    local terms = {
+        -- Directives
+        { pattern = "%.%. module%:%:", name = "module" },
+        { pattern = "%.%. function%:%:", name = "function" },
+        { pattern = "%.%. codeblock%:%:", name = "codeblock" },
 
-            -- Headings
-            { pattern = "[%-]+\n[%s]+Submodule%s", name = "submodule" },
-            { pattern = "[%=]+\n[%s]+Overview[%s]*\n[%=]+\n\n", name = "overview" },
-            { pattern = "[%=]+\n[%s]+Index[%s]*\n[%=]+\n\n", name = "index" }
-        }
+        -- Headings
+        { pattern = "[%-]+\n[%s]+Submodule%s", name = "submodule" },
+        { pattern = "[%=]+\n[%s]+Overview[%s]*\n[%=]+\n\n", name = "overview" },
+        { pattern = "[%=]+\n[%s]+Index[%s]*\n[%=]+\n\n", name = "index" }
+    }
 
-        local nextTerm
-        for _, term in ipairs(terms) do
-            local is, ie = text:find(term.pattern, pos)
-            if is then
-                if not nextTerm then
+    local nextTerm
+    for _, term in ipairs(terms) do
+        local is, ie = text:find(term.pattern, pos)
+        if is then
+            if not nextTerm then
+                nextTerm = { pos = is, term = term, e_pos = ie }
+            else
+                if is < nextTerm.pos then
                     nextTerm = { pos = is, term = term, e_pos = ie }
-                else
-                    if is < nextTerm.pos then
-                        nextTerm = { pos = is, term = term, e_pos = ie }
-                    end
                 end
             end
         end
-
-        return nextTerm
     end
 
+    return nextTerm
+end
+
+local function normalizeToMarkDown(text)
+    if not text then
+        return nil
+    end
+
+    local REF_REGEXP = "%:ref%:`([^<]+)%s[^>]+%>%`"
+    -- Normalize references
+    while text:match(REF_REGEXP) do
+        text = text:gsub(REF_REGEXP, "`%1`")
+    end
+
+    local CODEBLOCK_REGEXP = "%.%. code%-block%:%:%s([^\n]*)\n\n(.-)\n\n"
+    while true do
+        local language, code = text:match(CODEBLOCK_REGEXP)
+        if not code then
+            break
+        end
+
+        -- `tarantoolsession` is not supported MD code language
+        language = language == 'tarantoolsession' and 'lua' or language:lower()
+        text = text:gsub(CODEBLOCK_REGEXP, "```" .. language .. "\n%2\n```\n\n")
+    end
+
+    return text
+end
+
+-- Parse only functions
+local function parseDocFile(text, terms)
     local function truncateScope(text, startPos)
         local nextTerm = findNextTerm(text, startPos)
         local lastPos = text:len()
@@ -118,6 +143,19 @@ local function parseDocFile(text, terms)
         end
 
         return text:sub(startPos, lastPos - 1)
+    end
+
+    local function create_if_not_exist(termName, data)
+        local existenTerm = terms[termName]
+        if not existenTerm then
+            terms[termName] = data
+            existenTerm = terms[termName]
+
+            existenTerm.name = termName
+        end
+        existenTerm.description = normalizeToMarkDown(existenTerm.description)
+
+        return existenTerm
     end
 
     -- Scope for functions and other objects
@@ -131,15 +169,8 @@ local function parseDocFile(text, terms)
 
         if nextTerm.term.name == "module" then
             local is, ie, moduleName = text:find("%.%. module%:%: ([%w.:_]*)\n", nextTerm.pos)
-            local currentModule = terms[moduleName]
-            if not currentModule then
-                terms[moduleName] = { name = moduleName, type = completionKinds['Module'] }
-                currentModule = terms[moduleName]
-            end
-
-            if not currentModule.description then
-                currentModule.description = truncateScope(text, ie + 1)
-            end
+            local _ = create_if_not_exist(moduleName, { type = completionKinds['Module'],
+                                                                    description = truncateScope(text, ie + 1) })
         elseif nextTerm.term.name == "function" then
             local is, ie = text:find("%.%. function%:%:", nextTerm.pos)
 
@@ -147,36 +178,21 @@ local function parseDocFile(text, terms)
             local scope = text:sub(ie + 2, nextNextTerm and nextNextTerm.pos or text:len())
             local term = parseFunction(scope, moduleName)
 
-            if terms[term.name] then
-                terms[term.name].description = term.description
-            else
-                terms[term.name] = term
-            end
+            create_if_not_exist(term.name, term)
         elseif nextTerm.term.name == "submodule" then
-            moduleName = text:match("%`([%w.]+)%`", nextTerm.pos) -- Remained part [%s]*\n[%-]+\n
-            terms[moduleName] = { name = moduleName, type = completionKinds['Module'] }
+            moduleName = text:match("%`([%w.]+)%`", nextTerm.pos)
+            create_if_not_exist(moduleName, { type = completionKinds['Module'] })
         elseif nextTerm.term.name == "overview" then
             -- TODO: Uncomment
             -- assert(moduleName ~= nil, "Module name should be setted")
             if moduleName then
-                local currentModule = terms[moduleName]
-                if not currentModule then
-                    terms[moduleName] = { name = moduleName }
-                    currentModule = terms[moduleName]
-                end
-                currentModule.description = truncateScope(text, nextTerm.e_pos)
+                create_if_not_exist(moduleName, { description = truncateScope(text, nextTerm.e_pos) })
             end
         elseif nextTerm.term.name == "index" then
             local index = parseIndex(truncateScope(text, nextTerm.e_pos))
-            for func, desc in pairs(index) do
-                local term = terms[func]
-                if not term then
-                    -- TODO: Maybe it's not a function...
-                    terms[func] = { name = func, type = completionKinds['Function'] }
-                    term = terms[func]
-                end
-
-                term.brief = desc
+            for func, brief_desc in pairs(index) do
+                -- TODO: Maybe it's not a function...
+                create_if_not_exist(func, { brief = brief_desc, type = completionKinds['Function'] })
             end
         end
 
