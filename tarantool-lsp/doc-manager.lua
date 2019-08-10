@@ -1,6 +1,7 @@
 local http = require('http.client')
 local fio = require('fio')
 local log = require('tarantool-lsp.log')
+local jp = require('jit.p')
 
 local parser = require('tarantool-lsp.doc-parser')
 
@@ -57,7 +58,11 @@ local function parseDocs(doc_path)
     return terms
 end
 
-function DocumentationManager:init()
+function DocumentationManager:init(opts)
+    opts = opts or {}
+    if opts.bootstrap_profiler then
+        jp.start('f', '/tmp/tnt-lsp-doc-profile.txt')
+    end
     -- TODO: Check current revision of docs
     -- local filepath, err = downloadDocs()
     -- if err ~= nil then
@@ -80,6 +85,8 @@ function DocumentationManager:init()
     end
     table.sort(unsorted)
     self.termsSorted = unsorted
+
+    jp.stop()
 
     return true
 end
