@@ -43,7 +43,7 @@ local function main(_)
 		elseif data.method then
 			-- request
 			if not method_handlers[data.method] then
-				log.verbose("confused by %t", data)
+				-- log.verbose("confused by %t", data)
 				err = string.format("%q: Not found/NYI", tostring(data.method))
 				if data.id then
 					rpc.respondError(data.id, err, "MethodNotFound")

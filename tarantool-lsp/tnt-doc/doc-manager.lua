@@ -3,7 +3,7 @@ local fio = require('fio')
 local log = require('tarantool-lsp.log')
 local jp = require('jit.p')
 
-local parser = require('tarantool-lsp.doc-parser')
+local parser = require('tarantool-lsp.tnt-doc.doc-parser')
 
 local DocumentationManager = {}
 
@@ -39,19 +39,27 @@ end
 
 -- Parse only box.* namespace now
 local function parseDocs(doc_path)
-    local work_dir = fio.pathjoin(doc_path, "doc-1.10", "doc", "1.10", "book", "box")
-    local docs = fio.glob(fio.pathjoin(work_dir, "*.rst"))
+    local doc_dirs = {
+        -- box doc's
+        fio.pathjoin(doc_path, "doc-1.10", "doc", "1.10", "book", "box"),
+        -- libraries docs's + some box modules
+        -- fio.pathjoin(doc_path, "doc-1.10", "doc", "1.10", "reference", "reference_lua")
+    }
 
     local terms = {}
-    for _, doc_file in ipairs(docs) do
-        local f = fio.open(doc_file, { 'O_RDONLY' })
-        local text = f:read()
-        local ok, trace = xpcall(parser.parseDocFile, debug.traceback, text, terms)
 
-        f:close()
-        if not ok then
-            log.error("Error parse %s file. Traceback: %s. Exit...", trace, doc_file)
-            os.exit(1)
+    for _, work_dir in ipairs(doc_dirs) do
+        local docs = fio.glob(fio.pathjoin(work_dir, "*.rst"))
+        for _, doc_file in ipairs(docs) do
+            local f = fio.open(doc_file, { 'O_RDONLY' })
+            local text = f:read()
+            local ok, trace = xpcall(parser.parseDocFile, debug.traceback, text, terms)
+
+            f:close()
+            if not ok then
+                log.error("Error parse %s file. Traceback: %s. Exit...", trace, doc_file)
+                os.exit(1)
+            end
         end
     end
 

@@ -3,7 +3,7 @@ local analyze = require 'tarantool-lsp.analyze'
 local rpc     = require 'tarantool-lsp.rpc'
 local log     = require 'tarantool-lsp.log'
 local utf     = require 'tarantool-lsp.unicode'
-local docs 	  = require('tarantool-lsp.doc-manager')
+local docs 	  = require('tarantool-lsp.tnt-doc.doc-manager')
 local json    = require 'json'
 local unpack  = table.unpack or unpack
 
@@ -46,7 +46,7 @@ function method_handlers.initialize(params, id)
 			},
 			hoverProvider = true,
 			documentSymbolProvider = true,
-			--referencesProvider = false,
+			-- referencesProvider = true ,
 			--documentHighlightProvider = false,
 			--workspaceSymbolProvider = false,
 			--codeActionProvider = false,

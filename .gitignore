@@ -11,3 +11,5 @@ log.txt
 **/**.log
 work_log.md
 
+# MacOS
+.DS_Store

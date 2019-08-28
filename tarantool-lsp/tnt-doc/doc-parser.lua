@@ -34,6 +34,9 @@ local completionKinds = {
 local function parseFunction(scope, moduleName)
     local is, ie, funcName = scope:find("^([%w.:_]+)")
     scope = scope:match("%([^\n]*%)\n\n(.*)", ie)
+    if not scope then
+        return nil
+    end
 
     -- NOTE: Scope based regexp
     local termDescription = scope:match("^(.*)\n%s*\n%s*%:%w+[%s%w%-]*%:")
@@ -61,8 +64,12 @@ local function parseIndex(scope)
     local ROW_REGEXP = "[%s]*%|[%s]*%:ref%:%`(" .. FUNC_REGEXP .. ")"
 
     local i = 1
-    while index_rows:find(ROW_REGEXP, i) do
+    while true do
         local is, ie, func_name = index_rows:find(ROW_REGEXP, i)
+        if not is then
+            break
+        end
+
         local row_dump = index_rows:sub(ie + 1, index_rows:find(ROW_SEPARATOR, ie + 1))
 
         local desc = ""
@@ -77,18 +84,22 @@ local function parseIndex(scope)
     return index
 end
 
-local function findNextTerm(text, pos, searchedTerm)
-    local terms = {
-        -- Directives
+local function findNextTerm(text, pos, termType)
+    local directives = {
         { pattern = "%.%. module%:%:", name = "module" },
         { pattern = "%.%. function%:%:", name = "function" },
-        { pattern = "%.%. codeblock%:%:", name = "codeblock" },
+    }
 
-        -- Headings
+    local headings = {
         { pattern = "[%-]+\n[%s]+Submodule%s", name = "submodule" },
         { pattern = "[%=]+\n[%s]+Overview[%s]*\n[%=]+\n\n", name = "overview" },
         { pattern = "[%=]+\n[%s]+Index[%s]*\n[%=]+\n\n", name = "index" }
     }
+
+    local terms = directives
+    if termType == 'headings' then
+        terms = headings
+    end
 
     local nextTerm
     for _, term in ipairs(terms) do
@@ -133,70 +144,100 @@ local function normalizeToMarkDown(text)
     return text
 end
 
+local function truncateScope(text, startPos)
+    local nextTerm = findNextTerm(text, startPos)
+    local lastPos = text:len()
+    if nextTerm then
+        lastPos = nextTerm.pos
+    end
+
+    return text:sub(startPos, lastPos - 1)
+end
+
+local function create_if_not_exist(terms, termName, data)
+    local existenTerm = terms[termName]
+    if not existenTerm then
+        terms[termName] = data
+        existenTerm = terms[termName]
+
+        existenTerm.name = termName
+    end
+
+    if not existenTerm.description then
+        existenTerm.description = data.description
+    end
+    existenTerm.description = normalizeToMarkDown(existenTerm.description)
+
+    return existenTerm
+end
+
+local it = 1
+
+local function parseHeadings(text, terms)
+    local i = 1
+    -- Scope for functions and other objects
+    local moduleName
+
+    while true do
+        local nextTerm = findNextTerm(text, i, 'headings')
+        if not nextTerm then
+            break
+        end
+
+        if nextTerm.term.name == "submodule" then
+            moduleName = text:match("%`([%w.]+)%`", nextTerm.pos)
+            create_if_not_exist(terms, moduleName, { type = completionKinds['Module'] })
+        elseif nextTerm.term.name == "overview" then
+            -- TODO: Uncomment
+            -- assert(moduleName ~= nil, "Module name should be setted")
+            if moduleName then
+                create_if_not_exist(terms, moduleName, { description = truncateScope(text, nextTerm.e_pos) })
+            end
+        elseif nextTerm.term.name == "index" then
+            local index = parseIndex(truncateScope(text, nextTerm.e_pos))
+            for func, brief_desc in pairs(index) do
+                -- TODO: Maybe it's not a function...
+                create_if_not_exist(terms, func, { brief = brief_desc, type = completionKinds['Function'] })
+            end
+        end
+
+        i = nextTerm.e_pos + 1
+    end
+end
+
 -- Parse only functions
 local function parseDocFile(text, terms)
-    local function truncateScope(text, startPos)
-        local nextTerm = findNextTerm(text, startPos)
-        local lastPos = text:len()
-        if nextTerm then
-            lastPos = nextTerm.pos
-        end
-
-        return text:sub(startPos, lastPos - 1)
-    end
-
-    local function create_if_not_exist(termName, data)
-        local existenTerm = terms[termName]
-        if not existenTerm then
-            terms[termName] = data
-            existenTerm = terms[termName]
-
-            existenTerm.name = termName
-        end
-        existenTerm.description = normalizeToMarkDown(existenTerm.description)
-
-        return existenTerm
-    end
+    parseHeadings(text, terms)
 
     -- Scope for functions and other objects
     local moduleName
 
     local i = 1
     -- local terms = {}
-    while findNextTerm(text, i) do
+    while true do
         local nextTerm = findNextTerm(text, i)
-        local nextNextTerm = findNextTerm(text, nextTerm.pos + 1)
+        if not nextTerm then
+            break
+        end
 
         if nextTerm.term.name == "module" then
             local is, ie, moduleName = text:find("%.%. module%:%: ([%w.:_]*)\n", nextTerm.pos)
-            local _ = create_if_not_exist(moduleName, { type = completionKinds['Module'],
-                                                                    description = truncateScope(text, ie + 1) })
+            local _ = create_if_not_exist(terms, moduleName, { type = completionKinds['Module'],
+                                                               description = truncateScope(text, ie + 1) })
         elseif nextTerm.term.name == "function" then
             local is, ie = text:find("%.%. function%:%:", nextTerm.pos)
 
+            local nextNextTerm = findNextTerm(text, nextTerm.pos + 1)
             -- Skip space between directive and term name
             local scope = text:sub(ie + 2, nextNextTerm and nextNextTerm.pos or text:len())
             local term = parseFunction(scope, moduleName)
 
-            create_if_not_exist(term.name, term)
-        elseif nextTerm.term.name == "submodule" then
-            moduleName = text:match("%`([%w.]+)%`", nextTerm.pos)
-            create_if_not_exist(moduleName, { type = completionKinds['Module'] })
-        elseif nextTerm.term.name == "overview" then
-            -- TODO: Uncomment
-            -- assert(moduleName ~= nil, "Module name should be setted")
-            if moduleName then
-                create_if_not_exist(moduleName, { description = truncateScope(text, nextTerm.e_pos) })
-            end
-        elseif nextTerm.term.name == "index" then
-            local index = parseIndex(truncateScope(text, nextTerm.e_pos))
-            for func, brief_desc in pairs(index) do
-                -- TODO: Maybe it's not a function...
-                create_if_not_exist(func, { brief = brief_desc, type = completionKinds['Function'] })
+            if term then
+                create_if_not_exist(terms, term.name, term)
             end
         end
 
-        i = nextTerm.pos + 1
+        i = nextTerm.e_pos + 1
     end
 end
 
