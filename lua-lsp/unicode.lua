@@ -4,9 +4,9 @@
 
 local unicode = {}
 
-local shift_6  = math.pow(2, 6)
-local shift_12 = math.pow(2, 12)
-local shift_18 = math.pow(2, 18)
+local shift_6  = 2^6
+local shift_12 = 2^12
+local shift_18 = 2^18
 -- The iterator is from the lua 5.3 reference manual:
 -- "[\0-\x7F\xC2-\xF4][\x80-\xBF]*"
 -- modifications are to keep 5.1-3 compat.
