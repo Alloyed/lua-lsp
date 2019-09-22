@@ -33,7 +33,6 @@ local valid_content_type = {
 	["application/vscode-jsonrpc; charset=utf8"] = true
 }
 
-
 function rpc.respondError(id, errorMsg, errorKey, data)
 	if not errorMsg then
 		errorMsg = "missing error message!"
@@ -101,18 +100,18 @@ function rpc.decode()
 		elseif key == "Content-Type" then
 			assert(valid_content_type[val], "Invalid Content-Type")
 		else
-			error("unexpected")
+			error("unexpected http key")
 		end
 		line = io.read("*l")
 		line = line:gsub("\13", "")
 	end
 
 	-- body
-	assert(content_length)
+	assert(content_length, "no content length in message")
 	local data = io.read(content_length)
 	data = data:gsub("\13", "")
-	data = assert(json.decode(data))
-	assert(data["jsonrpc"] == "2.0")
+	data = assert(json.decode(data), "malformed json")
+	assert(data["jsonrpc"] == "2.0", "incorrect json-rpc version")
 	return data
 end
 
