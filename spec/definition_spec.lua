@@ -24,8 +24,8 @@ end
 describe("position_in_text", function()
 	it("works", function()
 		local long = "long long man\n sakeru gummy"
-		assert.same({0, 5}, {position_in_text(long, "long man")})
-		assert.same({1, 8}, {position_in_text(long, "sakeru gummy", "gummy")})
+		assert.same({line = 0, character = 5}, position_in_text(long, "long man"))
+		assert.same({line = 1, character = 8}, position_in_text(long, "sakeru gummy", "gummy"))
 	end)
 end)
 

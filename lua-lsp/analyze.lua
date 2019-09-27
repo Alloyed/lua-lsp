@@ -361,6 +361,7 @@ local function gen_scopes(len, ast, uri)
 				for _, name in ipairs(namelist) do
 					if name.tag == "Dots" then
 						-- probably should handle this :)
+						log.debug("vararg encountered")
 					else
 						-- when methods are defined like `function a:method()`
 						-- then self param doesn't include position, presumably
