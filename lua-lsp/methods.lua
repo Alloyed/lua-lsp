@@ -382,7 +382,7 @@ end
 local definition_of
 --- Get pair(), and unpack them automatically
 -- @returns key, value, document
-local function getp(doc, t, k, isDefinition)
+local function get_kv_pair_from_scope(doc, t, k, isDefinition)
 	-- luacheck: ignore 542
 	local pair = t and t[k]
 	if not pair then
@@ -447,6 +447,10 @@ local function getp(doc, t, k, isDefinition)
 		-- deref an argument
 		-- we know it's a method call, deref as such
 		if key[1] == "self" then
+			-- now this is wild, huh
+			local functionSymbol = getmetatable(value.functionScope).functionSymbol
+			local tableSymbol = getmetatable(functionSymbol.parentScope).tableSymbol
+			value = tableSymbol
 		end
 	end
 
@@ -493,30 +497,32 @@ function definition_of(doc, id_or_pos)
 	local symbol, val, _
 
 	if word:find("[:.]") then
-		local valdoc
-		_, val, valdoc = getp(document, scope, word_start)
+		local top_value, top_value_doc
+		_, top_value, top_value_doc = get_kv_pair_from_scope(document, scope, word_start)
 		local path_ids = split_path(word)
 
-		local function follow_path(ii, _scope)
-			if not _scope then
+		local function follow_path(ii, inner_scope)
+			if not inner_scope then
 				log.fatal("not a scope: %t2", val)
 			end
 			local key = path_ids[ii]
 			local last = ii == #path_ids
 
 			if last then
-				return getp(valdoc, _scope, key, "definition")
+				return get_kv_pair_from_scope(top_value_doc, inner_scope, key, "definition")
 			else
-				local _, ival, _ = getp(valdoc, _scope, key)
+				local _, ival, _ = get_kv_pair_from_scope(top_value_doc, inner_scope, key)
 
 				if ival.tag == "Table" and ival.scope then
 					return follow_path(ii+1, ival.scope)
 				end
 			end
 		end
-		symbol, val, document = follow_path(2, val.scope)
+		if top_value.tag == "Table" and top_value.scope then
+			symbol, val, document = follow_path(2, top_value.scope)
+		end
 	else
-		symbol, val, document = getp(document, scope, word_start, "definition")
+		symbol, val, document = get_kv_pair_from_scope(document, scope, word_start, "definition")
 	end
 
 	if not symbol then
@@ -528,6 +534,7 @@ end
 method_handlers["textDocument/completion"] = function(params, id)
 	local document = analyze.document(params.textDocument)
 	if document.scopes == nil then
+		log.debug("document not valid")
 		return rpc.respond(id, {
 			isIncomplete = false,
 			items = {}
@@ -543,6 +550,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 	local used  = {}
 	local scope = pick_scope(document.dirty, document.scopes, pos)
 	if scope == nil or word == nil then
+		log.debug("no scope or word, \nword: %_\nscope: %_", word, scope)
 		return rpc.respond(id, {
 			isIncomplete = false,
 			items = {}
@@ -572,7 +580,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 					end
 				end
 			else
-				local node, val = getp(document, _scope,_iword)
+				local node, val = get_kv_pair_from_scope(document, _scope,_iword)
 				if node then
 					if val and val.tag == "Table" then
 						if val.scope then
