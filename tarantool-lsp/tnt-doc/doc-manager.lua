@@ -41,19 +41,43 @@ end
 local function parseDocs(doc_path)
     local doc_dirs = {
         -- box doc's
-        fio.pathjoin(doc_path, "doc-1.10", "doc", "1.10", "book", "box"),
+        {
+            path = fio.pathjoin(doc_path, "doc-1.10", "doc", "1.10", "book", "box"),
+            name = 'box'
+        },
         -- libraries docs's + some box modules
-        -- fio.pathjoin(doc_path, "doc-1.10", "doc", "1.10", "reference", "reference_lua")
+        {
+            path = fio.pathjoin(doc_path, "doc-1.10", "doc", "1.10", "reference", "reference_lua"),
+            name = 'libraries',
+            separate = true
+        }
     }
+
+    local function basename(name)
+        return name:match("^(.*)%.rst$")
+    end
 
     local terms = {}
 
-    for _, work_dir in ipairs(doc_dirs) do
+    for _, doc in ipairs(doc_dirs) do
+        local work_dir = doc.path
         local docs = fio.glob(fio.pathjoin(work_dir, "*.rst"))
+
+        terms[doc.name] = {}
+        local termsTable = terms[doc.name]
+
         for _, doc_file in ipairs(docs) do
+            local moduleName = basename(fio.basename(doc_file))
+
+            if doc.separate then
+                terms[doc.name][moduleName] = {}
+                termsTable = terms[doc.name][moduleName]
+                -- assert(termsTable, ("%s sdsddas").format(doc_file))
+            end
+
             local f = fio.open(doc_file, { 'O_RDONLY' })
             local text = f:read()
-            local ok, trace = xpcall(parser.parseDocFile, debug.traceback, text, terms)
+            local ok, trace = xpcall(parser.parseDocFile, debug.traceback, text, termsTable)
 
             f:close()
             if not ok then
@@ -87,10 +111,15 @@ function DocumentationManager:init(opts)
 
     self.terms = parseDocs(filepath)
 
-    local unsorted = {}
-    for k, _ in pairs(self.terms) do
-        table.insert(unsorted, k)
+    local function mergeTerms(terms, dest)
+        for k, _ in pairs(terms) do
+            table.insert(dest, k)
+        end
     end
+
+    local unsorted = {}
+    mergeTerms(self.terms.box, unsorted)
+
     table.sort(unsorted)
     self.termsSorted = unsorted
 
@@ -144,6 +173,78 @@ end
 
 function DocumentationManager:get(term)
     return self.terms[term]
+end
+
+local completionKinds = {
+    Text = 1,
+    Method = 2,
+    Function = 3,
+    Constructor = 4,
+    Field = 5,
+    Variable = 6,
+    Class = 7,
+    Interface = 8,
+    Module = 9,
+    Property = 10,
+    Unit = 11,
+    Value = 12,
+    Enum = 13,
+    Keyword = 14,
+    Snippet = 15,
+    Color = 16,
+    File = 17,
+    Reference = 18,
+}
+
+local function findKindByDigit(digit)
+    for k, v in pairs(completionKinds) do
+        if v == digit then
+            return k
+        end
+    end
+end
+
+local function generateCompletionFile(tnt_module)
+    local output = {
+        type = 'table',
+        fields = {},
+    }
+
+    for k, v in pairs(tnt_module) do
+        local termType = findKindByDigit(v.type):lower()
+        output.fields[k] = {
+            type = termType,
+            -- argsDisplay =
+            -- TODO: Brief support
+            description = v.brief,
+            -- Hack: Current LSP support functions only with existen args field
+            args = termType == 'function' and {
+                {}
+            }
+        }
+    end
+
+    return output
+end
+
+function DocumentationManager:__generateCompletionForLibraries()
+    local serpent  = require('serpent')
+
+    for name, library in pairs(self.terms.libraries) do
+        local result = {
+            type = "table",
+            fields = {}
+        }
+        result.fields[name] = generateCompletionFile(library)
+
+        f = io.open('./tarantool-lsp/data/' .. name .. '.lua', 'w')
+        f:write("return ", serpent.block(result, {comment = false}))
+        f:close()
+    end
+end
+
+function DocumentationManager:getInternalLibrariesList(moduleName)
+    return self.terms.libraries
 end
 
 return DocumentationManager

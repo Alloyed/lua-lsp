@@ -16,7 +16,7 @@ function method_handlers.initialize(params, id)
 		error("already initialized!")
 	end
 	Config.root  = params.rootPath or params.rootUri
-	-- Some LSP clients doen't provide capabilities for change 'trace' option
+	-- Some LSP clients doesn't provide capabilities for change 'trace' option
 	-- and user options can override
 	log.setTraceLevel(params.initializationOptions and params.initializationOptions.trace
 					  or params.trace or "off")
@@ -393,6 +393,7 @@ end
 
 local definition_of
 --- Get pair(), and unpack them automatically
+-- @input t - current scope, k - current word
 -- @returns key, value, document
 local function getp(doc, t, k, isDefinition)
 	-- luacheck: ignore 542
@@ -409,7 +410,10 @@ local function getp(doc, t, k, isDefinition)
 
 	if value.tag == "Require" then
 		-- Resolve the return value of this module
-		local ref = assert(analyze.module(value.module))
+		local moduleName = value.module
+
+		-- [NOTE] Waiting the Document entity from this function
+		local ref = assert(analyze.module(moduleName))
 		doc = ref
 		if ref then
 			-- start at file scope
@@ -563,6 +567,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 	log.debug("looking for %q in scope id %d", word, getmetatable(scope).id)
 
 	if word:find("[:.]") then
+		-- Divides by separator (ex.: ['box', 'cfg'])
 		local path_ids, _ = split_path(word)
 		-- path scope
 		local function follow_path(ii, _scope)
@@ -584,11 +589,11 @@ method_handlers["textDocument/completion"] = function(params, id)
 					end
 				end
 			else
-				local node, val = getp(document, _scope,_iword)
+				local node, val = getp(document, _scope, _iword)
 				if node then
 					if val and val.tag == "Table" then
 						if val.scope then
-							return follow_path(ii+1, val.scope)
+							return follow_path(ii + 1, val.scope)
 						end
 					end
 				end

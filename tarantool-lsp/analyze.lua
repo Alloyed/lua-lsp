@@ -6,6 +6,8 @@ local json         = require 'json'
 local ok, luacheck = pcall(require, 'luacheck')
 if not ok then luacheck = nil end
 
+local docs 	  	   = require('tarantool-lsp.tnt-doc.doc-manager')
+
 local analyze = {}
 
 local TOPLEVEL = {}
@@ -593,9 +595,7 @@ function analyze.refresh(document)
 	document.lines = lines
 
 	local start_time = os.clock()
-	-- log.info('ast start build! %s %s', document.text, document.uri)
 	local ast, err = parser.parse(document.text, document.uri, Config.language)
-	-- log.info('ast builded!')
 	if ast then
 		document.ast = ast
 		document.validtext = document.text
@@ -662,6 +662,34 @@ end
 function analyze.module(mod)
 	-- FIXME: load path from config file
 	mod = mod:gsub("%.", "/")
+
+	local internalLibs = docs:getInternalLibrariesList()
+	if internalLibs[mod] then
+		local ok, lib = pcall(require, 'tarantool-lsp.data.' .. mod)
+		if ok then
+			local _scope = {}
+			translate_luacomplete(_scope, lib)
+
+			local fake_file_scope = setmetatable({}, {
+				_return = {
+					[1] = {
+						[1] = _scope[mod][2]
+					}
+				}
+			})
+			local fake_document = {
+				scopes = {
+					[1] = nil, -- Ignore Global scope (it's redundant here)
+					[2] = fake_file_scope
+				}
+			}
+
+			return fake_document
+		else
+			log.warning("Can't find completions for %s library", mod)
+		end
+	end
+
 	for _, template in ipairs(Config.packagePath) do
 		local p = template:gsub("^%./", Config.root.."/"):gsub("?", mod)
 		local uri = "file://"..p
