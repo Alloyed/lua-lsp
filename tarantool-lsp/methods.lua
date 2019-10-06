@@ -115,7 +115,7 @@ local function pick_scope(dirty, scopes, pos)
 			end
 		end
 	end
-	assert(closest, require'inspect'(scopes))
+	assert(closest, require('3rd-party.inspect')(scopes))
 
 	return closest
 end

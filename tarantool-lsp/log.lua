@@ -1,5 +1,5 @@
 local rpc     = require 'tarantool-lsp.rpc'
-local inspect = require 'inspect'
+local inspect = require '3rd-party.inspect'
 
 -- Using logger wrapper for LSP server log supports
 local tnt_logger = require 'log'

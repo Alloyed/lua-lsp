@@ -1,21 +1,16 @@
 #!/usr/bin/env tarantool
 
-local fio = require 'fio'
+local fio = require('fio')
 
-local source_root = os.getenv('TARANTOOL_WORK_DIR')
-if not source_root then
-	os.exit(1)
-end
+local link_dir = fio.dirname(arg[0])
+local lsp_bin = fio.pathjoin(link_dir, fio.readlink(arg[0]))
 
-box.cfg {
-    -- Work directory is unknown because server can be launched by any 3rd-party editor
-	work_dir = source_root,
-    log = fio.pathjoin(source_root, 'log.txt'),
-    log_level = 6,
+package.setsearchroot(fio.dirname(fio.dirname(lsp_bin)))
 
-    checkpoint_interval = 0,
-    wal_mode = 'none',
-}
+-- For debug purposes
+-- box.cfg{
+--     log = "log.txt"
+-- }
 
-local main = require 'tarantool-lsp.loop'
+local main = require('tarantool-lsp.loop')
 main(...)
