@@ -3,15 +3,11 @@ version = "scm-0"
 source = {
    url = "file://"
 }
-description = {
-   license = "MIT"
-}
 dependencies = {
-   "busted",
-   "luacheck",
-   "luacov",
-   "luacov-coveralls",
-   "ser-alloyed ~> 1.0"
+   "luaunit >= 0.2.2-1",
+   -- "luacheck",
+   -- "luacov",
+   -- "luacov-coveralls",
 }
 build = {
    type = "none"

@@ -614,48 +614,48 @@ method_handlers["textDocument/completion"] = function(params, id)
 		end
 	end
 
-	local current_line = document.lines[params.position.line + 1]["text"]
-	local left_part = current_line:sub(0, params.position.character)
-	local last_token = left_part:match("[%w.:_]*$")
-	if last_token then
-		local raw_completions = {}
-		local ADD_COMPLETION = function(cmplt)
-			raw_completions[cmplt] = true
-		end
+	-- local current_line = document.lines[params.position.line + 1]["text"]
+	-- local left_part = current_line:sub(0, params.position.character)
+	-- local last_token = left_part:match("[%w.:_]*$")
+	-- if last_token then
+	-- 	local raw_completions = {}
+	-- 	local ADD_COMPLETION = function(cmplt)
+	-- 		raw_completions[cmplt] = true
+	-- 	end
 
-		-- [?] Completion handler returns input string at the first element
-		local tnt_completions = console.completion_handler(last_token, 0, last_token:len()) or {}
-		local doc_completions = docs:getCompletions(last_token)
-		fun.each(ADD_COMPLETION, fun.tail(tnt_completions))
-		fun.each(ADD_COMPLETION, fun.remove_if(function(cmplt)
-			if raw_completions[cmplt .. '('] then
-				return false
-			end
+	-- 	-- [?] Completion handler returns input string at the first element
+	-- 	local tnt_completions = console.completion_handler(last_token, 0, last_token:len()) or {}
+	-- 	local doc_completions = docs:getCompletions(last_token)
+	-- 	fun.each(ADD_COMPLETION, fun.tail(tnt_completions))
+	-- 	fun.each(ADD_COMPLETION, fun.remove_if(function(cmplt)
+	-- 		if raw_completions[cmplt .. '('] then
+	-- 			return false
+	-- 		end
 
-			return true
-		end, doc_completions))
+	-- 		return true
+	-- 	end, doc_completions))
 
-		for _, cmplt in fun.map(function(cmplt) return cmplt end, raw_completions) do
-			local showedCmplt = cmplt
-			local insertedCmplt = cmplt
-			local cmpltKind = completionKinds["Field"]
+	-- 	for _, cmplt in fun.map(function(cmplt) return cmplt end, raw_completions) do
+	-- 		local showedCmplt = cmplt
+	-- 		local insertedCmplt = cmplt
+	-- 		local cmpltKind = completionKinds["Field"]
 
-			if cmplt:find("[(]") then
-				cmpltKind = completionKinds["Function"]
-				showedCmplt = cmplt:gsub("%(", "")
-			end
+	-- 		if cmplt:find("[(]") then
+	-- 			cmpltKind = completionKinds["Function"]
+	-- 			showedCmplt = cmplt:gsub("%(", "")
+	-- 		end
 
-			local doc = docs:get(showedCmplt)
+	-- 		local doc = docs:get(showedCmplt)
 
-			table.insert(items, {
-				label = showedCmplt,
-				kind = doc and doc.type or cmpltKind,
-				insertText = insertedCmplt,
-				documentation = doc and doc.description,
-				detail = doc and doc.brief
-			})
-		end
-	end
+	-- 		table.insert(items, {
+	-- 			label = showedCmplt,
+	-- 			kind = doc and doc.type or cmpltKind,
+	-- 			insertText = insertedCmplt,
+	-- 			documentation = doc and doc.description,
+	-- 			detail = doc and doc.brief
+	-- 		})
+	-- 	end
+	-- end
 
 	return rpc.respond(id, {
 		isIncomplete = false,
