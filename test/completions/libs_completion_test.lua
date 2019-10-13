@@ -22,6 +22,9 @@ package.loaded['tarantool-lsp.tnt-doc.doc-manager'] = {
     end
 }
 
+package.loaded['completions.csv'] = require('test.completions.golden_files.csv')
+package.loaded['completions.json'] = require('test.completions.golden_files.json')
+
 local function make_completion_call(before, after, position)
     local resp
 

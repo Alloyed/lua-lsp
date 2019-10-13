@@ -13,3 +13,9 @@ work_log.md
 
 # MacOS
 .DS_Store
+
+# Completions
+/completions
+
+# Any local test scripts
+*.sh

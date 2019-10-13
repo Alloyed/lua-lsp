@@ -665,7 +665,7 @@ function analyze.module(mod)
 
 	local internalLibs = docs:getInternalLibrariesList()
 	if internalLibs[mod] then
-		local ok, lib = pcall(require, 'tarantool-lsp.data.' .. mod)
+		local ok, lib = pcall(require, 'completions.' .. mod)
 		if ok then
 			local _scope = {}
 			translate_luacomplete(_scope, lib)
