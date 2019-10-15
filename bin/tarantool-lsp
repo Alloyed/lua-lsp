@@ -1,16 +1,201 @@
 #!/usr/bin/env tarantool
 
 local fio = require('fio')
+local log = require('log')
+local fun = require('fun')
+local argparse = require('internal.argparse').parse
 
-local link_dir = fio.dirname(arg[0])
-local lsp_bin = fio.pathjoin(link_dir, fio.readlink(arg[0]))
+local start_dir = fio.dirname(arg[0])
+local link_target_path = fio.readlink(arg[0])
+local lsp_bin
 
-package.setsearchroot(fio.dirname(fio.dirname(lsp_bin)))
+if link_target_path then
+    -- File link may point on relative or absolute path
+    if link_target_path:startswith('.') then
+        lsp_bin = fio.pathjoin(start_dir, link_target_path)
+    else
+        lsp_bin = link_target_paths
+    end
+else
+    lsp_bin = fio.abspath(arg[0])
+end
+
+local lsp_root = fio.dirname(fio.dirname(lsp_bin))
+package.setsearchroot(lsp_root)
+
+_G._docs_path = fio.pathjoin(lsp_root, '.tnt_doc')
 
 -- For debug purposes
 -- box.cfg{
 --     log = "log.txt"
 -- }
 
-local main = require('tarantool-lsp.loop')
-main(...)
+-- name of tarantool-lsp binary
+local self_name = fio.basename(arg[0])
+-- command that we're executing
+local command_name = arg[1]
+-- true if we're running in user's HOME directory
+local usermode = false
+
+local positional_arguments
+local keyword_arguments
+local lua_arguments = arg
+
+local function exit_wrapper(func)
+    return function() os.exit(func()) end
+end
+
+local function docs_info(args)
+    -- unpack(positional_arguments, 2)
+
+    --[[
+        1.  Trying to find directory with docs locally
+        2.  Read meta information from special file
+        3.  Print meta information with logs (download date, time of downloading)
+    ]]
+
+    return 0
+end
+
+local function docs()
+    local docs_commands = {
+        info = docs_info,
+        update = docs_update
+    }
+
+    docs_commands[positional_arguments[1]](positional_arguments)
+end
+
+local commands = setmetatable({
+    server = {
+        func = exit_wrapper(require('tarantool-lsp.loop')),
+        help = {
+            header = "%s server",
+            description = "Start LSP server on listening (using for client purposes)"
+        }
+    },
+    docs = {
+        func = exit_wrapper(docs),
+        help = {
+            header = "%s docs [update|info]",
+            description = "Module for docs management"
+        },
+        subcommands = {
+            update = {
+                help = {
+                    header = "%s docs update",
+                    description = "Update documentation"
+                }
+            },
+            info = {
+                help = {
+                    header = "%s docs info",
+                    description = "Get information about documentation"
+                }
+            }
+        }
+    }
+}, {
+    __index = function()
+        log.error("Unknown command '%s'", command_name)
+        usage()
+    end
+})
+
+local function usage_command(name, cmd)
+    local header = cmd.help.header
+    if linkmode then
+        header = cmd.help.linkmode
+    end
+    if type(header) == 'string' then
+        header = { header }
+    end
+    for no, line in ipairs(header) do
+        log.error("    " .. line, name)
+    end
+end
+
+local function usage_header()
+    log.error("Tarantool LSP CLI")
+end
+
+local function usage_commands(commands, verbose)
+    local names = fun.iter(commands):map(
+        function(self_name, cmd) return {self_name, cmd.help.weight or 0} end
+    ):totable()
+    table.sort(names, function(left, right) return left[2] < right[2] end)
+    for _, cmd_name in ipairs(names) do
+        local cmd = commands[cmd_name[1]]
+        if cmd.help.deprecated ~= true then
+            usage_command(self_name, cmd, false)
+            if verbose then
+                log.error("")
+                log.error(cmd.help.description)
+            end
+            if cmd.subcommands then
+                usage_commands(cmd.subcommands, verbose)
+            end
+        end
+    end
+end
+
+usage = function(command, verbose)
+    do -- in case a command is passed and is a valid command
+        local command_struct = rawget(commands, command)
+        if command ~= nil and command_struct then
+            log.error("Usage:\n")
+            usage_command(self_name, command_struct, true)
+            log.error("")
+            log.error(command_struct.help.description)
+            os.exit(1)
+        end
+    end -- do this otherwise
+    usage_header()
+    if default_file ~= nil then
+        log.error("Config file: %s", default_file)
+    end
+    log.error("")
+    log.error("Usage:")
+    usage_commands(commands, verbose)
+    os.exit(1)
+end
+
+-- parse parameters and put the result into positional/keyword_arguments
+local function populate_arguments()
+    -- returns the command name, file list and named parameters
+    local function parameters_parse(parameters)
+        local command_name = table.remove(parameters, 1)
+        local positional_arguments, keyword_arguments = {}, {}
+        for k, v in pairs(parameters) do
+            if type(k) == 'number' then
+                positional_arguments[k] = v
+            else
+                keyword_arguments[k] = v
+            end
+        end
+        return command_name, positional_arguments, keyword_arguments
+    end
+
+    local parameters = argparse(arg, {})
+
+    local cmd_name
+    cmd_name, positional_arguments, keyword_arguments = parameters_parse(parameters)
+    if cmd_name == 'help' or parameters.help == true or #arg < 1 then
+        usage(cmd_name, true)
+    end
+
+    keyword_arguments = parameters or {}
+end
+
+local function main()
+    populate_arguments()
+    local cmd_pair = commands[command_name]
+    if cmd_pair.subcommands and #arg < 2 then
+        log.error("Not enough arguments for '%s' command\n", command_name)
+        usage(command_name)
+    end
+
+    cmd_pair.func()
+end
+
+main()
