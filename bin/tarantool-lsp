@@ -23,36 +23,60 @@ end
 local lsp_root = fio.dirname(fio.dirname(lsp_bin))
 package.setsearchroot(lsp_root)
 
-_G._docs_path = fio.pathjoin(lsp_root, '.tnt_doc')
+_G._ROOT_PATH = lsp_root
 
 -- For debug purposes
 -- box.cfg{
 --     log = "log.txt"
 -- }
 
--- name of tarantool-lsp binary
 local self_name = fio.basename(arg[0])
--- command that we're executing
 local command_name = arg[1]
--- true if we're running in user's HOME directory
-local usermode = false
 
 local positional_arguments
 local keyword_arguments
-local lua_arguments = arg
 
 local function exit_wrapper(func)
     return function() os.exit(func()) end
 end
 
 local function docs_info(args)
-    -- unpack(positional_arguments, 2)
+    if not fio.path.exists(fio.pathjoin(lsp_root, '.tnt_doc')) then
+        log.error([[
+Documentation not yet inited!
+Call <tarantool-lsp docs init> for the initializing. ]])
+        return 0
+    end
 
-    --[[
-        1.  Trying to find directory with docs locally
-        2.  Read meta information from special file
-        3.  Print meta information with logs (download date, time of downloading)
-    ]]
+    -- TODO: Extend functionality
+    log.error("Docs was inited")
+    return 0
+end
+
+local function docs_init()
+    local doc_manager = require('tarantool-lsp.tnt-doc.doc-manager')
+    local ok, err = doc_manager.initDoc({
+        doc_dir = fio.pathjoin(lsp_root, '.tnt_doc'),
+        completion_dir = fio.pathjoin(lsp_root, 'completions')
+    })
+    if not ok then
+        log.error(err)
+        return 1
+    end
+
+    return 0
+end
+
+local function docs_update()
+    local doc_manager = require('tarantool-lsp.tnt-doc.doc-manager')
+    local ok, err = doc_manager.updateDoc({
+        doc_dir = fio.pathjoin(lsp_root, '.tnt_doc'),
+        completion_dir = fio.pathjoin(lsp_root, 'completions')
+    })
+    if not ok then
+        log.error(err)
+        return 1
+    end
 
     return 0
 end
@@ -60,6 +84,7 @@ end
 local function docs()
     local docs_commands = {
         info = docs_info,
+        init = docs_init,
         update = docs_update
     }
 
@@ -77,10 +102,16 @@ local commands = setmetatable({
     docs = {
         func = exit_wrapper(docs),
         help = {
-            header = "%s docs [update|info]",
+            header = "%s docs [init|update|info]",
             description = "Module for docs management"
         },
         subcommands = {
+            init = {
+                help = {
+                    header = "%s docs init",
+                    description = "Init documentation submodule"
+                }
+            },
             update = {
                 help = {
                     header = "%s docs update",
@@ -104,9 +135,9 @@ local commands = setmetatable({
 
 local function usage_command(name, cmd)
     local header = cmd.help.header
-    if linkmode then
-        header = cmd.help.linkmode
-    end
+    -- if linkmode then
+    --     header = cmd.help.linkmode
+    -- end
     if type(header) == 'string' then
         header = { header }
     end

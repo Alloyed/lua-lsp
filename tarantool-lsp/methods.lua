@@ -7,6 +7,7 @@ local docs 	  = require('tarantool-lsp.tnt-doc.doc-manager')
 local json    = require 'json'
 local unpack  = table.unpack or unpack
 
+local fio = require('fio')
 local fun = require('fun')
 local console = require('console')
 local method_handlers = {}
@@ -24,7 +25,7 @@ function method_handlers.initialize(params, id)
 	analyze.load_completerc(Config.root)
 	analyze.load_luacheckrc(Config.root)
 
-	local ok, err = docs:init()
+	local ok, err = docs:init({ completions_dir = fio.pathjoin(_G._ROOT_PATH, 'completions') })
 	if err ~= nil then
 		log.info("Docs subsystem error: %s", err)
 	end
