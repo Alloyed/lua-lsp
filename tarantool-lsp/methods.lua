@@ -214,10 +214,10 @@ local function make_completion_items(k, val, isField, isInvoke, isVariant)
 				sig = table.concat(sig, ", ")
 			end
 
-			if isInvoke and not val_is_method then
-				-- don't list functions that aren't usable as methods
-				return {}
-			end
+			-- if isInvoke and not val_is_method then
+			-- 	-- don't list functions that aren't usable as methods
+			-- 	return {}
+			-- end
 
 			local ret = ""
 			if val.scope then
@@ -264,7 +264,7 @@ local function make_completion_items(k, val, isField, isInvoke, isVariant)
 				ret = string.format("-> %s", ret)
 			end
 
-			item.insertText = k
+			item.insertText = ("%s()"):format(k)
 			item.label = ("%s(%s) %s"):format(k, sig, ret)
 			item.documentation = val.description
 			if isInvoke then
