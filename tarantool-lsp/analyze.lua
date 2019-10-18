@@ -55,6 +55,7 @@ local function translate_luacomplete(into, data)
 			scope[key] = {Id, {
 					tag = "Function",
 					description = value.description,
+					detail = value.detail,
 					arguments = value.args or {},
 					signature = value.argsDisplay,
 					returns   = value.returnTypes,

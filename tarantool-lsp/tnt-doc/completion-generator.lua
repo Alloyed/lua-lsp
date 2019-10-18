@@ -96,7 +96,7 @@ local function generateCompletionFile(tnt_module)
         output.fields[k] = {
             type = termType,
             argsDisplay = v.argsDisplay,
-            -- TODO: Brief support
+            detail = v.brief,
             description = v.description,
         }
     end

@@ -274,6 +274,8 @@ local function make_completion_items(k, val, isField, isInvoke, isVariant)
 				item.kind   = completionKinds.Function
 				item.detail = "<function>"
 			end
+
+			item.detail = val.detail
 		elseif val.tag == "Table" then
 			item.detail = "<table>"
 			item.documentation = val.description
