@@ -95,13 +95,9 @@ local function generateCompletionFile(tnt_module)
         local termType = findKindByDigit(v.type):lower()
         output.fields[k] = {
             type = termType,
-            -- argsDisplay =
+            argsDisplay = v.argsDisplay,
             -- TODO: Brief support
-            description = v.brief,
-            -- Hack: Current LSP support functions only with existen args field
-            args = termType == 'function' and {
-                {}
-            }
+            description = v.description,
         }
     end
 

@@ -579,9 +579,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 				local is_method = not not word:find(":")
 				log.debug("Is method? %_", is_method)
 				for iname, _, val in iter_scope(_scope) do
-					if type(iname) == "string" and
-						iname:sub(1, _iword:len()) == _iword then
-
+					if type(iname) == "string" and iname:sub(1, _iword:len()) == _iword then
 						local is_field = true
 						local subitems = make_completion_items(iname, val, is_method, is_field)
 						for _, item in ipairs(subitems) do

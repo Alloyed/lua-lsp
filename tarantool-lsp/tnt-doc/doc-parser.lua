@@ -33,7 +33,8 @@ local completionKinds = {
 
 local function parseFunction(scope, moduleName)
     local is, ie, funcName = scope:find("^([%w.:_]+)")
-    scope = scope:match("%([^\n]*%)\n\n(.*)", ie)
+    local argsDisplay
+    argsDisplay, scope = scope:match("%(([^\n]*)%)\n\n(.*)", ie)
     if not scope then
         return nil
     end
@@ -50,7 +51,8 @@ local function parseFunction(scope, moduleName)
         funcName = moduleName .. '.' .. funcName
     end
 
-    return { name = funcName, description = termDescription, type = completionKinds['Function'] }
+    return { name = funcName, description = termDescription, type = completionKinds['Function'],
+             argsDisplay = argsDisplay }
 end
 
 local function parseIndex(scope)
