@@ -1,12 +1,16 @@
-# lua-lsp
-[![Build Status](https://travis-ci.org/Alloyed/lua-lsp.svg)](https://travis-ci.org/Alloyed/lua-lsp)
+# tarantool-lsp
+[![Build Status](https://travis-ci.org/artur-barsegyan/tarantool-lsp.svg)](https://travis-ci.org/artur-barsegyan/tarantool-lsp)
 
-A [Language Server][lsp] for Lua code, written in Lua.
+A [Language Server][lsp] for Tarantool/Lua code, written in Lua.
 
 [lsp]: https://github.com/Microsoft/language-server-protocol
 
 It's still a work in progress, but it's usable for day-to-day. It currently
 supports:
+
+## [lua-lsp legacy][lua-lsp]
+
+[lua-lsp]: https://github.com/Alloyed/lua-lsp
 
 * Limited autocompletion
 * Goto definition
@@ -14,19 +18,51 @@ supports:
 * Code formatting
 * Supports Lua 5.1-5.3 and Luajit
 
+## Tarantool specific
+* Support autocompletion for Tarantool built-in libs on the fly
+
+  ![Completion](./images/completion.gif)
+
+* Support hovering for Tarantool built-in libs on the fly
+
+  ![Hover](./images/hover.gif)
+
+* Enhance completion support
+  - [NEW] Completions triggered only on `require`
+
+* Impl CLI doc manager
+
+  * parsing Tarantool documentation
+  * version management
+  * manual updates
+
+* Powered by Tarantool
+
 ### Installation/Usage
 
-lua-lsp can be installed using luarocks:
+tarantool-lsp can be installed using `brew`:
 ```
-$ luarocks install --server=http://luarocks.org/dev lua-lsp
+$ brew install https://github.com/artur-barsegyan/tarantool-lsp/raw/master/tarantoollsp.rb --HEAD
 ```
-This will install the `lua-lsp` command. Language clients can then communicate
-with this process using stdio as a transport. See [editors.md](editors.md) for
-more instructions specific to your editor of choice.
+This will install the `tarantool-lsp`.
+
+If you want to enable Tarantool documentation for the server, do the next command:
+
+```
+$ tarantool-lsp docs init
+```
+
+To update the documentation you need to run the next command:
+
+```
+$ tarantool-lsp docs update
+```
+
+After this, you should configure your text editor. Language clients can then communicate with this process using stdio as a transport. See [editors.md](editors.md) for more instructions specific to your editor of choice.
 
 ### Plugins
 
-lua-lsp automatically integrates with common lua packages, when they are
+tarantool-lsp automatically integrates with common lua packages, when they are
 installed. For linting, install luacheck:
 ```
 $ luarocks install luacheck
@@ -44,7 +80,7 @@ materially different results.
 
 ### Configuration
 
-lua-lsp reads a few project-level configuration files to do its work.
+tarantool-lsp reads a few project-level configuration files to do its work.
 
 To configure linting, we read your standard [.luacheckrc][check] file.
 

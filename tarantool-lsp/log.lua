@@ -131,10 +131,10 @@ function log.debug(...)
 
 		tnt_logger.debug(pre, msg, "\n")
 
-		--rpc.notify("window/logMessage", {
-		--	message = msg,
-		--	type = message_types.log,
-		--})
+		rpc.notify("window/logMessage", {
+			message = msg,
+			type = message_types.log,
+		})
 	end
 end
 log.d = log.debug
