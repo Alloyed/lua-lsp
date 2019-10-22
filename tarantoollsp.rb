@@ -3,7 +3,7 @@ class Tarantoollsp < Formula
 	homepage "https://github.com/artur-barsegyan/tarantool-lsp"
   	url "https://download.tarantool.org/tarantool/2.2/src/tarantool-2.2.1.1.tar.gz"
  	sha256 "42c6c61b7d9a2444afd96e4f5e1828da18ea2637d1e9d61dc543436ae48dd87f"
-	head "https://github.com/artur-barsegyan/tarantool-lsp.git", :branch => "impl-cli-tools"
+	head "https://github.com/artur-barsegyan/tarantool-lsp.git", :branch => "impl-tarantool-docs-support"
 
 	# By default, Tarantool from brew includes devel headers
 	depends_on "tarantool"
