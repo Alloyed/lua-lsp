@@ -42,7 +42,7 @@ supports:
 
 tarantool-lsp can be installed using `brew`:
 ```
-$ brew install https://github.com/artur-barsegyan/tarantool-lsp/raw/master/tarantoollsp.rb --HEAD
+$ brew install https://raw.githubusercontent.com/artur-barsegyan/tarantool-lsp/impl-tarantool-docs-support/tarantoollsp.rb --HEAD
 ```
 This will install the `tarantool-lsp`.
 

@@ -99,12 +99,12 @@ local function gen_scopes(len, ast, uri)
 			posEnd = 0,
 			scope = Globals,
 		}}
-		for _, builtin in ipairs(Config.builtins) do
-			local info = require('tarantool-lsp.data.'..builtin)
-			if info.global then
-				translate_luacomplete(Globals, info.global)
-			end
-		end
+		-- for _, builtin in ipairs(Config.builtins) do
+		-- 	local info = require('tarantool-lsp.data.'..builtin)
+		-- 	if info.global then
+		-- 		translate_luacomplete(Globals, info.global)
+		-- 	end
+		-- end
 
 		if Config.complete and Config.complete.global then
 			translate_luacomplete(Globals, Config.complete.global)

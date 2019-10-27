@@ -24,7 +24,7 @@ function DocumentationManager.initDoc(opts)
         end
     end
 
-    local res, err = utils.exec_call("cd %q && %s clone %s", opts.doc_dir, git, "https://github.com/tarantool/doc.git")
+    local res, err = utils.exec_call("cd %q && %s clone %s .", opts.doc_dir, git, "https://github.com/tarantool/doc.git")
     if not res then
         return nil, err
     end
@@ -45,7 +45,7 @@ function DocumentationManager.updateDoc(opts)
         return nil, "Error! You need to install 'git' for docs updating."
     end
 
-    local res, err = utils.exec_call("cd %q && %s pull origin master", opts.doc_dir, git)
+    local res, err = utils.exec_call("cd %q && %s pull", opts.doc_dir, git)
     if not res then
         return nil, err
     end
@@ -60,7 +60,7 @@ function DocumentationManager:getInternalLibrariesList(moduleName)
 end
 
 function DocumentationManager:init(opts)
-    checks({ completions_dir = 'string' })
+    checks('table', { completions_dir = 'string' })
 
     if not fio.path.exists(opts.completions_dir) then
         return nil, "Completion directory isn't exist"

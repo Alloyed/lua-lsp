@@ -38,12 +38,12 @@ local function parseDocs(doc_path)
     local doc_dirs = {
         -- box doc's
         {
-            path = fio.pathjoin(doc_path, "doc", "doc", "1.10", "book", "box"),
+            path = fio.pathjoin(doc_path, "doc", "book", "box"),
             name = 'box'
         },
         -- libraries docs's + some box modules
         {
-            path = fio.pathjoin(doc_path, "doc", "doc", "1.10", "reference", "reference_lua"),
+            path = fio.pathjoin(doc_path, "doc", "reference", "reference_lua"),
             name = 'libraries',
             separate = true
         }
@@ -120,6 +120,10 @@ local function generateCompletions(opts)
 
     jp.stop()
 
+    if not fio.path.exists(opts.completion_dir) then
+        fio.mkdir(opts.completion_dir)
+    end
+
     local serpent  = require('serpent')
     for name, library in pairs(terms.libraries) do
         local result = {
@@ -128,7 +132,7 @@ local function generateCompletions(opts)
         }
         result.fields[name] = generateCompletionFile(library)
 
-        f = io.open(opts.completion_dir .. '/' .. name .. '.lua', 'w')
+        local f = io.open(opts.completion_dir .. '/' .. name .. '.lua', 'w')
         f:write("return ", serpent.block(result, {comment = false}))
         f:close()
     end
