@@ -1,5 +1,6 @@
 local fio = require('fio')
 local log = require('tarantool-lsp.log')
+local tlog = require('log')
 local utils = require('tarantool-lsp.utils')
 local completion_generator = require('tarantool-lsp.tnt-doc.completion-generator')
 local checks = require('checks')
@@ -72,9 +73,10 @@ function DocumentationManager:init(opts)
     for _, libname in ipairs(cmpltFiles) do
          libname = fio.basename(libname)
          libname = libname:gsub("%.lua", "")
-
+        tlog.info('lib load: %s', libname)
         self.libraries[libname] = true
     end
+
 
     return true
 end

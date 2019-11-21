@@ -47,15 +47,11 @@ local function parseFunction(scope, moduleName)
     end
     termDescription = rtrim(ltrim(termDescription or ""))
 
-    if moduleName and not funcName:find(moduleName) then
-        funcName = moduleName .. '.' .. funcName
-    end
-
     return { name = funcName, description = termDescription, type = completionKinds['Function'],
              argsDisplay = argsDisplay }
 end
 
-local function parseIndex(scope)
+local function parseIndex(scope, moduleName)
     local is, ie = scope:find("%+[%=]+%+[%=]+%+\n")
     local index_rows = scope:sub(ie + 1, scope:len())
     local index = {}
@@ -70,6 +66,10 @@ local function parseIndex(scope)
         local is, ie, func_name = index_rows:find(ROW_REGEXP, i)
         if not is then
             break
+        end
+
+        if moduleName and func_name:find(moduleName .. '.') == 1 then
+            func_name = func_name:sub(moduleName:len() + 2)
         end
 
         local row_dump = index_rows:sub(ie + 1, index_rows:find(ROW_SEPARATOR, ie + 1))
@@ -168,6 +168,9 @@ local function create_if_not_exist(terms, termName, data)
     if not existenTerm.description then
         existenTerm.description = data.description
     end
+    if not existenTerm.brief then
+        existenTerm.brief = data.brief
+    end
     existenTerm.description = normalizeToMarkDown(existenTerm.description)
 
     return existenTerm
@@ -175,7 +178,7 @@ end
 
 local it = 1
 
-local function parseHeadings(text, terms)
+local function parseHeadings(titleName, text, terms)
     local i = 1
     -- Scope for functions and other objects
     local moduleName
@@ -196,7 +199,7 @@ local function parseHeadings(text, terms)
                 create_if_not_exist(terms, moduleName, { description = truncateScope(text, nextTerm.e_pos) })
             end
         elseif nextTerm.term.name == "index" then
-            local index = parseIndex(truncateScope(text, nextTerm.e_pos))
+            local index = parseIndex(truncateScope(text, nextTerm.e_pos), titleName)
             for func, brief_desc in pairs(index) do
                 -- TODO: Maybe it's not a function...
                 create_if_not_exist(terms, func, { brief = brief_desc, type = completionKinds['Function'] })
@@ -209,7 +212,7 @@ end
 
 -- Parse only functions
 local function parseDocFile(text, terms)
-    parseHeadings(text, terms)
+
 
     -- Scope for functions and other objects
     local moduleName
@@ -223,7 +226,8 @@ local function parseDocFile(text, terms)
         end
 
         if nextTerm.term.name == "module" then
-            local is, ie, moduleName = text:find("%.%. module%:%: ([%w.:_]*)\n", nextTerm.pos)
+            local is, ie, mName = text:find("%.%. module%:%: ([%w.:_]*)\n", nextTerm.pos)
+            moduleName = mName
             local _ = create_if_not_exist(terms, moduleName, { type = completionKinds['Module'],
                                                                description = truncateScope(text, ie + 1) })
         elseif nextTerm.term.name == "function" then
@@ -241,6 +245,8 @@ local function parseDocFile(text, terms)
 
         i = nextTerm.e_pos + 1
     end
+
+    parseHeadings(moduleName, text, terms)
 end
 
 return {

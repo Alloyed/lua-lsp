@@ -1,18 +1,26 @@
 local rpc             = require 'tarantool-lsp.rpc'
+local io_loop             = require 'tarantool-lsp.io-loop'
 local log             = require 'tarantool-lsp.log'
 local method_handlers = require 'tarantool-lsp.methods'
+local fio             = require 'fio'
+
+local config = {
+    language = "5.1",
+    builtins = {"5_1"},
+    packagePath = {"./?.lua"},
+    documents = {},
+    types = {},
+    globals = nil,
+    debugMode = false,
+    completion_root = fio.pathjoin(_G._ROOT_PATH, 'tarantool-lsp/completions'),
+    _useNativeLuacheck = false -- underscore means "experimental" here
+}
 
 _G.Types = _G.Types or {}
 _G.Documents = _G.Documents or {}
 _G.Globals = _G.Globals -- defined in analyze.lua
 -- selfish default
-_G.Config = _G.Config or {
-	language = "5.1",
-	builtins = {"5_1"},
-	packagePath = {"./?.lua"},
-	debugMode = false,
-	_useNativeLuacheck = false -- underscore means "experimental" here
-}
+
 _G.Shutdown = false
 _G.Initialized = _G.Initialized or false
 _G.print = function()
@@ -32,8 +40,8 @@ end
 local function main(_)
 	while not Shutdown do
 		-- header
-		local data, err = rpc.decode()
-		if _G.Config.debugMode then
+		local data, err = io_loop.decode()
+		if config.debugMode then
 			reload_all()
 		end
 
@@ -53,11 +61,15 @@ local function main(_)
 			else
 				local ok
 				ok, err = xpcall(function()
-					method_handlers[data.method](data.params, data.id)
+					local response = method_handlers[data.method](config, data.params, data.id)
+                    io.write(response)
+                    io.flush()
 				end, debug.traceback)
 				if not ok then
 					if data.id then
-						rpc.respondError(data.id, err, "InternalError")
+						local msgError = rpc.respondError(data.id, err, "InternalError")
+                        io.write(msgError)
+                        io.flush()
 					else
 						log.warning("%s", tostring(err))
 					end

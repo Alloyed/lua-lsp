@@ -12,59 +12,67 @@ local fun = require('fun')
 local console = require('console')
 local method_handlers = {}
 
-function method_handlers.initialize(params, id)
-	if _G.Initialized then
-		error("already initialized!")
-	end
-	Config.root  = params.rootPath or params.rootUri
-	-- Some LSP clients doesn't provide capabilities for change 'trace' option
-	-- and user options can override
-	log.setTraceLevel(params.initializationOptions and params.initializationOptions.trace
-					  or params.trace or "off")
-	log.info("Config.root = %q", Config.root)
-	analyze.load_completerc(Config.root)
-	analyze.load_luacheckrc(Config.root)
+function method_handlers.initialize(config, params, id)
+    if config.initialized then
+        error("already initialized!")
+    end
+    if params.rootPath and params.rootPath ~= box.NULL then
+        config.root = params.rootPath
+    else
+        if params.rootUri and params.rootUri ~= box.NULL then
+            config.root = params.rootUri
+        end
+    end
+    -- Some LSP clients doesn't provide capabilities for change 'trace' option
+    -- and user options can override
+    log.info("Config.root = %q", config.root)
+    if  not config.web_server and config.root and config.root ~= box.NULL then
+        analyze.load_completerc(config, config.root)
+        analyze.load_luacheckrc(config, config.root)
+    end
 
-	local ok, err = docs:init({ completions_dir = fio.pathjoin(_G._ROOT_PATH, 'completions') })
-	if err ~= nil then
-		log.info("Docs subsystem error: %s", err)
-	end
+    if not config.web_server then
+        local ok, err = docs:init({ completions_dir = config.completion_root })
+        if err ~= nil then
+            log.info("Docs subsystem error: %s", err)
+        end
+    end
 
-	--ClientCapabilities = params.capabilities
-	Initialized = true
-	-- hopefully this is modest enough
-	return rpc.respond(id, {
-		capabilities = {
-			completionProvider = {
-				triggerCharacters = {".",":"},
-				resolveProvider = false
-			},
-			definitionProvider = true,
-			textDocumentSync = {
-				openClose = true,
-				change = 1, -- 1 is non-incremental, 2 is incremental
-				save = { includeText = true },
-			},
-			hoverProvider = true,
-			documentSymbolProvider = true,
-			-- referencesProvider = true ,
-			--documentHighlightProvider = false,
-			--workspaceSymbolProvider = false,
-			--codeActionProvider = false,
-			--documentFormattingProvider = false,
-			--documentRangeFormattingProvider = false,
-			--renameProvider = false,
-		}
-	})
+    --ClientCapabilities = params.capabilities
+    config.initialized = true
+    -- hopefully this is modest enough
+    return rpc.respond(id, {
+        capabilities = {
+            completionProvider = {
+                triggerCharacters = {".",":"},
+                resolveProvider = false
+            },
+            definitionProvider = true,
+            textDocumentSync = {
+                openClose = true,
+                change = 1, -- 1 is non-incremental, 2 is incremental
+                save = { includeText = true },
+            },
+            hoverProvider = true,
+            documentSymbolProvider = true,
+            -- referencesProvider = true ,
+            --documentHighlightProvider = false,
+            --workspaceSymbolProvider = false,
+            --codeActionProvider = false,
+            --documentFormattingProvider = false,
+            --documentRangeFormattingProvider = false,
+            --renameProvider = false,
+        }
+    })
 end
 
-method_handlers["textDocument/didOpen"] = function(params)
-	Documents[params.textDocument.uri] = params.textDocument
-	analyze.refresh(params.textDocument)
+method_handlers["textDocument/didOpen"] = function(config, params)
+	config.documents[params.textDocument.uri] = params.textDocument
+	analyze.refresh(config, params.textDocument)
 end
 
-method_handlers["textDocument/didChange"] = function(params)
-	local document = analyze.document(params.textDocument)
+method_handlers["textDocument/didChange"] = function(config, params)
+	local document = analyze.document(config, params.textDocument)
 
 	for _, patch in ipairs(params.contentChanges) do
 		if (patch.range == nil and patch.rangeLength == nil) then
@@ -77,18 +85,18 @@ method_handlers["textDocument/didChange"] = function(params)
 		end
 	end
 
-	analyze.refresh(document)
+	analyze.refresh(config, document)
 end
 
-method_handlers["textDocument/didSave"] = function(params)
+method_handlers["textDocument/didSave"] = function(config, params)
 	local uri = params.textDocument.uri
-	local document = analyze.document(uri)
+	local document = analyze.document(config, uri)
 	-- FIXME: merge in details from params.textDocument
-	analyze.refresh(document)
+	analyze.refresh(config, document)
 end
 
-method_handlers["textDocument/didClose"] = function(params)
-	Documents[params.textDocument.uri] = nil
+method_handlers["textDocument/didClose"] = function(config, params)
+	config.documents[params.textDocument.uri] = nil
 end
 
 local function pick_scope(dirty, scopes, pos)
@@ -98,7 +106,7 @@ local function pick_scope(dirty, scopes, pos)
 	assert(#scopes > 0)
 	if dirty then
 		-- ignore posEnd, it's probably wrong
-		for _, scope in ipairs(scopes) do
+		for val, scope in ipairs(scopes) do
 			local meta = getmetatable(scope)
 			local dist = pos - meta.pos
 			if meta.pos <= pos and dist < size then
@@ -116,7 +124,7 @@ local function pick_scope(dirty, scopes, pos)
 			end
 		end
 	end
-	assert(closest, require('3rd-party.inspect')(scopes))
+	assert(closest, require('tarantool-lsp.inspect')(scopes))
 
 	return closest
 end
@@ -398,7 +406,7 @@ local definition_of
 --- Get pair(), and unpack them automatically
 -- @input t - current scope, k - current word
 -- @returns key, value, document
-local function getp(doc, t, k, isDefinition)
+local function getp(config, doc, t, k, isDefinition)
 	-- luacheck: ignore 542
 	local pair = t and t[k]
 	if not pair then
@@ -416,7 +424,7 @@ local function getp(doc, t, k, isDefinition)
 		local moduleName = value.module
 
 		-- [NOTE] Waiting the Document entity from this function
-		local ref = assert(analyze.module(moduleName))
+		local ref = assert(analyze.module(config, moduleName))
 		doc = ref
 		if ref then
 			-- start at file scope
@@ -424,7 +432,7 @@ local function getp(doc, t, k, isDefinition)
 			local ret = mt and mt._return and mt._return[1][1]
 			if ret and ret.tag == "Id" then
 				local _
-				_, value, doc = definition_of(ref, ret)
+				_, value, doc = definition_of(config, ref, ret)
 			else
 				value = ret
 			end
@@ -435,10 +443,10 @@ local function getp(doc, t, k, isDefinition)
 		-- "string", which is true in the default lua impl, but can be
 		-- broken by crazy users doing setmetatable("", new_string), which we
 		-- don't actually handle.
-		key, value, doc = definition_of(doc, {tag="Id", "string", pos=-1})
+		key, value, doc = definition_of(config, doc, {tag="Id", "string", pos=-1})
 	elseif value.tag == "Call" or value.tag == "Invoke" then
 		local v
-		key, v, doc = definition_of(doc, value.ref)
+		key, v, doc = definition_of(config, doc, value.ref)
 		if v.scope then
 			local mt = v.scope and getmetatable(v.scope)
 			local rets = mt and mt._return or {{}}
@@ -457,7 +465,7 @@ local function getp(doc, t, k, isDefinition)
 		elseif v.returns then
 			local ret = v.returns[1]
 			if ret.type == "ref" then
-				local _type = Types[ret.name]
+				local _type = config.types[ret.name]
 				return key, _type, doc
 			end
 		end
@@ -484,8 +492,8 @@ end
 --- returns the definition of an expression AST or a position in a document
 -- FIXME: this is real dumb, do the expression parsing someplace else and only
 -- query based on AST
-function definition_of(doc, id_or_pos)
-	local document = analyze.document(doc)
+function definition_of(config, doc, id_or_pos)
+	local document = analyze.document(config, doc)
 
 	local word, cursor
 	if id_or_pos.tag then
@@ -513,7 +521,7 @@ function definition_of(doc, id_or_pos)
 
 	if word:find("[:.]") then
 		local valdoc
-		_, val, valdoc = getp(document, scope, word_start)
+		_, val, valdoc = getp(config, document, scope, word_start)
 		local path_ids = split_path(word)
 
 		local function follow_path(ii, _scope)
@@ -524,9 +532,9 @@ function definition_of(doc, id_or_pos)
 			local last = ii == #path_ids
 
 			if last then
-				return getp(valdoc, _scope, key, "definition")
+				return getp(config, valdoc, _scope, key, "definition")
 			else
-				local _, ival, _ = getp(valdoc, _scope, key)
+				local _, ival, _ = getp(config, valdoc, _scope, key)
 
 				if ival.tag == "Table" and ival.scope then
 					return follow_path(ii+1, ival.scope)
@@ -535,7 +543,7 @@ function definition_of(doc, id_or_pos)
 		end
 		symbol, val, document = follow_path(2, val.scope)
 	else
-		symbol, val, document = getp(document, scope, word_start, "definition")
+		symbol, val, document = getp(config, document, scope, word_start, "definition")
 	end
 
 	if not symbol then
@@ -544,8 +552,8 @@ function definition_of(doc, id_or_pos)
 	return symbol, val, document
 end
 
-method_handlers["textDocument/completion"] = function(params, id)
-	local document = analyze.document(params.textDocument)
+method_handlers["textDocument/completion"] = function(config, params, id)
+	local document = analyze.document(config, params.textDocument)
 	if document.scopes == nil then
 		return rpc.respond(id, {
 			isIncomplete = false,
@@ -590,7 +598,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 					end
 				end
 			else
-				local node, val = getp(document, _scope, _iword)
+				local node, val = getp(config, document, _scope, _iword)
 				if node then
 					if val and val.tag == "Table" then
 						if val.scope then
@@ -605,6 +613,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 		-- variable scope
 		for iname, node, val in iter_scope(scope) do
 			if not used[iname] and (node.global or node.posEnd < pos) then
+
 				used[iname] = true
 				if iname:sub(1, word:len()) == word then
 					for _, item in ipairs(make_completion_items(iname, val)) do
@@ -664,8 +673,8 @@ method_handlers["textDocument/completion"] = function(params, id)
 	})
 end
 
-method_handlers["textDocument/definition"] = function(params, id)
-	local document = analyze.document(params.textDocument)
+method_handlers["textDocument/definition"] = function(config, params, id)
+	local document = analyze.document(config, params.textDocument)
 
 	local line, char = line_for(document, params.position)
 	local word_s = line.text:sub(1, char):find("[%w.:_]*$")
@@ -674,7 +683,7 @@ method_handlers["textDocument/definition"] = function(params, id)
 	local word = line.text:sub(word_s, word_e)
 	log.debug("definition for %q", word)
 
-	local symbol, _, doc2 = definition_of(params.textDocument, params.position)
+	local symbol, _, doc2 = definition_of(config, params.textDocument, params.position)
 
 	if not symbol or symbol.file == "__NONE__" then
 		-- symbol not found
@@ -707,8 +716,8 @@ method_handlers["textDocument/definition"] = function(params, id)
 
 end
 
-method_handlers["textDocument/hover"] = function(params, id)
-	local document = analyze.document(params.textDocument)
+method_handlers["textDocument/hover"] = function(config, params, id)
+	local document = analyze.document(config, params.textDocument)
 	if not document.scopes then
 		return rpc.respondError(id, "No AST data")
 	end
@@ -720,7 +729,7 @@ method_handlers["textDocument/hover"] = function(params, id)
 	local word = line.text:sub(word_s, word_e)
 	log.debug("hover for %q", word)
 
-	local symbol, value = definition_of(params.textDocument, params.position)
+	local symbol, value = definition_of(config, params.textDocument, params.position)
 	if symbol then
 		local contents = {}
 
@@ -746,8 +755,8 @@ method_handlers["textDocument/hover"] = function(params, id)
 	})
 end
 
-method_handlers["textDocument/documentSymbol"] = function(params, id)
-	local document = analyze.document(params.textDocument)
+method_handlers["textDocument/documentSymbol"] = function(config, params, id)
+	local document = analyze.document(config, params.textDocument)
 	local symbols = {}
 
 	-- FIXME: report table keys too, like a.b.c
@@ -770,8 +779,8 @@ method_handlers["textDocument/documentSymbol"] = function(params, id)
 	return rpc.respond(id, symbols)
 end
 
-method_handlers["textDocument/formatting"] = function(params, id)
-	local doc = analyze.document(params.textDocument)
+method_handlers["textDocument/formatting"] = function(config, params, id)
+	local doc = analyze.document(config, params.textDocument)
 	local indent = "\t"
 	if params.options.insertSpaces then
 		indent = string.rep(" ", params.options.tabSize)
@@ -791,8 +800,8 @@ method_handlers["textDocument/formatting"] = function(params, id)
 	})
 end
 
-method_handlers["textDocument/rangeFormatting"] = function(params, id)
-	local doc = analyze.document(params.textDocument)
+method_handlers["textDocument/rangeFormatting"] = function(config, params, id)
+	local doc = analyze.document(config, params.textDocument)
 	local indent = "\t"
 	if params.options.insertSpaces then
 		indent = string.rep(" ", params.options.tabSize)
@@ -814,10 +823,10 @@ method_handlers["textDocument/rangeFormatting"] = function(params, id)
 	})
 end
 
-method_handlers["workspace/didChangeConfiguration"] = function(params)
+method_handlers["workspace/didChangeConfiguration"] = function(config, params)
 	assert(params.settings)
-	merge_(Config, params.settings)
-	log.info("Config loaded, new config: %t", Config)
+	merge_(config, params.settings)
+	log.info("Config loaded, new config: %t", config)
 end
 
 function method_handlers.shutdown(_, id)

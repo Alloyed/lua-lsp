@@ -15,7 +15,12 @@ work_log.md
 .DS_Store
 
 # Completions
-/completions
+/completions/
+tarantool-lsp/completions/
+.tnt_doc
 
 # Any local test scripts
 *.sh
+
+# idea
+.idea

@@ -3,13 +3,11 @@ local json    = require 'json'
 local rpc = {}
 
 function rpc.respond(id, result)
-	local msg = json.encode({
+	return json.encode({
 		jsonrpc = "2.0",
 		id = id or json.null,
 		result = result
 	})
-	io.write("Content-Length: ".. string.len(msg).."\r\n\r\n"..msg)
-	io.flush()
 end
 
 local lsp_error_codes = {
@@ -47,19 +45,15 @@ function rpc.respondError(id, errorMsg, errorKey, data)
 			data = data
 		}
 	})
-	io.write("Content-Length: ".. string.len(msg).."\r\n\r\n"..msg)
-	io.flush()
-	io.stderr:write("Error: "..errorMsg.."\n")
+    return msg
 end
 
 function rpc.notify(method, params)
-	local msg = json.encode({
+	return json.encode({
 		jsonrpc = "2.0",
 		method = method,
 		params = params
 	})
-	io.write("Content-Length: ".. string.len(msg).."\r\n\r\n"..msg)
-	io.flush()
 end
 
 local open_rpc = {}
@@ -73,8 +67,7 @@ function rpc.request(method, params, fn)
 	})
 	open_rpc[next_rpc_id] = fn
 	next_rpc_id = next_rpc_id + 1
-	io.write("Content-Length: ".. string.len(msg).."\r\n\r\n"..msg)
-	io.flush()
+	return msg
 end
 
 function rpc.finish(data)
@@ -83,37 +76,6 @@ function rpc.finish(data)
 	if call then
 		call(data.result)
 	end
-end
-
-function rpc.decode()
-	local line = io.read("*l")
-	if line == nil then
-		return nil, "eof"
-	end
-	line = line:gsub("\13", "")
-	local content_length
-	while line ~= "" do
-		local key, val = line:match("^([^:]+): (.+)$")
-		assert(key, string.format("%q", tostring(line)))
-		assert(val)
-		if key == "Content-Length" then
-			content_length = tonumber(val)
-		elseif key == "Content-Type" then
-			assert(valid_content_type[val], "Invalid Content-Type")
-		else
-			error("unexpected")
-		end
-		line = io.read("*l")
-		line = line:gsub("\13", "")
-	end
-
-	-- body
-	assert(content_length)
-	local data = io.read(content_length)
-	data = data:gsub("\13", "")
-	data = assert(json.decode(data))
-	assert(data["jsonrpc"] == "2.0")
-	return data
 end
 
 return rpc

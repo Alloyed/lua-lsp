@@ -26,9 +26,10 @@ package.setsearchroot(lsp_root)
 _G._ROOT_PATH = lsp_root
 
 -- For debug purposes
--- box.cfg{
---     log = "log.txt"
--- }
+box.cfg{
+ log = "log.txt",
+ log_level = 6
+}
 
 local self_name = fio.basename(arg[0])
 local command_name = arg[1]
@@ -97,6 +98,13 @@ local commands = setmetatable({
         help = {
             header = "%s server",
             description = "Start LSP server on listening (using for client purposes)"
+        }
+    },
+    ws = {
+        func = require('tarantool-lsp.websocket'),
+        help = {
+            header = "%s ws",
+            description = "Start WebSocket LSP server on listening"
         }
     },
     docs = {

@@ -79,14 +79,14 @@ end
 local GLOBAL_SCOPE = 1
 local FILE_SCOPE   = 2
 
-local function gen_scopes(len, ast, uri)
-	if not Globals then
+local function gen_scopes(config, len, ast, uri)
+	if not config.globals then
 		-- FIXME: we need to teach the rest of the system that it's okay for a
 		-- scopes to not have positions
-		Globals = setmetatable({},{
+        config.globals = setmetatable({},{
 			id=GLOBAL_SCOPE, pos=0, posEnd=math.huge, origin="global"
 		})
-		Globals._G = {{
+        config.globals._G = {{
 			"_G",
 			tag = "Id",
 			pos = 0,
@@ -97,24 +97,24 @@ local function gen_scopes(len, ast, uri)
 			tag = "Table",
 			pos = 0,
 			posEnd = 0,
-			scope = Globals,
+			scope = config.globals,
 		}}
-		-- for _, builtin in ipairs(Config.builtins) do
-		-- 	local info = require('tarantool-lsp.data.'..builtin)
-		-- 	if info.global then
-		-- 		translate_luacomplete(Globals, info.global)
-		-- 	end
-		-- end
 
-		if Config.complete and Config.complete.global then
-			translate_luacomplete(Globals, Config.complete.global)
+        local info = require('tarantool-lsp.data.5_1')
+        if info.global then
+            translate_luacomplete(config.globals, info.global)
+        end
+
+		if config.complete and config.complete.global then
+			translate_luacomplete(config.globals, config.complete.global)
 		end
 	end
 
+
 	local scopes = {
-		Globals,
+        config.globals,
 		setmetatable({},{
-			__index = Globals, id=FILE_SCOPE,
+			__index = config.globals, id=FILE_SCOPE,
 			pos=0, posEnd=len+1, origin="file"
 		}),
 	}
@@ -489,20 +489,20 @@ end
 
 local popen_cmd = "sh -c 'cd %q; luacheck %q --filename %q --formatter plain --ranges --codes'"
 local message_match =  "^([^:]+):(%d+):(%d+)%-(%d+): %(W(%d+)%) (.+)"
-local function try_luacheck(document)
+local function try_luacheck(config, document)
 	local diagnostics = {}
 	local opts = {}
 	if luacheck then
 		local reports
-		if Config._useNativeLuacheck == false then
+		if config._useNativeLuacheck == false then
 			local tmp_path = "/tmp/check.lua"
 			local tmp = assert(io.open(tmp_path, "w"))
 			tmp:write(document.text)
 			tmp:close()
 
-			local _, ce = document.uri:find(Config.root, 1, true)
+			local _, ce = document.uri:find(config.root, 1, true)
 			local fname = document.uri:sub((ce or -1)+2, -1):gsub("file://","")
-			local root = Config.root:gsub("file://", "")
+			local root = config.root:gsub("file://", "")
 			local issues = io.popen(popen_cmd:format(root, tmp_path, fname))
 			reports = {{}}
 			for line in issues:lines() do
@@ -580,7 +580,7 @@ local function lcp(strList)
 	return shortest
 end
 
-function analyze.refresh(document)
+function analyze.refresh(config, document)
 	local text = document.text
 
 	local lines = {}
@@ -596,12 +596,12 @@ function analyze.refresh(document)
 	document.lines = lines
 
 	local start_time = os.clock()
-	local ast, err = parser.parse(document.text, document.uri, Config.language)
+	local ast, err = parser.parse(document.text, document.uri, config.language)
 	if ast then
 		document.ast = ast
 		document.validtext = document.text
-		document.scopes = gen_scopes(#document.text, document.ast, document.uri)
-		try_luacheck(document)
+		document.scopes = gen_scopes(config, #document.text, document.ast, document.uri)
+		try_luacheck(config, document)
 	else
 		document.dirty = lcp{document.text, document.validtext}
 		local line, column = err.line, err.column
@@ -626,47 +626,52 @@ function analyze.refresh(document)
 		-- AST are out of sync with the new text object.
 	end
 	local path = document.uri
-	local _, e = string.find(path, Config.root, 1, true)
+	local _, e = string.find(path, config.root, 1, true)
 	path = string.sub(path, (e or -1)+2, -1)
 	log.verbose("%s: analyze took %f s", path, os.clock() - start_time)
 end
 
-function analyze.document(uri)
+function analyze.document(config, uri)
 	local ref = nil
 	if type(uri) == "table" then
 		ref = uri
 		uri = uri.uri
 	end
-	if Documents[uri] then
+	if config.documents[uri] then
 		if ref and ref.text then
-			Documents[uri].text = ref.text
-			analyze.refresh(Documents[uri])
+			config.documents[uri].text = ref.text
+			analyze.refresh(config, config.documents[uri])
 		end
-		return Documents[uri]
+		return config.documents[uri]
 	end
 	local document = ref or {}
 	document.uri = uri
 
 	if not document.text then
-		local f       = assert(io.open(uri:gsub("^[^:]+://", ""), "r"))
-		document.text = f:read("*a")
-		f:close()
+        if config.web_server then
+            document.text = ''
+        else
+            local f       = assert(io.open(uri:gsub("^[^:]+://", ""), "r"))
+            document.text = f:read("*a")
+            f:close()
+        end
 	end
 
-	analyze.refresh(document)
+	analyze.refresh(config, document)
 
-	Documents[uri] = document
+	config.documents[uri] = document
+
 
 	return document
 end
 
-function analyze.module(mod)
+function analyze.module(config, mod)
 	-- FIXME: load path from config file
 	mod = mod:gsub("%.", "/")
 
 	local internalLibs = docs:getInternalLibrariesList()
 	if internalLibs[mod] then
-		local ok, lib = pcall(require, 'completions.' .. mod)
+		local ok, lib = pcall(require, 'tarantool-lsp.completions.' .. mod)
 		if ok then
 			local _scope = {}
 			translate_luacomplete(_scope, lib)
@@ -691,19 +696,19 @@ function analyze.module(mod)
 		end
 	end
 
-	for _, template in ipairs(Config.packagePath) do
-		local p = template:gsub("^%./", Config.root.."/"):gsub("?", mod)
+	for _, template in ipairs(config.packagePath) do
+		local p = template:gsub("^%./", config.root.."/"):gsub("?", mod)
 		local uri = "file://"..p
-		if Documents[uri] then
-			return analyze.document(uri)
-		elseif Documents[uri] ~= false then
+		if config.documents[uri] then
+			return analyze.document(config, uri)
+		elseif config.documents[uri] ~= false then
 			local f = io.open(p)
 			if f then
 				f:close()
-				return analyze.document(uri)
+				return analyze.document(config, uri)
 			else
 				-- cache missing file
-				Documents[uri] = false
+				config.documents[uri] = false
 			end
 		end
 	end
@@ -728,46 +733,46 @@ local function split_pkg_path(path)
 	return path_ids
 end
 
-local function add_types(new_types)
+local function add_types(config, new_types)
 	for k, v in pairs(new_types) do
-		Types[k] = {tag="Table", scope = {}}
-		translate_luacomplete(Types[k].scope, v)
+		config.types[k] = {tag="Table", scope = {}}
+		translate_luacomplete(config.types[k].scope, v)
 	end
 end
 
 --- load a .luacompleterc file into Config, for later use
-function analyze.load_completerc(root)
+function analyze.load_completerc(config, root)
 	local f = io.open(root.."/.luacompleterc")
 	if f then
 		local s = assert(f:read("*a"))
 		local data, err = json.decode(s)
 		if data then
-			Config.complete = data
+			config.complete = data
 			if data.namedTypes then
-				add_types(data.namedTypes)
+				add_types(config, data.namedTypes)
 			end
 
 			if data.luaVersion == "love" then
-				Config.builtins = {"love-completions", "luajit-2_0"}
-				Config.language = "luajit"
+				config.builtins = {"love-completions", "luajit-2_0"}
+				config.language = "luajit"
 			elseif data.luaVersion then
-				Config.builtins = {(data.luaVersion:gsub("%.","_"))}
-				Config.language = data.luaVersion
-				if Config.language:match("luajit") then
-					Config.language = "luajit"
+				config.builtins = {(data.luaVersion:gsub("%.","_"))}
+				config.language = data.luaVersion
+				if config.language:match("luajit") then
+					config.language = "luajit"
 				end
 			end
 
-			for _, builtin in ipairs(Config.builtins) do
-				local info = require('tarantool-lsp.data.'..builtin)
+			for _, builtin in ipairs(config.builtins) do
+				local info = require('lua-lsp.data.'..builtin)
 				if info.namedTypes then
-					add_types(info.namedTypes)
+					add_types(config, info.namedTypes)
 				end
 			end
 
 			if data.packagePath then
 				assert(type(data.packagePath) == "string")
-				Config.packagePath = split_pkg_path(data.packagePath)
+				config.packagePath = split_pkg_path(data.packagePath)
 			end
 
 			if data.cwd then
@@ -790,14 +795,14 @@ local function skip(...)
 end
 
 --- Load a .luacheckrc into Config for later use
-function analyze.load_luacheckrc(root)
+function analyze.load_luacheckrc(config, root)
 	if luacheck then
 		local cfg = require 'luacheck.config'
 		-- stack_configs is not in release builds of luacheck yet
 		if cfg.stack_configs then
 			local default = cfg.load_config()
 			local current = cfg.load_config(root.."/.luacheckrc")
-			Config.luacheckrc = cfg.stack_configs(skip(default, current))
+			config.luacheckrc = cfg.stack_configs(skip(default, current))
 		end
 	end
 end

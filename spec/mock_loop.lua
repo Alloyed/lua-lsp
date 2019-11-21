@@ -59,6 +59,17 @@ return function(fn, builtins)
 	end)
 	_G.Args = {}
 
+    local config = {
+        language = "5.1",
+        builtins = {"5_1"},
+        packagePath = {"./?.lua"},
+        debugMode = false,
+        documents = {},
+        types = {},
+        completion_root = require('fio').pathjoin(debug.getinfo(1).source:match("@?(.*/)"), '..', 'test', 'completions'),
+        _useNativeLuacheck = false -- underscore means "experimental" here
+    }
+
 	while not Shutdown and coroutine.status(co) ~= 'dead' do
 		local ok, data = coroutine.resume(co, unpack(Args))
 		if not ok then
@@ -69,7 +80,7 @@ return function(fn, builtins)
 		elseif data.method then
 			-- request
 			assert(method_handlers[data.method], "no method "..data.method)
-			method_handlers[data.method](data.params, data.id)
+			method_handlers[data.method](config, data.params, data.id)
 		elseif data.result then
 			s_rpc.finish(data)
 		elseif data.error then

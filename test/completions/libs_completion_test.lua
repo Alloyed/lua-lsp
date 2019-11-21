@@ -2,14 +2,14 @@ local mock_loop = require('spec.mock_loop')
 local test = require('luatest')
 
 local DEFAULT_CSV_ITEMS = {
-    { detail="<method>", insertText="dump", kind=2, label="dump() "},
-    { detail="<method>", insertText="load", kind=2, label="load() "},
-    { detail="<method>", insertText="iterate", kind=2, label="iterate() "}
+    {insertText="dump()", label="dump() ", kind=2,},
+    {insertText="load()", label="load() ", kind=2,},
+    {insertText="iterate()", label="iterate() ", kind=2}
 }
 
 local DEFAULT_JSON_ITEMS = {
-    { detail="<method>", insertText="decode", kind=2, label="decode() "},
-    { detail="<method>", insertText="encode", kind=2, label="encode() "}
+    {insertText="decode()", kind=2, label="decode() "},
+    {insertText="encode()", kind=2, label="encode() "}
 }
 
 package.loaded['tarantool-lsp.tnt-doc.doc-manager'] = {
@@ -22,8 +22,8 @@ package.loaded['tarantool-lsp.tnt-doc.doc-manager'] = {
     end
 }
 
-package.loaded['completions.csv'] = require('test.completions.golden_files.csv')
-package.loaded['completions.json'] = require('test.completions.golden_files.json')
+package.loaded['tarantool-lsp.completions.csv'] = require('test.completions.golden_files.csv')
+package.loaded['tarantool-lsp.completions.json'] = require('test.completions.golden_files.json')
 
 local function make_completion_call(before, after, position)
     local resp
@@ -56,9 +56,9 @@ libs_completion.test_basic = function()
     local text = "local csv = require('csv')\n"
 
     local cmplt = make_completion_call(text, text .. "csv.", {line = 1, character = 4})
-    test.assertEquals(cmplt, {
-            isIncomplete = false,
-            items = DEFAULT_CSV_ITEMS
+    test.assert_equals(cmplt, {
+        isIncomplete = false,
+        items = DEFAULT_CSV_ITEMS,
         })
 end
 
@@ -113,7 +113,7 @@ local function abc()
 end
 ]]
     local cmplt = make_completion_call(text, cmpltText, {line = 3, character = 6})
-    test.assertEquals(cmplt, {
+    test.assert_equals(cmplt, {
         isIncomplete = false,
         items = DEFAULT_CSV_ITEMS
     })
@@ -136,7 +136,7 @@ end
 ]]
 
     local cmplt = make_completion_call(text, cmpltText, {line = 2, character = 6})
-    test.assertEquals(cmplt, {
+    test.assert_equals(cmplt, {
         isIncomplete = false,
         items = DEFAULT_CSV_ITEMS
     })
@@ -162,7 +162,7 @@ do
 end
 ]]
     local cmplt = make_completion_call(text, cmpltText, {line = 4, character = 6})
-    test.assertEquals(cmplt, {
+    test.assert_equals(cmplt, {
         isIncomplete = false,
         items = DEFAULT_JSON_ITEMS
     })
