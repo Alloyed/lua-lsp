@@ -565,7 +565,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 						iname:sub(1, _iword:len()) == _iword then
 
 						local is_field = true
-						local subitems = make_completion_items(iname, val, is_method, is_field)
+						local subitems = make_completion_items(iname, val, is_field, is_method)
 						for _, item in ipairs(subitems) do
 							table.insert(items, item)
 						end
