@@ -5,12 +5,24 @@ source = {
 }
 description = {
    homepage = "https://github.com/Alloyed/lua-lsp",
-   license = "MIT"
+   license = "MIT",
+   summary = "A Language Server implementation for lua, the language",
+   detailed = [[
+A Language Server for Lua code, written in Lua.
+It's still a work in progress, but it's usable for day-to-day. It currently
+supports:
+
+* Limited autocompletion
+* Goto definition
+* As you type linting and syntax checking
+* Code formatting
+* Supports Lua 5.1-5.3 and Luajit
+   ]],
 }
 dependencies = {
 	"lua >= 5.1, < 5.4",
 	"dkjson ~> 2.5",
-	"lpeglabel ~> 1.5",
+	"lpeglabel ~> 1.6",
 	"inspect ~> 3.1"
 }
 build = {
