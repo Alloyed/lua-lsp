@@ -4,6 +4,31 @@ local function not_empty(t)
 	assert.not_same({}, t)
 end
 
+-- super quick, not utf8-compatibile
+local function position_in_text(text, substr, start)
+	local line = 0
+	for s in text:gmatch("[^\n]*\n?") do
+		line = line + 1
+		local col = s:find(substr, 1, true)
+		if col then
+			if start then
+				col = s:find(start, 1, true)
+				assert(col)
+			end
+			-- zero-indexed
+			return {line=line-1, character=col-1}
+		end
+	end
+end
+
+describe("position_in_text", function()
+	it("works", function()
+		local long = "long long man\n sakeru gummy"
+		assert.same({line = 0, character = 5}, position_in_text(long, "long man"))
+		assert.same({line = 1, character = 8}, position_in_text(long, "sakeru gummy", "gummy"))
+	end)
+end)
+
 describe("textDocument/didOpen", function()
 	it("triggers", function()
 		mock_loop(function(rpc, s_rpc)
@@ -39,7 +64,7 @@ describe("textDocument/definition", function()
 			local callme
 			rpc.request("textDocument/definition", {
 				textDocument = doc,
-				position = { line = 1, character = 8}
+				position = position_in_text(text, "return jeff", "jeff")
 			}, function()
 				callme = true
 			end)
@@ -69,7 +94,7 @@ describe("textDocument/definition", function()
 		end)
 	end)
 
-	it("handles multiple symbols #tmp", function()
+	it("handles multiple symbols", function()
 		mock_loop(function(rpc)
 			local text =  "local jack\nlocal diane\n return jack, diane\n"
 			local doc = {
@@ -80,7 +105,7 @@ describe("textDocument/definition", function()
 			})
 			rpc.request("textDocument/definition", {
 				textDocument = doc,
-				position = {line = 2, character = 8} -- jack
+				position = position_in_text(text, "return jack", "jack")
 			}, function(out)
 				not_empty(out)
 				assert.same({line=0, character=6}, out.range.start)
@@ -88,7 +113,7 @@ describe("textDocument/definition", function()
 
 			rpc.request("textDocument/definition", {
 				textDocument = doc,
-				position = {line = 2, character = 14} -- diane
+				position = position_in_text(text, "return jack, diane", "diane")
 			}, function(out)
 				not_empty(out)
 				assert.same({line=1, character=6}, out.range.start)
@@ -339,6 +364,41 @@ return a.jeff
 			}, function(out)
 				assert.equal(doc.uri, out.uri)
 				assert.same({line=0, character=6}, out.range.start)
+			end)
+		end)
+	end)
+
+	it("handles implicit self", function()
+		mock_loop(function(rpc)
+			local text = [[
+local my_object = { myField = "here" }
+function my_object:myFn()
+	return self:myOtherFn() .. self.myField
+end
+function my_object:myOtherFn()
+end
+]]
+			local doc = {
+				uri = "file:///tmp/fake2.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = position_in_text(text, "self:myOtherFn", "myOtherFn")
+			}, function(out)
+				assert.equal(doc.uri, out.uri)
+				assert.same({line=4, character=19}, out.range.start)
+			end)
+
+			rpc.request("textDocument/definition", {
+				textDocument = doc,
+				position = position_in_text(text, "self.myField", "myField")
+			}, function(out)
+				assert.equal(doc.uri, out.uri)
+				assert.same({line=0, character=20}, out.range.start)
 			end)
 		end)
 	end)

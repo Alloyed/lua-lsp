@@ -136,7 +136,7 @@ end
 		end)
 	end)
 
-	it("handles table returns #atm", function()
+	it("handles table returns", function()
 		mock_loop(function(rpc)
 			local text =  [[
 local function myfun()
