@@ -21,7 +21,7 @@ supports:
 }
 dependencies = {
 	"lua >= 5.1, < 5.4",
-	"dkjson ~> 2.5",
+	"lua-cjson ~> 2.1",
 	"lpeglabel ~> 1.6",
 	"inspect ~> 3.1"
 }

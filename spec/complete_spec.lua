@@ -500,7 +500,7 @@ end
 				assert.same({
 					detail = '"myField"',
 					label  = 'fieldName',
-					kind = completionKinds.Variable,
+					kind = completionKinds.Field,
 				}, out.items[1])
 				callme = true
 			end)

@@ -1,5 +1,5 @@
 -- json-rpc implementation
-local json    = require 'dkjson'
+local json    = require 'cjson'
 local rpc = {}
 
 function rpc.respond(id, result)
