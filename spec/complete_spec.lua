@@ -176,7 +176,7 @@ return t
 						detail = '"a"',
 						label = "string",
 						insertTextFormat = insertTextFormats.Plain,
-						kind = completionKinds.Variable
+						kind = completionKinds.Field
 					}}
 				}, out)
 				callme = true
@@ -196,7 +196,7 @@ return t
 						detail = '"a"',
 						label = "string",
 						insertTextFormat = insertTextFormats.Plain,
-						kind = completionKinds.Variable
+						kind = completionKinds.Field
 					}}
 				}, out)
 				callme = true
@@ -264,7 +264,7 @@ return mystr.t
 				assert.same({
 					detail = 'True',
 					label  = 'test_example',
-					kind = completionKinds.Variable,
+					kind = completionKinds.Field,
 					insertTextFormat = insertTextFormats.Plain,
 				}, out.items[1])
 				callme = true
@@ -297,7 +297,7 @@ return mytbl.j
 				assert.same({
 					detail = '1',
 					label  = 'jeff',
-					kind = completionKinds.Variable,
+					kind = completionKinds.Field,
 					insertTextFormat = insertTextFormats.Plain,
 				}, out.items[1])
 				callme = true
@@ -404,7 +404,7 @@ return mytbl.f
 				assert.same({
 					detail = '"a"',
 					label  = 'field',
-					kind = completionKinds.Variable,
+					kind = completionKinds.Field,
 					insertTextFormat = insertTextFormats.Plain,
 				}, out.items[1])
 				callme = true
@@ -473,6 +473,44 @@ return my_fun().f
 				assert.same({
 					detail = 'M<mymod>',
 					label  = 'tbl'
+				}, out.items[1])
+				callme = true
+			end)
+			assert.truthy(callme)
+		end)
+	end)
+
+	it("can resolve implicit self args", function()
+		mock_loop(function(rpc)
+			local text =  [[
+local obj = {}
+obj.fieldName = "myField"
+function obj:my_fun()
+	return {}
+end
+function obj:my_second_fun()
+	return self.fieldN
+end
+]]
+			local doc = {
+				uri = "file:///tmp/fake.lua"
+			}
+			rpc.notify("textDocument/didOpen", {
+				textDocument = {uri = doc.uri, text = text}
+			})
+			local callme
+			rpc.request("textDocument/completion", {
+				textDocument = doc,
+				position = {line = 6, character = 16}
+			}, function(out)
+				table.sort(out.items, function(a, b)
+					return a < b
+				end)
+				assert.equal(1, #out.items)
+				assert.same({
+					detail = '"myField"',
+					label  = 'fieldName',
+					kind = completionKinds.Field,
 				}, out.items[1])
 				callme = true
 			end)

@@ -10,7 +10,7 @@ local templates = {
 	"https://raw.githubusercontent.com/dapetcu21/atom-autocomplete-lua/master/lib/stdlib/luajit-2_0.json",
 }
 
-local json = require 'dkjson'
+local json = require 'cjson'
 local serpent  = require 'serpent'
 
 local function basename(url)

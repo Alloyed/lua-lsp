@@ -2,7 +2,7 @@
 local parser       = require 'lua-lsp.lua-parser.parser'
 local log          = require 'lua-lsp.log'
 local rpc          = require 'lua-lsp.rpc'
-local json         = require 'dkjson'
+local json         = require 'cjson'
 local ok, luacheck = pcall(require, 'luacheck')
 if not ok then luacheck = nil end
 
@@ -108,7 +108,7 @@ local function gen_scopes(len, ast, uri)
 		end
 	end
 
-	local scopes = {
+	local all_scopes = {
 		Globals,
 		setmetatable({},{
 			__index = Globals, id=FILE_SCOPE,
@@ -116,9 +116,10 @@ local function gen_scopes(len, ast, uri)
 		}),
 	}
 
-	local visit_stat
+	local visit_statement
 
-	local function clean_value(value)
+	-- Turns an AST value into an intermediate value (which can then be stored in a scope, queried etc)
+	local function clean_value(value, owning_a)
 		if value == nil then
 			return {tag = "None"}
 		end
@@ -133,13 +134,17 @@ local function gen_scopes(len, ast, uri)
 				value = value[1] or value.tag
 			}
 		elseif value.tag == "Table" then
-			return {
+			local scope = value.scope or {}
+			local sym = {
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
 				file = uri,
-				scope = value.scope or {},
+				scope = scope,
 			}
+			if not getmetatable(scope) then setmetatable(scope, {}) end
+			getmetatable(scope).tableSymbol = sym
+			return sym
 		elseif value.tag == "Call" then
 			-- find require(), maybe
 			if value[1].tag == "Id" then
@@ -161,7 +166,7 @@ local function gen_scopes(len, ast, uri)
 				tag    = value.tag,
 				pos    = value.pos,
 				posEnd = value.posEnd,
-				file = uri,
+				file   = uri,
 				ref    = value[1],
 				_value = value
 			}
@@ -171,26 +176,31 @@ local function gen_scopes(len, ast, uri)
 				tag    = value.tag,
 				pos    = value.pos,
 				posEnd = value.posEnd,
-				file = uri,
+				file   = uri,
 				ref    = value[1],
-				_value = value
+				_value = value,
 			}
 		elseif value.tag == "Function" then
-			return {
+			local sym = {
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
 				file = uri,
 				scope = value.scope,
 				arguments = value[1],
-				signature = nil
+				signature = nil,
+				-- used for dereferencing methods, which needs to know what object we're stored in
+				parentScope = owning_a,
 			}
+			getmetatable(sym.scope).functionSymbol = sym
+			return sym
 		elseif value.tag == "Arg" then
 			return {
 				tag = value.tag,
 				pos = value.pos,
 				posEnd = value.posEnd,
 				file = uri,
+				functionScope = owning_a,
 			}
 		elseif value.tag == "Id" then
 			return { value[1],
@@ -208,6 +218,19 @@ local function gen_scopes(len, ast, uri)
 		}
 	end
 
+	local function save_arg(a, key, value)
+		if key.tag == "Id" then
+			assert(type(key[1]) == "string")
+			assert(key.pos)
+
+			assert(key.posEnd)
+
+			-- It's perfectly valid to shadow argument names, only pick the last one
+			a[key[1]] = {key, clean_value(value, a)}
+		end
+		return a
+	end
+
 	local function save_local(a, key, value)
 		if key.tag == "Id" then
 			assert(type(key[1]) == "string")
@@ -223,11 +246,11 @@ local function gen_scopes(len, ast, uri)
 				assert(a_mt.posEnd)
 				local new_a = setmetatable({}, {
 					__index = a,
-					id = #scopes+1,
+					id = #all_scopes+1,
 					pos = key.pos,
 					posEnd = a_mt.posEnd
 				})
-				table.insert(scopes, new_a)
+				table.insert(all_scopes, new_a)
 				a = new_a
 			end
 			a[key[1]] = {key, clean_value(value)}
@@ -263,7 +286,7 @@ local function gen_scopes(len, ast, uri)
 		assert(key)
 		assert(key[1])
 		assert(value)
-		scope[key[1]] = {key, clean_value(value)}
+		scope[key[1]] = {key, clean_value(value, scope)}
 	end
 
 	local function save_path(a, path, value)
@@ -301,12 +324,13 @@ local function gen_scopes(len, ast, uri)
 			-- misleading type info is a good start and we can pare it back
 			-- later considering we still have an unknown/None type
 			--a[k][2] = clean_value(nil)
-			a[k][2] = clean_value(value)
+			a[k][2] = clean_value(value, a)
 		else
 			-- this is a new global var
 			key.global = true
 			key.file   = uri
-			scopes[GLOBAL_SCOPE][k] = {key, clean_value(value)}
+			local a_global = all_scopes[GLOBAL_SCOPE]
+			a_global[k] = {key, clean_value(value, a_global)}
 		end
 	end
 
@@ -327,15 +351,18 @@ local function gen_scopes(len, ast, uri)
 		table.insert(mt._return, cleaned_exprs)
 	end
 
-	local function visit_expr(node, a)
+	local function visit_expression(node, a)
 		if node.tag == "Function" then
 			assert(node[2].tag == "Block")
 			local namelist = node[1]
-			visit_stat(node[2], a, function(next_a)
-				getmetatable(next_a).origin = node
-				node.scope = next_a
+			visit_statement(node[2], a, function(function_a)
+				getmetatable(function_a).origin = node
+				node.scope = function_a
 				for _, name in ipairs(namelist) do
-					if name.tag ~= "Dots" then
+					if name.tag == "Dots" then
+						-- probably should handle this :)
+						log.debug("vararg encountered")
+					else
 						-- when methods are defined like `function a:method()`
 						-- then self param doesn't include position, presumably
 						-- because it is implicit. add it back in
@@ -343,66 +370,70 @@ local function gen_scopes(len, ast, uri)
 							name.pos = node.pos
 							name.posEnd = node.posEnd
 						end
-						next_a = save_local(next_a, name, {
+						function_a = save_arg(function_a, name, {
 							name,
 							tag = "Arg",
 							pos = name.pos,
-							posEnd = name.posEnd
+							posEnd = name.posEnd,
 						})
 					end
 				end
-				return next_a
+				return function_a
 			end)
 		elseif node.tag == "Call" then
 			for _, expr in ipairs(node) do
-				visit_expr(expr, a)
+				visit_expression(expr, a)
 			end
 		elseif node.tag == "Invoke" then
 			for _, expr in ipairs(node) do
-				visit_expr(expr, a)
+				visit_expression(expr, a)
 			end
 		elseif node.tag == "Paren" then
-			visit_expr(node[1], a)
+			visit_expression(node[1], a)
 		elseif node.tag == "Table" then
 			node.scope = node.scope or {}
 			local idx = 1
 			for _, inode in ipairs(node) do
 				if inode.tag == "Pair" then
 					local key, value = inode[1], inode[2]
-					visit_expr(key, a)
-					visit_expr(value, a)
+					visit_expression(key, a)
+					visit_expression(value, a)
 					save_pair(node.scope, key, value)
 				else
 					local key, value = {Tag="Number", idx}, inode
 					idx = idx + 1
-					visit_expr(value, a)
+					visit_expression(value, a)
 					save_pair(node.scope, key, value)
 				end
 			end
 		end
 	end
 
-	function visit_stat(node, a, add_symbols)
+	-- Visit an AST statement and pull out info
+	-- @arg node the AST node
+	-- @arg a the current scope
+	-- @arg add_symbols called when a new symbol is encountered
+	function visit_statement(node, a, add_symbols)
 		assert(node.pos)
 		assert(node.tag)
 		if node.tag == "Block" or node.tag == "Do" then
 			local new_a = setmetatable({}, {
 				__index = a,
-				id = #scopes+1,
+				id = #all_scopes+1,
 				pos = node.pos,
 				posEnd = node.posEnd
 			})
-			table.insert(scopes, new_a)
+			table.insert(all_scopes, new_a)
 			if add_symbols then new_a = add_symbols(new_a) end
 			for _, i in ipairs(node) do
-				visit_stat(i, new_a)
+				visit_statement(i, new_a)
 			end
 		elseif node.tag == "Set" then
 			local namelist,exprlist = node[1], node[2]
 			for i=1, math.max(#namelist, #exprlist) do
 				local name, expr = namelist[i], exprlist[i]
 				if expr then
-					visit_expr(expr, a)
+					visit_expression(expr, a)
 				end
 
 				if name then
@@ -416,14 +447,14 @@ local function gen_scopes(len, ast, uri)
 			end
 		elseif node.tag == "Return" then
 			for _, expr in ipairs(node) do
-				visit_expr(expr, a)
+				visit_expression(expr, a)
 			end
 			save_return(a, node)
 		elseif node.tag == "Local" then
 			local namelist,exprlist = node[1], node[2]
 			if exprlist then
 				for _, expr in ipairs(exprlist) do
-					visit_expr(expr, a)
+					visit_expression(expr, a)
 				end
 			end
 			for i, name in ipairs(namelist) do
@@ -431,12 +462,12 @@ local function gen_scopes(len, ast, uri)
 			end
 		elseif node.tag == "Localrec" then
 			local name, expr = node[1][1], node[2][1]
-			visit_expr(expr, a)
+			visit_expression(expr, a)
 			local _ = save_local(a, name, expr)
 		elseif node.tag == "Fornum" then
 			for _, n in ipairs(node) do
 				if n.tag == "Block" then
-					visit_stat(n, a, function(next_a)
+					visit_statement(n, a, function(next_a)
 						return save_local(next_a, node[1], {tag="Iter"})
 					end)
 				end
@@ -444,9 +475,9 @@ local function gen_scopes(len, ast, uri)
 		elseif node.tag == "Forin" then
 			local namelist, exprlist, block = node[1], node[2], node[3]
 			for _, expr in ipairs(exprlist) do
-				visit_expr(expr, a)
+				visit_expression(expr, a)
 			end
-			visit_stat(block, a, function(next_a)
+			visit_statement(block, a, function(next_a)
 				for _, name in ipairs(namelist) do
 					next_a = save_local(next_a, name, {tag="Iter"})
 				end
@@ -454,25 +485,25 @@ local function gen_scopes(len, ast, uri)
 			end)
 		elseif node.tag == "While" then
 			local expr, block = node[1], node[2]
-			visit_expr(expr, a)
-			visit_stat(block, a)
+			visit_expression(expr, a)
+			visit_statement(block, a)
 		elseif node.tag == "Repeat" then
 			local block, expr = node[1], node[2]
-			visit_stat(block, a)
-			visit_expr(expr, a)
+			visit_statement(block, a)
+			visit_expression(expr, a)
 		elseif node.tag == "Call" then
 			for _, expr in ipairs(node) do
-				visit_expr(expr, a)
+				visit_expression(expr, a)
 			end
 		elseif node.tag == "If" then
 			for i=1, #node, 2 do
 				if node[i+1] then
 					-- if/elseif block
-					visit_expr(node[i], a) -- test
-					visit_stat(node[i+1], a) -- body
+					visit_expression(node[i], a) -- test
+					visit_statement(node[i+1], a) -- body
 				else
 					-- else block
-					visit_stat(node[i], a)
+					visit_statement(node[i], a)
 				end
 			end
 		elseif node.tag == "Comment" then
@@ -480,8 +511,8 @@ local function gen_scopes(len, ast, uri)
 		end
 	end
 
-	visit_stat(ast, scopes[FILE_SCOPE])
-	return scopes
+	visit_statement(ast, all_scopes[FILE_SCOPE])
+	return all_scopes
 end
 
 local popen_cmd = "sh -c 'cd %q; luacheck %q --filename %q --formatter plain --ranges --codes'"
