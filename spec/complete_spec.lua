@@ -172,7 +172,7 @@ return t
 					items = {{
 						detail = '"a"',
 						label = "string",
-						kind = completionKinds.Variable
+						kind = completionKinds.Field
 					}}
 				}, out)
 				callme = true
@@ -191,7 +191,7 @@ return t
 					items = {{
 						detail = '"a"',
 						label = "string",
-						kind = completionKinds.Variable
+						kind = completionKinds.Field
 					}}
 				}, out)
 				callme = true
@@ -258,7 +258,7 @@ return mystr.t
 				assert.same({
 					detail = 'True',
 					label  = 'test_example',
-					kind = completionKinds.Variable,
+					kind = completionKinds.Field,
 				}, out.items[1])
 				callme = true
 			end)
@@ -290,7 +290,7 @@ return mytbl.j
 				assert.same({
 					detail = '1',
 					label  = 'jeff',
-					kind = completionKinds.Variable,
+					kind = completionKinds.Field,
 				}, out.items[1])
 				callme = true
 			end)
@@ -395,7 +395,7 @@ return mytbl.f
 				assert.same({
 					detail = '"a"',
 					label  = 'field',
-					kind = completionKinds.Variable,
+					kind = completionKinds.Field,
 				}, out.items[1])
 				callme = true
 			end)
