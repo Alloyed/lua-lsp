@@ -1,5 +1,5 @@
 package = "lua-lsp"
-version = "scm-1"
+version = "scm-0"
 source = {
    url = "git://github.com/Alloyed/lua-lsp"
 }
