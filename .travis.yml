@@ -17,7 +17,7 @@ cache:
 before_install:
   - pip install hererocks
   - hererocks lua_install -r^ --$LUA
-  - export PATH=$PATH:$PWD/lua_install/bin # Add directory with all installed binaries to PATH
+  - export PATH=$PWD/lua_install/bin:$PATH # Add directory with all installed binaries to PATH
 
 install:
   - luarocks install --only-deps spec/test-scm-0.rockspec
