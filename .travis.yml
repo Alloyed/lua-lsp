@@ -9,6 +9,7 @@ env:
   - LUA="lua=5.3" FMT=""
   - LUA="lua=5.3" FMT="lcf"
   - LUA="luajit=2.1" FMT=""
+  - LUA="lua=5.4" FMT=""
 
 cache:
     directories:
