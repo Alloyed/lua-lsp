@@ -22,7 +22,7 @@ before_install:
 
 install:
   - luarocks install --only-deps spec/test-scm-0.rockspec
-  - luarocks install --only-deps lua-lsp-scm-1.rockspec
+  - luarocks install --only-deps lua-lsp-scm-0.rockspec
   - luarocks install $FMT || true
 
 script:
