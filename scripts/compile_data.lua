@@ -8,6 +8,8 @@ local templates = {
 	"https://raw.githubusercontent.com/dapetcu21/atom-autocomplete-lua/master/lib/stdlib/5_2.json",
 	"https://raw.githubusercontent.com/dapetcu21/atom-autocomplete-lua/master/lib/stdlib/5_3.json",
 	"https://raw.githubusercontent.com/dapetcu21/atom-autocomplete-lua/master/lib/stdlib/luajit-2_0.json",
+	-- use upstream link if/when the PR goes through
+	"https://raw.githubusercontent.com/Alloyed/atom-autocomplete-lua/add-lua-5_4/lib/stdlib/5_4.json",
 }
 
 local json = require 'dkjson'

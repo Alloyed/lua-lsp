@@ -57,7 +57,10 @@ opid:  -- includes additional operators from Lua 5.3
   pos and posEnd seem pretty goofed up when it comes to Id nodes (which are the
   only ones I looked into), should probably be fixed
 
-  We need to support lua 5.2/luajit and 5.1 ideally. Details:
+  We need to support lua 5.3, 5.2/luajit and 5.1 ideally. Details:
+
+  for 5.3 support:
+  * no attributes
 
   for 5.2 support:
   * no bitops
@@ -297,7 +300,7 @@ end
 
 -- grammar
 local G = {}
-G["5.3"] = { V"Lua",
+G["5.4"] = { V"Lua",
   Lua      = V"Shebang"^-1 * V"Skip" * V"Block" * expect(P(-1), "Extra");
   Shebang  = P"#!" * (P(1) - P"\n")^0;
 
@@ -326,7 +329,7 @@ G["5.3"] = { V"Lua",
 
   LocalStat    = kw("local") * expect(V"LocalFunc" + V"LocalAssign", "DefLocal");
   LocalFunc    = tagC("Localrec", kw("function") * expect(V"Id", "NameLFunc") * V"FuncBody") / fixFuncStat;
-  LocalAssign  = tagC("Local", V"NameList" * (sym("=") * expect(V"ExprList", "EListLAssign") + Ct(Cc())));
+  LocalAssign  = tagC("Local", V"LocalList" * (sym("=") * expect(V"ExprList", "EListLAssign") + Ct(Cc())));
   Assignment   = tagC("Set", V"VarList" * sym("=") * expect(V"ExprList", "EListAssign"));
 
   FuncStat    = tagC("Set", kw("function") * expect(V"FuncName", "FuncName") * V"FuncBody") / fixFuncStat;
@@ -343,9 +346,11 @@ G["5.3"] = { V"Lua",
   BreakStat  = tagC("Break", kw("break"));
   RetStat    = tagC("Return", kw("return") * commaSep(V"Expr", "RetList")^-1 * sym(";")^-1);
 
-  NameList  = tagC("NameList", commaSep(V"Id"));
-  VarList   = tagC("VarList", commaSep(V"VarExpr", "VarList"));
-  ExprList  = tagC("ExpList", commaSep(V"Expr", "ExprList"));
+  LocalList    = V"AttNameList"; -- will be NameList for < 5.4
+  AttNameList  = tagC("NameList", commaSep(V"IdAtt"));
+  NameList     = tagC("NameList", commaSep(V"Id"));
+  VarList      = tagC("VarList", commaSep(V"VarExpr", "VarList"));
+  ExprList     = tagC("ExpList", commaSep(V"Expr", "ExprList"));
 
   Expr        = V"OrExpr";
   OrExpr      = chainOp(V"AndExpr", V"OrOp", "OrExpr");
@@ -397,6 +402,7 @@ G["5.3"] = { V"Lua",
 
   Id     = tagC("Id", V"Name");
   StrId  = tagC("String", V"Name");
+  IdAtt  = tagC("Id", V"Name") * (sym("<") * tagC("Attribute", V"Name") * sym(">"))^-1;
 
   -- lexer
   Skip     = (V"Space" + V"Comment")^0;
@@ -497,6 +503,10 @@ local function copy(t)
 	end
 	return nt
 end
+
+G["5.3"] = copy(G["5.4"])
+-- remove attribute support
+G["5.3"].LocalList = V"NameList"
 
 G["5.2"] = copy(G["5.3"])
 -- remove bitops
