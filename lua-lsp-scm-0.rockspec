@@ -20,7 +20,7 @@ supports:
    ]],
 }
 dependencies = {
-	"lua >= 5.1, < 5.4",
+	"lua >= 5.1, < 5.5",
 	"dkjson ~> 2.5",
 	"lpeglabel ~> 1.6",
 	"inspect ~> 3.1"
