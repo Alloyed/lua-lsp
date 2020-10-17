@@ -48,6 +48,7 @@ end)
 local parser = require 'lua-lsp.lua-parser.parser'
 
 describe("lua-parser version differences:", function()
+	-- added in luajit
 	it("cdata numbers", function()
 		local body = [[
 local cdata1 = 1LL
@@ -63,6 +64,22 @@ local cdata4 = 0xffLL
 		end
 	end)
 
+	-- added in lua 5.4
+	it("attributes", function()
+		local body = [[
+local myconst1 <const>, notconst, myconst2<const> = 1, 2, 3
+local myclose <close> = 4
+]]
+		assert(parser.parse(body, "out.lua", "5.4"))
+		for _, v in ipairs{"5.1", "5.2", "5.3", "luajit"} do
+			assert.has_errors(function()
+				assert(parser.parse(body, "out.lua", v))
+			end)
+		end
+	end)
+
+
+	-- added in lua 5.3
 	it("bitops", function()
 		local body = [[
 local cdata1 = 1 | 2
@@ -92,6 +109,7 @@ local cdata1 = 1 // 2
 		end
 	end)
 
+	-- added in lua 5.2
 	it("goto/label", function()
 		local body = [[
 goto mylabel

@@ -6,6 +6,17 @@ return {
           audio = {
             description = "Provides an interface to create noise with the user's speakers.",
             fields = {
+              getActiveSourceCount = {
+                args = {},
+                description = "Gets the current number of simultaneously playing sources.",
+                link = "https://love2d.org/wiki/love.audio.getActiveSourceCount",
+                returnTypes = {
+                  {
+                    type = "number"
+                  }
+                },
+                type = "function"
+              },
               getDistanceModel = {
                 args = {},
                 description = "Returns the distance attenuation model.",
@@ -127,11 +138,10 @@ return {
                         name = "filename"
                       },
                       {
-                        displayName = "[type]",
                         name = "type"
                       }
                     },
-                    description = "Creates a new Source from a file or SoundData. Sources created from SoundData are always static."
+                    description = "Creates a new Source from a filepath, File, Decoder or SoundData. Sources created from SoundData are always static."
                   },
                   {
                     args = {
@@ -139,31 +149,18 @@ return {
                         name = "file"
                       },
                       {
-                        displayName = "[type]",
                         name = "type"
                       }
                     },
-                    description = "Creates a new Source from a file or SoundData. Sources created from SoundData are always static."
+                    description = "Creates a new Source from a filepath, File, Decoder or SoundData. Sources created from SoundData are always static."
                   },
                   {
                     args = {
                       {
                         name = "decoder"
-                      },
-                      {
-                        displayName = "[type]",
-                        name = "type"
                       }
                     },
-                    description = "Creates a new Source from a file or SoundData. Sources created from SoundData are always static."
-                  },
-                  {
-                    args = {
-                      {
-                        name = "soundData"
-                      }
-                    },
-                    description = "Creates a new Source from a file or SoundData. Sources created from SoundData are always static."
+                    description = "Creates a new Source from a filepath, File, Decoder or SoundData. Sources created from SoundData are always static."
                   },
                   {
                     args = {
@@ -171,7 +168,15 @@ return {
                         name = "fileData"
                       }
                     },
-                    description = "Creates a new Source from a file or SoundData. Sources created from SoundData are always static."
+                    description = "Creates a new Source from a filepath, File, Decoder or SoundData. Sources created from SoundData are always static."
+                  },
+                  {
+                    args = {
+                      {
+                        name = "soundData"
+                      }
+                    },
+                    description = "Creates a new Source from a filepath, File, Decoder or SoundData. Sources created from SoundData are always static."
                   }
                 }
               },
@@ -202,42 +207,6 @@ return {
                 description = "Plays the specified Source.",
                 link = "https://love2d.org/wiki/love.audio.play",
                 type = "function"
-              },
-              resume = {
-                link = "https://love2d.org/wiki/love.audio.resume",
-                type = "function",
-                variants = {
-                  {
-                    args = {},
-                    description = "Resumes all audio"
-                  },
-                  {
-                    args = {
-                      {
-                        name = "source"
-                      }
-                    },
-                    description = "Resumes all audio"
-                  }
-                }
-              },
-              rewind = {
-                link = "https://love2d.org/wiki/love.audio.rewind",
-                type = "function",
-                variants = {
-                  {
-                    args = {},
-                    description = "Rewinds all playing audio."
-                  },
-                  {
-                    args = {
-                      {
-                        name = "source"
-                      }
-                    },
-                    description = "Rewinds all playing audio."
-                  }
-                }
               },
               setDistanceModel = {
                 args = {
@@ -374,14 +343,14 @@ return {
             link = "https://love2d.org/wiki/love.draw",
             type = "function"
           },
-          errhand = {
+          errorhandler = {
             args = {
               {
                 name = "msg"
               }
             },
             description = "The error handler, used to display error messages.",
-            link = "https://love2d.org/wiki/love.errhand",
+            link = "https://love2d.org/wiki/love.errorhandler",
             type = "function"
           },
           event = {
@@ -559,25 +528,21 @@ return {
                 },
                 type = "function"
               },
-              exists = {
-                args = {
-                  {
-                    name = "filename"
-                  }
-                },
-                description = "Check whether a file or directory exists.",
-                link = "https://love2d.org/wiki/love.filesystem.exists",
-                returnTypes = {
-                  {
-                    type = "boolean"
-                  }
-                },
-                type = "function"
-              },
               getAppdataDirectory = {
                 args = {},
                 description = "Returns the application data directory (could be the same as getUserDirectory)",
                 link = "https://love2d.org/wiki/love.filesystem.getAppdataDirectory",
+                returnTypes = {
+                  {
+                    type = "string"
+                  }
+                },
+                type = "function"
+              },
+              getCRequirePath = {
+                args = {},
+                description = "Gets the filesystem paths that will be searched for c libraries when require is called.\n\nThe paths string returned by this function is a sequence of path templates separated by semicolons. The argument passed to require will be inserted in place of any question mark (\"?\") character in each template (after the dot characters in the argument passed to require are replaced by directory separators.) Additionally, any occurrence of a double question mark (\"??\") will be replaced by the name passed to require and the default library extension for the platform.\n\nThe paths are relative to the game's source and save directories, as well as any paths mounted with love.filesystem.mount.",
+                link = "https://love2d.org/wiki/love.filesystem.getCRequirePath",
                 returnTypes = {
                   {
                     type = "string"
@@ -610,23 +575,35 @@ return {
                 link = "https://love2d.org/wiki/love.filesystem.getIdentity",
                 type = "function"
               },
-              getLastModified = {
-                args = {
-                  {
-                    name = "filename"
-                  }
-                },
-                description = "Gets the last modification time of a file.",
-                link = "https://love2d.org/wiki/love.filesystem.getLastModified",
+              getInfo = {
+                link = "https://love2d.org/wiki/love.filesystem.getInfo",
                 returnTypes = {
                   {
-                    type = "number"
-                  },
-                  {
-                    type = "string"
+                    type = "table"
                   }
                 },
-                type = "function"
+                type = "function",
+                variants = {
+                  {
+                    args = {
+                      {
+                        name = "path"
+                      }
+                    },
+                    description = "Gets information about the specified file or directory."
+                  },
+                  {
+                    args = {
+                      {
+                        name = "path"
+                      },
+                      {
+                        name = "info"
+                      }
+                    },
+                    description = "This variant accepts an existing table to fill in, instead of creating a new one."
+                  }
+                }
               },
               getRealDirectory = {
                 args = {
@@ -659,24 +636,6 @@ return {
                 description = "Gets the full path to the designated save directory. This can be useful if you want to use the standard io library (or something else) to read or write in the save directory.",
                 link = "https://love2d.org/wiki/love.filesystem.getSaveDirectory",
                 returnTypes = {
-                  {
-                    type = "string"
-                  }
-                },
-                type = "function"
-              },
-              getSize = {
-                args = {
-                  {
-                    name = "filename"
-                  }
-                },
-                description = "Gets the size in bytes of a file.",
-                link = "https://love2d.org/wiki/love.filesystem.getSize",
-                returnTypes = {
-                  {
-                    type = "number"
-                  },
                   {
                     type = "string"
                   }
@@ -737,55 +696,10 @@ return {
                 link = "https://love2d.org/wiki/love.filesystem.init",
                 type = "function"
               },
-              isDirectory = {
-                args = {
-                  {
-                    name = "path"
-                  }
-                },
-                description = "Check whether something is a directory.",
-                link = "https://love2d.org/wiki/love.filesystem.isDirectory",
-                returnTypes = {
-                  {
-                    type = "boolean"
-                  }
-                },
-                type = "function"
-              },
-              isFile = {
-                args = {
-                  {
-                    name = "path"
-                  }
-                },
-                description = "Check whether something is a file.",
-                link = "https://love2d.org/wiki/love.filesystem.isFile",
-                returnTypes = {
-                  {
-                    type = "boolean"
-                  }
-                },
-                type = "function"
-              },
               isFused = {
                 args = {},
                 description = "Gets whether the game is in fused mode or not.\n\nIf a game is in fused mode, its save directory will be directly in the Appdata directory instead of Appdata/LOVE/. The game will also be able to load C Lua dynamic libraries which are located in the save directory.\n\nA game is in fused mode if the source .love has been fused to the executable (see Game Distribution), or if \"--fused\" has been given as a command-line argument when starting the game.",
                 link = "https://love2d.org/wiki/love.filesystem.isFused",
-                returnTypes = {
-                  {
-                    type = "boolean"
-                  }
-                },
-                type = "function"
-              },
-              isSymlink = {
-                args = {
-                  {
-                    name = "path"
-                  }
-                },
-                description = "Gets whether a filepath is actually a symbolic link.\n\nIf symbolic links are not enabled (via love.filesystem.setSymlinksEnabled), this function will always return false.",
-                link = "https://love2d.org/wiki/love.filesystem.isSymlink",
                 returnTypes = {
                   {
                     type = "boolean"
@@ -904,10 +818,6 @@ return {
                       },
                       {
                         name = "name"
-                      },
-                      {
-                        displayName = "[decoder]",
-                        name = "decoder"
                       }
                     },
                     description = "Creates a new FileData object."
@@ -957,6 +867,16 @@ return {
                     type = "boolean"
                   }
                 },
+                type = "function"
+              },
+              setCRequirePath = {
+                args = {
+                  {
+                    name = "paths"
+                  }
+                },
+                description = "Sets the filesystem paths that will be searched for c libraries when require is called.\n\nThe paths string returned by this function is a sequence of path templates separated by semicolons. The argument passed to require will be inserted in place of any question mark (\"?\") character in each template (after the dot characters in the argument passed to require are replaced by directory separators.) Additionally, any occurrence of a double question mark (\"??\") will be replaced by the name passed to require and the default library extension for the platform.\n\nThe paths are relative to the game's source and save directories, as well as any paths mounted with love.filesystem.mount.",
+                link = "https://love2d.org/wiki/love.filesystem.setCRequirePath",
                 type = "function"
               },
               setIdentity = {
@@ -1083,6 +1003,9 @@ return {
               },
               {
                 name = "axis"
+              },
+              {
+                name = "value"
               }
             },
             description = "Called when a Joystick's virtual gamepad axis is moved.",
@@ -1138,6 +1061,16 @@ return {
           graphics = {
             description = "The primary responsibility for the love.graphics module is the drawing of lines, shapes, text, Images and other Drawable objects onto the screen. Its secondary responsibilities include loading external files (including Images and Fonts) into memory, creating specialized objects (such as ParticleSystems or Canvases) and managing screen geometry.\n\nLÖVE's coordinate system is rooted in the upper-left corner of the screen, which is at location (0, 0). The x axis is horizontal: larger values are further to the right. The y axis is vertical: larger values are further towards the bottom.\n\nIn many cases, you draw images or shapes in terms of their upper-left corner.\n\nMany of the functions are used to manipulate the graphics coordinate system, which is essentially the way coordinates are mapped to the display. You can change the position, scale, and even rotation in this way.",
             fields = {
+              applyTransform = {
+                args = {
+                  {
+                    name = "transform"
+                  }
+                },
+                description = "Applies the given Transform object to the current coordinate transformation.\n\nThis effectively multiplies the existing coordinate transformation's matrix with the Transform object's internal matrix to produce the new coordinate transformation.",
+                link = "https://love2d.org/wiki/love.graphics.applyTransform",
+                type = "function"
+              },
               arc = {
                 link = "https://love2d.org/wiki/love.graphics.arc",
                 type = "function",
@@ -1198,6 +1131,36 @@ return {
                       }
                     },
                     description = "Draws a filled or unfilled arc at position (x, y). The arc is drawn from angle1 to angle2 in radians. The segments parameter determines how many segments are used to draw the arc. The more segments, the smoother the edge."
+                  }
+                }
+              },
+              captureScreenshot = {
+                link = "https://love2d.org/wiki/love.graphics.captureScreenshot",
+                type = "function",
+                variants = {
+                  {
+                    args = {
+                      {
+                        name = "filename"
+                      }
+                    },
+                    description = "Capture a screenshot and save it to a file at the end of the current frame."
+                  },
+                  {
+                    args = {
+                      {
+                        name = "callback"
+                      }
+                    },
+                    description = "Capture a screenshot and call a callback with the generated ImageData at the end of the current frame."
+                  },
+                  {
+                    args = {
+                      {
+                        name = "channel"
+                      }
+                    },
+                    description = "Capture a screenshot and push the generated ImageData to a Channel at the end of the current frame."
                   }
                 }
               },
@@ -1360,7 +1323,7 @@ return {
                         name = "ky"
                       }
                     },
-                    description = "Draws a Drawable object (an Image, Canvas, SpriteBatch, ParticleSystem, Mesh, or Video) on the screen with optional rotation, scaling and shearing.\n\nObjects are drawn relative to their local coordinate system. The origin is by default located at the top left corner of Image and Canvas. All scaling, shearing, and rotation arguments transform the object relative to that point. Also, the position of the origin can be specified on the screen coordinate system.\n\nIt's possible to rotate an object about its center by offsetting the origin to the center. Angles must be given in radians for rotation. One can also use a negative scaling factor to flip about its centerline.\n\nNote that the offsets are applied before rotation, scaling, or shearing; scaling and shearing are applied before rotation.\n\nThe right and bottom edges of the object are shifted at an angle defined by the shearing factors."
+                    description = "Draws a Drawable object (an Image, Canvas, SpriteBatch, ParticleSystem, Mesh, Text object, or Video) on the screen with optional rotation, scaling and shearing.\n\nObjects are drawn relative to their local coordinate system. The origin is by default located at the top left corner of Image and Canvas. All scaling, shearing, and rotation arguments transform the object relative to that point. Also, the position of the origin can be specified on the screen coordinate system.\n\nIt's possible to rotate an object about its center by offsetting the origin to the center. Angles must be given in radians for rotation. One can also use a negative scaling factor to flip about its centerline.\n\nNote that the offsets are applied before rotation, scaling, or shearing; scaling and shearing are applied before rotation.\n\nThe right and bottom edges of the object are shifted at an angle defined by the shearing factors."
                   },
                   {
                     args = {
@@ -1407,7 +1370,208 @@ return {
                         name = "ky"
                       }
                     },
-                    description = "Draws a Drawable object (an Image, Canvas, SpriteBatch, ParticleSystem, Mesh, or Video) on the screen with optional rotation, scaling and shearing.\n\nObjects are drawn relative to their local coordinate system. The origin is by default located at the top left corner of Image and Canvas. All scaling, shearing, and rotation arguments transform the object relative to that point. Also, the position of the origin can be specified on the screen coordinate system.\n\nIt's possible to rotate an object about its center by offsetting the origin to the center. Angles must be given in radians for rotation. One can also use a negative scaling factor to flip about its centerline.\n\nNote that the offsets are applied before rotation, scaling, or shearing; scaling and shearing are applied before rotation.\n\nThe right and bottom edges of the object are shifted at an angle defined by the shearing factors."
+                    description = "Draws a Drawable object (an Image, Canvas, SpriteBatch, ParticleSystem, Mesh, Text object, or Video) on the screen with optional rotation, scaling and shearing.\n\nObjects are drawn relative to their local coordinate system. The origin is by default located at the top left corner of Image and Canvas. All scaling, shearing, and rotation arguments transform the object relative to that point. Also, the position of the origin can be specified on the screen coordinate system.\n\nIt's possible to rotate an object about its center by offsetting the origin to the center. Angles must be given in radians for rotation. One can also use a negative scaling factor to flip about its centerline.\n\nNote that the offsets are applied before rotation, scaling, or shearing; scaling and shearing are applied before rotation.\n\nThe right and bottom edges of the object are shifted at an angle defined by the shearing factors."
+                  }
+                }
+              },
+              drawInstanced = {
+                link = "https://love2d.org/wiki/love.graphics.drawInstanced",
+                type = "function",
+                variants = {
+                  {
+                    args = {
+                      {
+                        name = "mesh"
+                      },
+                      {
+                        name = "instancecount"
+                      },
+                      {
+                        displayName = "[x]",
+                        name = "x"
+                      },
+                      {
+                        displayName = "[y]",
+                        name = "y"
+                      },
+                      {
+                        displayName = "[r]",
+                        name = "r"
+                      },
+                      {
+                        displayName = "[sx]",
+                        name = "sx"
+                      },
+                      {
+                        displayName = "[sy]",
+                        name = "sy"
+                      },
+                      {
+                        displayName = "[ox]",
+                        name = "ox"
+                      },
+                      {
+                        displayName = "[oy]",
+                        name = "oy"
+                      },
+                      {
+                        displayName = "[kx]",
+                        name = "kx"
+                      },
+                      {
+                        displayName = "[ky]",
+                        name = "ky"
+                      }
+                    },
+                    description = "Draws many instances of a Mesh with a single draw call, using hardware geometry instancing.\n\nEach instance can have unique properties (positions, colors, etc.) but will not by default unless a custom Shader along with either per-instance attributes or the love_InstanceID GLSL 3 vertex shader variable is used, otherwise they will all render at the same position on top of each other.\n\nInstancing is not supported by some older GPUs that are only capable of using OpenGL ES 2 or OpenGL 2. Use love.graphics.getSupported to check."
+                  },
+                  {
+                    args = {
+                      {
+                        name = "mesh"
+                      },
+                      {
+                        name = "instancecount"
+                      },
+                      {
+                        name = "transform"
+                      }
+                    },
+                    description = "Draws many instances of a Mesh with a single draw call, using hardware geometry instancing.\n\nEach instance can have unique properties (positions, colors, etc.) but will not by default unless a custom Shader along with either per-instance attributes or the love_InstanceID GLSL 3 vertex shader variable is used, otherwise they will all render at the same position on top of each other.\n\nInstancing is not supported by some older GPUs that are only capable of using OpenGL ES 2 or OpenGL 2. Use love.graphics.getSupported to check."
+                  }
+                }
+              },
+              drawLayer = {
+                link = "https://love2d.org/wiki/love.graphics.drawLayer",
+                type = "function",
+                variants = {
+                  {
+                    args = {
+                      {
+                        name = "texture"
+                      },
+                      {
+                        name = "layerindex"
+                      },
+                      {
+                        displayName = "[x]",
+                        name = "x"
+                      },
+                      {
+                        displayName = "[y]",
+                        name = "y"
+                      },
+                      {
+                        displayName = "[r]",
+                        name = "r"
+                      },
+                      {
+                        displayName = "[sx]",
+                        name = "sx"
+                      },
+                      {
+                        displayName = "[sy]",
+                        name = "sy"
+                      },
+                      {
+                        displayName = "[ox]",
+                        name = "ox"
+                      },
+                      {
+                        displayName = "[oy]",
+                        name = "oy"
+                      },
+                      {
+                        displayName = "[kx]",
+                        name = "kx"
+                      },
+                      {
+                        displayName = "[ky]",
+                        name = "ky"
+                      }
+                    },
+                    description = "Draws a layer of an Array Texture."
+                  },
+                  {
+                    args = {
+                      {
+                        name = "texture"
+                      },
+                      {
+                        name = "layerindex"
+                      },
+                      {
+                        name = "quad"
+                      },
+                      {
+                        displayName = "[x]",
+                        name = "x"
+                      },
+                      {
+                        displayName = "[y]",
+                        name = "y"
+                      },
+                      {
+                        displayName = "[r]",
+                        name = "r"
+                      },
+                      {
+                        displayName = "[sx]",
+                        name = "sx"
+                      },
+                      {
+                        displayName = "[sy]",
+                        name = "sy"
+                      },
+                      {
+                        displayName = "[ox]",
+                        name = "ox"
+                      },
+                      {
+                        displayName = "[oy]",
+                        name = "oy"
+                      },
+                      {
+                        displayName = "[kx]",
+                        name = "kx"
+                      },
+                      {
+                        displayName = "[ky]",
+                        name = "ky"
+                      }
+                    },
+                    description = "Draws a layer of an Array Texture using the specified Quad."
+                  },
+                  {
+                    args = {
+                      {
+                        name = "texture"
+                      },
+                      {
+                        name = "layerindex"
+                      },
+                      {
+                        name = "transform"
+                      }
+                    },
+                    description = "Draws a layer of an Array Texture using the specified Transform."
+                  },
+                  {
+                    args = {
+                      {
+                        name = "texture"
+                      },
+                      {
+                        name = "layerindex"
+                      },
+                      {
+                        name = "quad"
+                      },
+                      {
+                        name = "transform"
+                      }
+                    },
+                    description = "Draws a layer of an Array Texture using the specified Quad and Transform."
                   }
                 }
               },
@@ -1460,6 +1624,12 @@ return {
                   }
                 }
               },
+              flushBatch = {
+                args = {},
+                description = "Immediately renders any pending automatically batched draws.\n\nLÖVE will call this function internally as needed when most state is changed, so it is not necessary to manually call it.\n\nThe current batch will be automatically flushed by love.graphics state changes (except for the transform stack and the current color), as well as Shader:send and methods on Textures which change their state. Using a different Image in consecutive love.graphics.draw calls will also flush the current batch.\n\nSpriteBatches, ParticleSystems, Meshes, and Text objects do their own batching and do not affect automatic batching of other draws.",
+                link = "https://love2d.org/wiki/love.graphics.flushBatch",
+                type = "function"
+              },
               getBackgroundColor = {
                 args = {},
                 description = "Gets the current background color.",
@@ -1509,15 +1679,27 @@ return {
                 type = "function"
               },
               getCanvasFormats = {
-                args = {},
-                description = "Gets the available Canvas formats, and whether each is supported.",
                 link = "https://love2d.org/wiki/love.graphics.getCanvasFormats",
                 returnTypes = {
                   {
                     type = "table"
                   }
                 },
-                type = "function"
+                type = "function",
+                variants = {
+                  {
+                    args = {
+                      {
+                        name = "readable"
+                      }
+                    },
+                    description = "Gets the available Canvas formats, and whether each is supported."
+                  },
+                  {
+                    args = {},
+                    description = "Gets the available Canvas formats, and whether each is supported."
+                  }
+                }
               },
               getColor = {
                 args = {},
@@ -1559,17 +1741,6 @@ return {
                 },
                 type = "function"
               },
-              getCompressedImageFormats = {
-                args = {},
-                description = "Gets the available compressed image formats, and whether each is supported.",
-                link = "https://love2d.org/wiki/love.graphics.getCompressedImageFormats",
-                returnTypes = {
-                  {
-                    type = "table"
-                  }
-                },
-                type = "function"
-              },
               getDefaultFilter = {
                 args = {},
                 description = "Returns the default scaling filters used with Images, Canvases, and Fonts.",
@@ -1585,6 +1756,21 @@ return {
                   },
                   {
                     type = "number"
+                  }
+                },
+                type = "function"
+              },
+              getDepthMode = {
+                args = {},
+                description = "Gets the current depth test mode and whether writing to the depth buffer is enabled.\n\nThis is low-level functionality designed for use with custom vertex shaders and Meshes with custom vertex attributes. No higher level APIs are provided to set the depth of 2D graphics such as shapes, lines, and Images.",
+                link = "https://love2d.org/wiki/love.graphics.getDepthMode",
+                returnTypes = {
+                  {
+                    name = "CompareMode",
+                    type = "ref"
+                  },
+                  {
+                    type = "boolean"
                   }
                 },
                 type = "function"
@@ -1615,6 +1801,18 @@ return {
                 },
                 type = "function"
               },
+              getFrontFaceWinding = {
+                args = {},
+                description = "Gets whether triangles with clockwise- or counterclockwise-ordered vertices are considered front-facing.\n\nThis is designed for use in combination with Mesh face culling. Other love.graphics shapes, lines, and sprites are not guaranteed to have a specific winding order to their internal vertices.",
+                link = "https://love2d.org/wiki/love.graphics.getFrontFaceWinding",
+                returnTypes = {
+                  {
+                    name = "VertexWinding",
+                    type = "ref"
+                  }
+                },
+                type = "function"
+              },
               getHeight = {
                 args = {},
                 description = "Gets the height of the window.",
@@ -1622,6 +1820,17 @@ return {
                 returnTypes = {
                   {
                     type = "number"
+                  }
+                },
+                type = "function"
+              },
+              getImageFormats = {
+                args = {},
+                description = "Gets the raw and compressed pixel formats usable for Images, and whether each is supported.",
+                link = "https://love2d.org/wiki/love.graphics.getImageFormats",
+                returnTypes = {
+                  {
+                    type = "table"
                   }
                 },
                 type = "function"
@@ -1657,6 +1866,18 @@ return {
                 returnTypes = {
                   {
                     type = "number"
+                  }
+                },
+                type = "function"
+              },
+              getMeshCullMode = {
+                args = {},
+                description = "Gets whether back-facing triangles in a Mesh are culled.\n\nMesh face culling is designed for use with low level custom hardware-accelerated 3D rendering via custom vertex attributes on Meshes, custom vertex shaders, and depth testing with a depth buffer.",
+                link = "https://love2d.org/wiki/love.graphics.getMeshCullMode",
+                returnTypes = {
+                  {
+                    name = "CullMode",
+                    type = "ref"
                   }
                 },
                 type = "function"
@@ -1724,6 +1945,17 @@ return {
                 },
                 type = "function"
               },
+              getStackDepth = {
+                args = {},
+                description = "Gets the current depth of the transform / state stack (the number of pushes without corresponding pops).",
+                link = "https://love2d.org/wiki/love.graphics.getStackDepth",
+                returnTypes = {
+                  {
+                    type = "number"
+                  }
+                },
+                type = "function"
+              },
               getStats = {
                 args = {},
                 description = "Gets performance-related rendering statistics.",
@@ -1771,6 +2003,17 @@ return {
                 },
                 type = "function"
               },
+              getTextureTypes = {
+                args = {},
+                description = "Gets the available texture types, and whether each is supported.",
+                link = "https://love2d.org/wiki/love.graphics.getTextureTypes",
+                returnTypes = {
+                  {
+                    type = "table"
+                  }
+                },
+                type = "function"
+              },
               getWidth = {
                 args = {},
                 description = "Gets the width of the window.",
@@ -1808,6 +2051,27 @@ return {
                     description = "Disables scissor."
                   }
                 }
+              },
+              inverseTransformPoint = {
+                args = {
+                  {
+                    name = "screenX"
+                  },
+                  {
+                    name = "screenY"
+                  }
+                },
+                description = "Converts the given 2D position from screen-space into global coordinates.\n\nThis effectively applies the reverse of the current graphics transformations to the given position. A similar Transform:inverseTransformPoint method exists for Transform objects.",
+                link = "https://love2d.org/wiki/love.graphics.inverseTransformPoint",
+                returnTypes = {
+                  {
+                    type = "number"
+                  },
+                  {
+                    type = "number"
+                  }
+                },
+                type = "function"
               },
               isGammaCorrect = {
                 args = {},
@@ -2173,23 +2437,6 @@ return {
                 },
                 type = "function"
               },
-              newScreenshot = {
-                args = {
-                  {
-                    displayName = "[copyAlpha]",
-                    name = "copyAlpha"
-                  }
-                },
-                description = "Creates a screenshot and returns the image data.",
-                link = "https://love2d.org/wiki/love.graphics.newScreenshot",
-                returnTypes = {
-                  {
-                    name = "ImageData",
-                    type = "ref"
-                  }
-                },
-                type = "function"
-              },
               newShader = {
                 link = "https://love2d.org/wiki/love.graphics.newShader",
                 returnTypes = {
@@ -2427,7 +2674,7 @@ return {
                         name = "ky"
                       }
                     },
-                    description = "Draws text on screen. If no Font is set, one will be created and set (once) if needed.\n\nAs of LOVE 0.7.1, when using translation and scaling functions while drawing text, this function assumes the scale occurs first. If you don't script with this in mind, the text won't be in the right position, or possibly even on screen.\n\nlove.graphics.print and love.graphics.printf both suppport UTF-8 encoding. You'll also need a proper Font for special characters."
+                    description = "Draws text on screen. If no Font is set, one will be created and set (once) if needed.\n\nAs of LOVE 0.7.1, when using translation and scaling functions while drawing text, this function assumes the scale occurs first. If you don't script with this in mind, the text won't be in the right position, or possibly even on screen.\n\nlove.graphics.print and love.graphics.printf both support UTF-8 encoding. You'll also need a proper Font for special characters.\n\nIn versions prior to 11.0, color and byte component values were within the range of 0 to 255 instead of 0 to 1."
                   },
                   {
                     args = {
@@ -2469,7 +2716,7 @@ return {
                         name = "ky"
                       }
                     },
-                    description = "Draws text on screen. If no Font is set, one will be created and set (once) if needed.\n\nAs of LOVE 0.7.1, when using translation and scaling functions while drawing text, this function assumes the scale occurs first. If you don't script with this in mind, the text won't be in the right position, or possibly even on screen.\n\nlove.graphics.print and love.graphics.printf both suppport UTF-8 encoding. You'll also need a proper Font for special characters."
+                    description = "Draws text on screen. If no Font is set, one will be created and set (once) if needed.\n\nAs of LOVE 0.7.1, when using translation and scaling functions while drawing text, this function assumes the scale occurs first. If you don't script with this in mind, the text won't be in the right position, or possibly even on screen.\n\nlove.graphics.print and love.graphics.printf both support UTF-8 encoding. You'll also need a proper Font for special characters.\n\nIn versions prior to 11.0, color and byte component values were within the range of 0 to 255 instead of 0 to 1."
                   }
                 }
               },
@@ -2643,6 +2890,16 @@ return {
                     description = "Draws a rectangle with rounded corners."
                   }
                 }
+              },
+              replaceTransform = {
+                args = {
+                  {
+                    name = "transform"
+                  }
+                },
+                description = "Replaces the current coordinate transformation with the given Transform object.",
+                link = "https://love2d.org/wiki/love.graphics.replaceTransform",
+                type = "function"
               },
               reset = {
                 args = {},
@@ -2840,6 +3097,19 @@ return {
                 link = "https://love2d.org/wiki/love.graphics.setDefaultFilter",
                 type = "function"
               },
+              setDepthMode = {
+                args = {
+                  {
+                    name = "comparemode"
+                  },
+                  {
+                    name = "write"
+                  }
+                },
+                description = "Configures depth testing and writing to the depth buffer.\n\nThis is low-level functionality designed for use with custom vertex shaders and Meshes with custom vertex attributes. No higher level APIs are provided to set the depth of 2D graphics such as shapes, lines, and Images.",
+                link = "https://love2d.org/wiki/love.graphics.setDepthMode",
+                type = "function"
+              },
               setFont = {
                 args = {
                   {
@@ -2848,6 +3118,16 @@ return {
                 },
                 description = "Set an already-loaded Font as the current font or create and load a new one from the file and size.\n\nIt's recommended that Font objects are created with love.graphics.newFont in the loading stage and then passed to this function in the drawing stage.",
                 link = "https://love2d.org/wiki/love.graphics.setFont",
+                type = "function"
+              },
+              setFrontFaceWinding = {
+                args = {
+                  {
+                    name = "winding"
+                  }
+                },
+                description = "Sets whether triangles with clockwise- or counterclockwise-ordered vertices are considered front-facing.\n\nThis is designed for use in combination with Mesh face culling. Other love.graphics shapes, lines, and sprites are not guaranteed to have a specific winding order to their internal vertices.",
+                link = "https://love2d.org/wiki/love.graphics.setFrontFaceWinding",
                 type = "function"
               },
               setLineJoin = {
@@ -2878,6 +3158,16 @@ return {
                 },
                 description = "Sets the line width.",
                 link = "https://love2d.org/wiki/love.graphics.setLineWidth",
+                type = "function"
+              },
+              setMeshCullMode = {
+                args = {
+                  {
+                    name = "mode"
+                  }
+                },
+                description = "Sets whether back-facing triangles in a Mesh are culled.\n\nThis is designed for use with low level custom hardware-accelerated 3D rendering via custom vertex attributes on Meshes, custom vertex shaders, and depth testing with a depth buffer.",
+                link = "https://love2d.org/wiki/love.graphics.setMeshCullMode",
                 type = "function"
               },
               setNewFont = {
@@ -3049,6 +3339,27 @@ return {
                 link = "https://love2d.org/wiki/love.graphics.stencil",
                 type = "function"
               },
+              transformPoint = {
+                args = {
+                  {
+                    name = "globalX"
+                  },
+                  {
+                    name = "globalY"
+                  }
+                },
+                description = "Converts the given 2D position from global coordinates into screen-space.\n\nThis effectively applies the current graphics transformations to the given position. A similar Transform:transformPoint method exists for Transform objects.",
+                link = "https://love2d.org/wiki/love.graphics.transformPoint",
+                returnTypes = {
+                  {
+                    type = "number"
+                  },
+                  {
+                    type = "number"
+                  }
+                },
+                type = "function"
+              },
               translate = {
                 args = {
                   {
@@ -3061,10 +3372,60 @@ return {
                 description = "Translates the coordinate system in two dimensions.\n\nWhen this function is called with two numbers, dx, and dy, all the following drawing operations take effect as if their x and y coordinates were x+dx and y+dy.\n\nScale and translate are not commutative operations, therefore, calling them in different orders will change the outcome.\n\nThis change lasts until love.graphics.clear is called (which is called automatically before love.draw in the default love.run function), or a love.graphics.pop reverts to a previous coordinate system state.\n\nTranslating using whole numbers will prevent tearing/blurring of images and fonts draw after translating.",
                 link = "https://love2d.org/wiki/love.graphics.translate",
                 type = "function"
+              },
+              validateShader = {
+                link = "https://love2d.org/wiki/love.graphics.validateShader",
+                returnTypes = {
+                  {
+                    type = "boolean"
+                  },
+                  {
+                    type = "string"
+                  }
+                },
+                type = "function",
+                variants = {
+                  {
+                    args = {
+                      {
+                        name = "gles"
+                      },
+                      {
+                        name = "code"
+                      }
+                    },
+                    description = "Validates shader code. Check if specificed shader code does not contain any errors."
+                  },
+                  {
+                    args = {
+                      {
+                        name = "gles"
+                      },
+                      {
+                        name = "pixelcode"
+                      },
+                      {
+                        name = "vertexcode"
+                      }
+                    },
+                    description = "Validates shader code. Check if specificed shader code does not contain any errors."
+                  }
+                }
               }
             },
             link = "https://love2d.org/wiki/love.graphics",
             type = "table"
+          },
+          hasDeprecationOutput = {
+            args = {},
+            description = "Gets whether LÖVE displays warnings when using deprecated functionality. It is disabled by default in fused mode, and enabled by default otherwise.\n\nWhen deprecation output is enabled, the first use of a formally deprecated LÖVE API will show a message at the bottom of the screen for a short time, and print the message to the console.",
+            link = "https://love2d.org/wiki/love.hasDeprecationOutput",
+            returnTypes = {
+              {
+                type = "boolean"
+              }
+            },
+            type = "function"
           },
           image = {
             description = "Provides an interface to decode encoded image data.",
@@ -3915,6 +4276,61 @@ return {
                   }
                 }
               },
+              newTransform = {
+                link = "https://love2d.org/wiki/love.math.newTransform",
+                returnTypes = {
+                  {
+                    name = "Transform",
+                    type = "ref"
+                  }
+                },
+                type = "function",
+                variants = {
+                  {
+                    args = {},
+                    description = "Creates a Transform with no transformations applied. Call methods on the returned object to apply transformations."
+                  },
+                  {
+                    args = {
+                      {
+                        name = "x"
+                      },
+                      {
+                        name = "y"
+                      },
+                      {
+                        displayName = "[angle]",
+                        name = "angle"
+                      },
+                      {
+                        displayName = "[sx]",
+                        name = "sx"
+                      },
+                      {
+                        displayName = "[sy]",
+                        name = "sy"
+                      },
+                      {
+                        displayName = "[ox]",
+                        name = "ox"
+                      },
+                      {
+                        displayName = "[oy]",
+                        name = "oy"
+                      },
+                      {
+                        displayName = "[kx]",
+                        name = "kx"
+                      },
+                      {
+                        displayName = "[ky]",
+                        name = "ky"
+                      }
+                    },
+                    description = "Creates a Transform with the specified transformation applied on creation."
+                  }
+                }
+              },
               noise = {
                 link = "https://love2d.org/wiki/love.math.noise",
                 returnTypes = {
@@ -4196,6 +4612,17 @@ return {
                 args = {},
                 description = "Gets whether cursor functionality is supported.\n\nIf it isn't supported, calling love.mouse.newCursor and love.mouse.getSystemCursor will cause an error. Mobile devices do not support cursors.",
                 link = "https://love2d.org/wiki/love.mouse.hasCursor",
+                returnTypes = {
+                  {
+                    type = "boolean"
+                  }
+                },
+                type = "function"
+              },
+              isCursorSupported = {
+                args = {},
+                description = "Gets whether cursor functionality is supported.\n\nIf it isn't supported, calling love.mouse.newCursor and love.mouse.getSystemCursor will cause an error. Mobile devices do not support cursors.",
+                link = "https://love2d.org/wiki/love.mouse.isCursorSupported",
                 returnTypes = {
                   {
                     type = "boolean"
@@ -5358,6 +5785,16 @@ return {
             link = "https://love2d.org/wiki/love.run",
             type = "function"
           },
+          setDeprecationOutput = {
+            args = {
+              {
+                name = "enable"
+              }
+            },
+            description = "Sets whether LÖVE displays warnings when using deprecated functionality. It is disabled by default in fused mode, and enabled by default otherwise.\n\nWhen deprecation output is enabled, the first use of a formally deprecated LÖVE API will show a message at the bottom of the screen for a short time, and print the message to the console.",
+            link = "https://love2d.org/wiki/love.setDeprecationOutput",
+            type = "function"
+          },
           sound = {
             description = "This module is responsible for decoding sound files. It can't play the sounds, see love.audio for that.",
             fields = {
@@ -5502,7 +5939,7 @@ return {
               },
               getProcessorCount = {
                 args = {},
-                description = "Gets the number of CPU cores in the system.\n\nThe number includes the threads reported if technologies such as Intel's Hyper-threading are enabled. For example, on a 4-core CPU with Hyper-threading, this function will return 8.",
+                description = "Gets the amount of logical processor in the system.",
                 link = "https://love2d.org/wiki/love.system.getProcessorCount",
                 returnTypes = {
                   {
@@ -5719,10 +6156,18 @@ return {
                 type = "function"
               },
               step = {
-                args = {},
-                description = "Measures the time between two frames. Calling this changes the return value of love.timer.getDelta.",
                 link = "https://love2d.org/wiki/love.timer.step",
-                type = "function"
+                type = "function",
+                variants = {
+                  {
+                    args = {},
+                    description = "Measures the time between two frames. Calling this changes the return value of love.timer.getDelta."
+                  },
+                  {
+                    args = {},
+                    description = "Measures the time between two frames. Calling this changes the return value of love.timer.getDelta."
+                  }
+                }
               }
             },
             link = "https://love2d.org/wiki/love.timer",
@@ -5961,6 +6406,17 @@ return {
                   }
                 }
               },
+              getDPIScale = {
+                args = {},
+                description = "Gets the DPI scale factor associated with the window.\n\nThe pixel density inside the window might be greater (or smaller) than the \"size\" of the window. For example on a retina screen in Mac OS X with the highdpi window flag enabled, the window may take up the same physical size as an 800x600 window, but the area inside the window uses 1600x1200 pixels. love.window.getDPIScale() would return 2.0 in that case.\n\nThe love.window.fromPixels and love.window.toPixels functions can also be used to convert between units.\n\nThe highdpi window flag must be enabled to use the full pixel density of a Retina screen on Mac OS X and iOS. The flag currently does nothing on Windows and Linux, and on Android it is effectively always enabled.",
+                link = "https://love2d.org/wiki/love.window.getDPIScale",
+                returnTypes = {
+                  {
+                    type = "number"
+                  }
+                },
+                type = "function"
+              },
               getDisplayName = {
                 args = {
                   {
@@ -6119,6 +6575,17 @@ return {
                 },
                 type = "function"
               },
+              isMinimized = {
+                args = {},
+                description = "Gets whether the Window is currently minimized.",
+                link = "https://love2d.org/wiki/love.window.isMinimized",
+                returnTypes = {
+                  {
+                    type = "boolean"
+                  }
+                },
+                type = "function"
+              },
               isOpen = {
                 args = {},
                 description = "Checks if the window is open.",
@@ -6162,6 +6629,12 @@ return {
                 },
                 description = "Causes the window to request the attention of the user if it is not in the foreground.\n\nIn Windows the taskbar icon will flash, and in OS X the dock icon will bounce.",
                 link = "https://love2d.org/wiki/love.window.requestAttention",
+                type = "function"
+              },
+              restore = {
+                args = {},
+                description = "Restores the size and position of the window if it was minimized or maximized.",
+                link = "https://love2d.org/wiki/love.window.restore",
                 type = "function"
               },
               setDisplaySleepEnabled = {
@@ -6347,6 +6820,27 @@ return {
                     description = "Converts a number from density-independent units to pixels.\n\nThe pixel density inside the window might be greater (or smaller) than the \"size\" of the window. For example on a retina screen in Mac OS X with the highdpi window flag enabled, the window may take up the same physical size as an 800x600 window, but the area inside the window uses 1600x1200 pixels. love.window.toPixels(800) would return 1600 in that case.\n\nThis is used to convert coordinates from the size users are expecting them to display at onscreen to pixels. love.window.fromPixels does the opposite. The highdpi window flag must be enabled to use the full pixel density of a Retina screen on Mac OS X and iOS. The flag currently does nothing on Windows and Linux, and on Android it is effectively always enabled.\n\nMost LÖVE functions return values and expect arguments in terms of pixels rather than density-independent units."
                   }
                 }
+              },
+              updateMode = {
+                args = {
+                  {
+                    name = "width"
+                  },
+                  {
+                    name = "height"
+                  },
+                  {
+                    name = "settings"
+                  }
+                },
+                description = "Sets the display mode and properties of the window, without modifying unspecified properties.\n\nIf width or height is 0, updateMode will use the width and height of the desktop.\n\nChanging the display mode may have side effects: for example, canvases will be cleared. Make sure to save the contents of canvases beforehand or re-draw to them afterward if you need to.",
+                link = "https://love2d.org/wiki/love.window.updateMode",
+                returnTypes = {
+                  {
+                    type = "boolean"
+                  }
+                },
+                type = "function"
               }
             },
             link = "https://love2d.org/wiki/love.window",
@@ -8042,12 +8536,6 @@ return {
           type = "function"
         },
         demand = {
-          args = {
-            {
-              name = "self"
-            }
-          },
-          description = "Retrieves the value of a Channel message and removes it from the message queue.\n\nIt waits until a message is in the queue then returns the message value.",
           link = "https://love2d.org/wiki/Channel:demand",
           returnTypes = {
             {
@@ -8055,7 +8543,28 @@ return {
               type = "ref"
             }
           },
-          type = "function"
+          type = "function",
+          variants = {
+            {
+              args = {
+                {
+                  name = "self"
+                }
+              },
+              description = "Retrieves the value of a Channel message and removes it from the message queue.\n\nIt waits until a message is in the queue then returns the message value."
+            },
+            {
+              args = {
+                {
+                  name = "self"
+                },
+                {
+                  name = "timeout"
+                }
+              },
+              description = "Retrieves the value of a Channel message and removes it from the message queue.\n\nIt waits until a message is in the queue then returns the message value."
+            }
+          }
         },
         getCount = {
           args = {
@@ -8068,6 +8577,24 @@ return {
           returnTypes = {
             {
               type = "number"
+            }
+          },
+          type = "function"
+        },
+        hasRead = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "id"
+            }
+          },
+          description = "Gets whether a pushed value has been popped or otherwise removed from the Channel.",
+          link = "https://love2d.org/wiki/Channel:hasRead",
+          returnTypes = {
+            {
+              type = "boolean"
             }
           },
           type = "function"
@@ -8147,17 +8674,40 @@ return {
           type = "function"
         },
         supply = {
-          args = {
+          link = "https://love2d.org/wiki/Channel:supply",
+          returnTypes = {
             {
-              name = "self"
-            },
-            {
-              name = "value"
+              type = "boolean"
             }
           },
-          description = "Send a message to the thread Channel and wait for a thread to accept it.\n\nSee Variant for the list of supported types.",
-          link = "https://love2d.org/wiki/Channel:supply",
-          type = "function"
+          type = "function",
+          variants = {
+            {
+              args = {
+                {
+                  name = "self"
+                },
+                {
+                  name = "value"
+                }
+              },
+              description = "Send a message to the thread Channel and wait for a thread to accept it.\n\nSee Variant for the list of supported types."
+            },
+            {
+              args = {
+                {
+                  name = "self"
+                },
+                {
+                  name = "value"
+                },
+                {
+                  name = "timeout"
+                }
+              },
+              description = "Send a message to the thread Channel and wait for a thread to accept it.\n\nSee Variant for the list of supported types."
+            }
+          }
         }
       },
       metatable = {
@@ -8717,14 +9267,14 @@ return {
           },
           type = "function"
         },
-        getChannels = {
+        getChannelCount = {
           args = {
             {
               name = "self"
             }
           },
           description = "Returns the number of channels in the stream.",
-          link = "https://love2d.org/wiki/Decoder:getChannels",
+          link = "https://love2d.org/wiki/Decoder:getChannelCount",
           returnTypes = {
             {
               type = "number"
@@ -10156,34 +10706,6 @@ return {
     },
     Image = {
       fields = {
-        getData = {
-          link = "https://love2d.org/wiki/Image:getData",
-          returnTypes = {
-            {
-              name = "ImageData",
-              type = "ref"
-            }
-          },
-          type = "function",
-          variants = {
-            {
-              args = {
-                {
-                  name = "self"
-                }
-              },
-              description = "Gets the original ImageData or CompressedImageData used to create the Image.\n\nAll Images keep a reference to the Data that was used to create the Image. The Data is used to refresh the Image when love.window.setMode or Image:refresh is called."
-            },
-            {
-              args = {
-                {
-                  name = "self"
-                }
-              },
-              description = "Gets the original ImageData or CompressedImageData used to create the Image.\n\nAll Images keep a reference to the Data that was used to create the Image. The Data is used to refresh the Image when love.window.setMode or Image:refresh is called."
-            }
-          }
-        },
         getDimensions = {
           args = {
             {
@@ -10306,39 +10828,25 @@ return {
           },
           type = "function"
         },
-        refresh = {
-          link = "https://love2d.org/wiki/Image:refresh",
-          type = "function",
-          variants = {
+        replacePixels = {
+          args = {
             {
-              args = {
-                {
-                  name = "self"
-                }
-              },
-              description = "Reloads the Image's contents from the ImageData or CompressedImageData used to create the image."
+              name = "self"
             },
             {
-              args = {
-                {
-                  name = "self"
-                },
-                {
-                  name = "x"
-                },
-                {
-                  name = "y"
-                },
-                {
-                  name = "width"
-                },
-                {
-                  name = "height"
-                }
-              },
-              description = "Reloads the Image's contents from the ImageData or CompressedImageData used to create the image."
+              name = "data"
+            },
+            {
+              name = "slice"
+            },
+            {
+              displayName = "[mipmap]",
+              name = "mipmap"
             }
-          }
+          },
+          description = "Replaces the contents of an Image.",
+          link = "https://love2d.org/wiki/Image:replacePixels",
+          type = "function"
         },
         setFilter = {
           args = {
@@ -11170,6 +11678,24 @@ return {
           },
           description = "Attaches a vertex attribute from a different Mesh onto this Mesh, for use when drawing. This can be used to share vertex attribute data between several different Meshes.",
           link = "https://love2d.org/wiki/Mesh:attachAttribute",
+          type = "function"
+        },
+        detachAttribute = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "name"
+            }
+          },
+          description = "Removes a previously attached vertex attribute from this Mesh.",
+          link = "https://love2d.org/wiki/Mesh:detachAttribute",
+          returnTypes = {
+            {
+              type = "boolean"
+            }
+          },
           type = "function"
         },
         getDrawMode = {
@@ -12926,6 +13452,21 @@ return {
     },
     PrismaticJoint = {
       fields = {
+        areLimitsEnabled = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Checks whether the limits are enabled.",
+          link = "https://love2d.org/wiki/PrismaticJoint:areLimitsEnabled",
+          returnTypes = {
+            {
+              type = "boolean"
+            }
+          },
+          type = "function"
+        },
         getAxis = {
           args = {
             {
@@ -13063,21 +13604,6 @@ return {
           returnTypes = {
             {
               type = "number"
-            }
-          },
-          type = "function"
-        },
-        hasLimitsEnabled = {
-          args = {
-            {
-              name = "self"
-            }
-          },
-          description = "Checks whether the limits are enabled.",
-          link = "https://love2d.org/wiki/PrismaticJoint:hasLimitsEnabled",
-          returnTypes = {
-            {
-              type = "boolean"
             }
           },
           type = "function"
@@ -13598,8 +14124,36 @@ return {
       },
       type = "table"
     },
+    RecordingDevice = {
+      fields = {},
+      metatable = {
+        fields = {
+          __index = {
+            name = "Object",
+            type = "ref"
+          }
+        },
+        type = "table"
+      },
+      type = "table"
+    },
     RevoluteJoint = {
       fields = {
+        areLimitsEnabled = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Checks whether the limits are enabled.",
+          link = "https://love2d.org/wiki/RevoluteJoint:areLimitsEnabled",
+          returnTypes = {
+            {
+              type = "boolean"
+            }
+          },
+          type = "function"
+        },
         getJointAngle = {
           args = {
             {
@@ -13719,21 +14273,6 @@ return {
           returnTypes = {
             {
               type = "number"
-            }
-          },
-          type = "function"
-        },
-        hasLimitsEnabled = {
-          args = {
-            {
-              name = "self"
-            }
-          },
-          description = "Checks whether limits are enabled.",
-          link = "https://love2d.org/wiki/RevoluteJoint:hasLimitsEnabled",
-          returnTypes = {
-            {
-              type = "boolean"
             }
           },
           type = "function"
@@ -13875,6 +14414,19 @@ return {
             }
           },
           type = "function"
+        },
+        setMaxLength = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "maxLength"
+            }
+          },
+          description = "Sets the maximum length of a RopeJoint.",
+          link = "https://love2d.org/wiki/RopeJoint:setMaxLength",
+          type = "function"
         }
       },
       metatable = {
@@ -13890,31 +14442,6 @@ return {
     },
     Shader = {
       fields = {
-        getExternVariable = {
-          args = {
-            {
-              name = "self"
-            },
-            {
-              name = "name"
-            }
-          },
-          description = "Gets information about an 'extern' ('uniform') variable in the shader.",
-          link = "https://love2d.org/wiki/Shader:getExternVariable",
-          returnTypes = {
-            {
-              name = "ShaderVariableType",
-              type = "ref"
-            },
-            {
-              type = "number"
-            },
-            {
-              type = "number"
-            }
-          },
-          type = "function"
-        },
         getWarnings = {
           args = {
             {
@@ -13926,6 +14453,24 @@ return {
           returnTypes = {
             {
               type = "string"
+            }
+          },
+          type = "function"
+        },
+        hasUniform = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "name"
+            }
+          },
+          description = "Gets whether a uniform / extern variable exists in the Shader.\n\nIf a graphics driver's shader compiler determines that a uniform / extern variable doesn't affect the final output of the shader, it may optimize the variable out. This function will return false in that case.",
+          link = "https://love2d.org/wiki/Shader:hasUniform",
+          returnTypes = {
+            {
+              type = "boolean"
             }
           },
           type = "function"
@@ -14260,14 +14805,14 @@ return {
           },
           type = "function"
         },
-        getChannels = {
+        getChannelCount = {
           args = {
             {
               name = "self"
             }
           },
           description = "Returns the number of channels in the stream.",
-          link = "https://love2d.org/wiki/SoundData:getChannels",
+          link = "https://love2d.org/wiki/SoundData:getChannelCount",
           returnTypes = {
             {
               type = "number"
@@ -14402,14 +14947,14 @@ return {
           },
           type = "function"
         },
-        getChannels = {
+        getChannelCount = {
           args = {
             {
               name = "self"
             }
           },
           description = "Gets the number of channels in the Source. Only 1-channel (mono) Sources can use directional and positional effects.",
-          link = "https://love2d.org/wiki/Source:getChannels",
+          link = "https://love2d.org/wiki/Source:getChannelCount",
           returnTypes = {
             {
               type = "number"
@@ -14614,21 +15159,6 @@ return {
           },
           type = "function"
         },
-        isPaused = {
-          args = {
-            {
-              name = "self"
-            }
-          },
-          description = "Returns whether the Source is paused.",
-          link = "https://love2d.org/wiki/Source:isPaused",
-          returnTypes = {
-            {
-              type = "boolean"
-            }
-          },
-          type = "function"
-        },
         isPlaying = {
           args = {
             {
@@ -14637,21 +15167,6 @@ return {
           },
           description = "Returns whether the Source is playing.",
           link = "https://love2d.org/wiki/Source:isPlaying",
-          returnTypes = {
-            {
-              type = "boolean"
-            }
-          },
-          type = "function"
-        },
-        isStopped = {
-          args = {
-            {
-              name = "self"
-            }
-          },
-          description = "Returns whether the Source is stopped.",
-          link = "https://love2d.org/wiki/Source:isStopped",
           returnTypes = {
             {
               type = "boolean"
@@ -14682,26 +15197,6 @@ return {
               type = "boolean"
             }
           },
-          type = "function"
-        },
-        resume = {
-          args = {
-            {
-              name = "self"
-            }
-          },
-          description = "Resumes a paused Source.",
-          link = "https://love2d.org/wiki/Source:resume",
-          type = "function"
-        },
-        rewind = {
-          args = {
-            {
-              name = "self"
-            }
-          },
-          description = "Rewinds a Source.",
-          link = "https://love2d.org/wiki/Source:rewind",
           type = "function"
         },
         seek = {
@@ -15035,7 +15530,7 @@ return {
               name = "mesh"
             }
           },
-          description = "Attaches a per-vertex attribute from a Mesh onto this SpriteBatch, for use when drawing. This can be combined with a Shader to augment a SpriteBatch with per-vertex or additional per-sprite information instead of just having per-sprite colors.\n\nEach sprite in a SpriteBatch has 4 vertices in the following order: top-left, bottom-left, top-right, bottom-right. The index returned by SpriteBatch:add (and used by SpriteBatch:set) can be multiplied by 4 to determine the first vertex in a specific sprite.",
+          description = "Attaches a per-vertex attribute from a Mesh onto this SpriteBatch, for use when drawing. This can be combined with a Shader to augment a SpriteBatch with per-vertex or additional per-sprite information instead of just having per-sprite colors.\n\nEach sprite in a SpriteBatch has 4 vertices in the following order: top-left, bottom-left, top-right, bottom-right. The index returned by SpriteBatch:add (and used by SpriteBatch:set) can used to determine the first vertex of a specific sprite with the formula \"1 + 4 * ( id - 1 )\".",
           link = "https://love2d.org/wiki/SpriteBatch:attachAttribute",
           type = "function"
         },
@@ -15228,19 +15723,6 @@ return {
             }
           }
         },
-        setBufferSize = {
-          args = {
-            {
-              name = "self"
-            },
-            {
-              name = "size"
-            }
-          },
-          description = "Sets the maximum number of sprites the SpriteBatch can hold. Existing sprites in the batch (up to the new maximum) will not be cleared when this function is called.",
-          link = "https://love2d.org/wiki/SpriteBatch:setBufferSize",
-          type = "function"
-        },
         setColor = {
           link = "https://love2d.org/wiki/SpriteBatch:setColor",
           type = "function",
@@ -15273,6 +15755,34 @@ return {
                 }
               },
               description = "Disables all per-sprite colors for this SpriteBatch."
+            }
+          }
+        },
+        setDrawRange = {
+          link = "https://love2d.org/wiki/SpriteBatch:setDrawRange",
+          type = "function",
+          variants = {
+            {
+              args = {
+                {
+                  name = "self"
+                },
+                {
+                  name = "start"
+                },
+                {
+                  name = "count"
+                }
+              },
+              description = "Restricts the drawn sprites in the SpriteBatch to a subset of the total."
+            },
+            {
+              args = {
+                {
+                  name = "self"
+                }
+              },
+              description = "Allows all sprites in the SpriteBatch to be drawn."
             }
           }
         },
@@ -15665,14 +16175,6 @@ return {
                 }
               },
               description = "Replaces the contents of the Text object with a new unformatted string."
-            },
-            {
-              args = {
-                {
-                  name = "self"
-                }
-              },
-              description = "Clears the contents of the Text object."
             }
           }
         },
@@ -15750,7 +16252,100 @@ return {
       type = "table"
     },
     Texture = {
-      fields = {},
+      fields = {
+        getDepth = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Gets the depth of a Volume Texture. Returns 1 for 2D, Cubemap, and Array textures.",
+          link = "https://love2d.org/wiki/Texture:getDepth",
+          returnTypes = {
+            {
+              type = "number"
+            }
+          },
+          type = "function"
+        },
+        getFormat = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Gets the PixelFormat of the Texture.",
+          link = "https://love2d.org/wiki/Texture:getFormat",
+          returnTypes = {
+            {
+              name = "PixelFormat",
+              type = "ref"
+            }
+          },
+          type = "function"
+        },
+        getLayerCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Gets the number of layers / slices in an Array Texture. Returns 1 for 2D, Cubemap, and Volume textures.",
+          link = "https://love2d.org/wiki/Texture:getLayerCount",
+          returnTypes = {
+            {
+              type = "number"
+            }
+          },
+          type = "function"
+        },
+        getMipmapCount = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Gets the number of mipmaps contained in the Texture. If the texture was not created with mipmaps, it will return 1.",
+          link = "https://love2d.org/wiki/Texture:getMipmapCount",
+          returnTypes = {
+            {
+              type = "number"
+            }
+          },
+          type = "function"
+        },
+        getTextureType = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Gets the type of the Texture.",
+          link = "https://love2d.org/wiki/Texture:getTextureType",
+          returnTypes = {
+            {
+              name = "TextureType",
+              type = "ref"
+            }
+          },
+          type = "function"
+        },
+        isReadable = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Gets whether the Texture can be drawn and sent to a Shader.\n\nCanvases created with stencil and/or depth PixelFormats are not readable by default, unless readable=true is specified in the settings table passed into love.graphics.newCanvas.\n\nNon-readable Canvases can still be rendered to.",
+          link = "https://love2d.org/wiki/Texture:isReadable",
+          returnTypes = {
+            {
+              type = "boolean"
+            }
+          },
+          type = "function"
+        }
+      },
       metatable = {
         fields = {
           __index = {
@@ -15833,6 +16428,377 @@ return {
           },
           description = "Wait for a thread to finish. This call will block until the thread finishes.",
           link = "https://love2d.org/wiki/Thread:wait",
+          type = "function"
+        }
+      },
+      metatable = {
+        fields = {
+          __index = {
+            name = "Object",
+            type = "ref"
+          }
+        },
+        type = "table"
+      },
+      type = "table"
+    },
+    Transform = {
+      fields = {
+        apply = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "other"
+            }
+          },
+          description = "Applies the given other Transform object to this one.",
+          link = "https://love2d.org/wiki/Transform:apply",
+          returnTypes = {
+            {
+              name = "Transform",
+              type = "ref"
+            }
+          },
+          type = "function"
+        },
+        clone = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Creates a new copy of this Transform.",
+          link = "https://love2d.org/wiki/Transform:clone",
+          returnTypes = {
+            {
+              name = "Transform",
+              type = "ref"
+            }
+          },
+          type = "function"
+        },
+        getMatrix = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Gets the internal 4x4 transformation matrix stored by this Transform. The matrix is returned in row-major order.",
+          link = "https://love2d.org/wiki/Transform:getMatrix",
+          returnTypes = {
+            {
+              type = "number"
+            },
+            {
+              type = "number"
+            },
+            {
+              type = "number"
+            },
+            {
+              type = "number"
+            }
+          },
+          type = "function"
+        },
+        inverse = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Creates a new Transform containing the inverse of this Transform.",
+          link = "https://love2d.org/wiki/Transform:inverse",
+          returnTypes = {
+            {
+              name = "Transform",
+              type = "ref"
+            }
+          },
+          type = "function"
+        },
+        inverseTransformPoint = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "localX"
+            },
+            {
+              name = "localY"
+            }
+          },
+          description = "Applies the reverse of the Transform object's transformation to the given 2D position.\n\nThis effectively converts the given position from the local coordinate space of the Transform into global coordinates.\n\nOne use of this method can be to convert a screen-space mouse position into global world coordinates, if the given Transform has transformations applied that are used for a camera system in-game.",
+          link = "https://love2d.org/wiki/Transform:inverseTransformPoint",
+          returnTypes = {
+            {
+              type = "number"
+            },
+            {
+              type = "number"
+            }
+          },
+          type = "function"
+        },
+        reset = {
+          args = {
+            {
+              name = "self"
+            }
+          },
+          description = "Resets the Transform to an identity state. All previously applied transformations are erased.",
+          link = "https://love2d.org/wiki/Transform:reset",
+          returnTypes = {
+            {
+              name = "Transform",
+              type = "ref"
+            }
+          },
+          type = "function"
+        },
+        rotate = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "angle"
+            }
+          },
+          description = "Applies a rotation to the Transform's coordinate system. This method does not reset any previously applied transformations.",
+          link = "https://love2d.org/wiki/Transform:rotate",
+          returnTypes = {
+            {
+              name = "Transform",
+              type = "ref"
+            }
+          },
+          type = "function"
+        },
+        scale = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "sx"
+            },
+            {
+              name = "sy"
+            }
+          },
+          description = "Scales the Transform's coordinate system. This method does not reset any previously applied transformations.",
+          link = "https://love2d.org/wiki/Transform:scale",
+          returnTypes = {
+            {
+              name = "Transform",
+              type = "ref"
+            }
+          },
+          type = "function"
+        },
+        setMatrix = {
+          link = "https://love2d.org/wiki/Transform:setMatrix",
+          returnTypes = {
+            {
+              name = "Transform",
+              type = "ref"
+            }
+          },
+          type = "function",
+          variants = {
+            {
+              args = {
+                {
+                  name = "self"
+                },
+                {
+                  name = "e1_1"
+                },
+                {
+                  name = "e1_2"
+                },
+                {
+                  name = "..."
+                },
+                {
+                  name = "e4_4"
+                }
+              },
+              description = "Directly sets the Transform's internal 4x4 transformation matrix."
+            },
+            {
+              args = {
+                {
+                  name = "self"
+                },
+                {
+                  name = "layout"
+                },
+                {
+                  name = "e1_1"
+                },
+                {
+                  name = "e1_2"
+                },
+                {
+                  name = "..."
+                },
+                {
+                  name = "e4_4"
+                }
+              },
+              description = "Directly sets the Transform's internal 4x4 transformation matrix."
+            },
+            {
+              args = {
+                {
+                  name = "self"
+                },
+                {
+                  name = "layout"
+                },
+                {
+                  name = "matrix"
+                }
+              },
+              description = "Directly sets the Transform's internal 4x4 transformation matrix."
+            },
+            {
+              args = {
+                {
+                  name = "self"
+                },
+                {
+                  name = "layout"
+                },
+                {
+                  name = "matrix"
+                }
+              },
+              description = "Directly sets the Transform's internal 4x4 transformation matrix."
+            }
+          }
+        },
+        setTransformation = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "x"
+            },
+            {
+              name = "y"
+            },
+            {
+              displayName = "[angle]",
+              name = "angle"
+            },
+            {
+              displayName = "[sx]",
+              name = "sx"
+            },
+            {
+              displayName = "[sy]",
+              name = "sy"
+            },
+            {
+              displayName = "[ox]",
+              name = "ox"
+            },
+            {
+              displayName = "[oy]",
+              name = "oy"
+            },
+            {
+              displayName = "[kx]",
+              name = "kx"
+            },
+            {
+              displayName = "[ky]",
+              name = "ky"
+            }
+          },
+          description = "Resets the Transform to the specified transformation parameters.",
+          link = "https://love2d.org/wiki/Transform:setTransformation",
+          returnTypes = {
+            {
+              name = "Transform",
+              type = "ref"
+            }
+          },
+          type = "function"
+        },
+        shear = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "kx"
+            },
+            {
+              name = "ky"
+            }
+          },
+          description = "Applies a shear factor (skew) to the Transform's coordinate system. This method does not reset any previously applied transformations.",
+          link = "https://love2d.org/wiki/Transform:shear",
+          returnTypes = {
+            {
+              name = "Transform",
+              type = "ref"
+            }
+          },
+          type = "function"
+        },
+        transformPoint = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "globalX"
+            },
+            {
+              name = "globalY"
+            }
+          },
+          description = "Applies the Transform object's transformation to the given 2D position.\n\nThis effectively converts the given position from global coordinates into the local coordinate space of the Transform.",
+          link = "https://love2d.org/wiki/Transform:transformPoint",
+          returnTypes = {
+            {
+              type = "number"
+            },
+            {
+              type = "number"
+            }
+          },
+          type = "function"
+        },
+        translate = {
+          args = {
+            {
+              name = "self"
+            },
+            {
+              name = "dx"
+            },
+            {
+              name = "dy"
+            }
+          },
+          description = "Applies a translation to the Transform's coordinate system. This method does not reset any previously applied transformations.",
+          link = "https://love2d.org/wiki/Transform:translate",
+          returnTypes = {
+            {
+              name = "Transform",
+              type = "ref"
+            }
+          },
           type = "function"
         }
       },
@@ -16698,6 +17664,14 @@ return {
             },
             {
               name = "dt"
+            },
+            {
+              displayName = "[velocityiterations]",
+              name = "velocityiterations"
+            },
+            {
+              displayName = "[positioniterations]",
+              name = "positioniterations"
             }
           },
           description = "Update the state of the world.",
