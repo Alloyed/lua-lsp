@@ -1,5 +1,5 @@
 -- json-rpc implementation
-local json    = require 'cjson'
+local json = require 'lua-lsp.json'
 local rpc = {}
 
 function rpc.respond(id, result)

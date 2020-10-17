@@ -21,7 +21,7 @@ supports:
 }
 dependencies = {
 	"lua >= 5.1, < 5.4",
-	"lua-cjson == 2.1.0-1", -- https://github.com/openresty/lua-cjson/issues/36, should be fixed in next version
+	"dkjson ~> 2.5",
 	"lpeglabel ~> 1.6",
 	"inspect ~> 3.1"
 }

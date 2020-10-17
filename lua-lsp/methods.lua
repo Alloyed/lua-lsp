@@ -3,7 +3,7 @@ local analyze = require 'lua-lsp.analyze'
 local rpc     = require 'lua-lsp.rpc'
 local log     = require 'lua-lsp.log'
 local utf     = require 'lua-lsp.unicode'
-local json    = require 'cjson'
+local json    = require 'lua-lsp.json'
 local unpack  = table.unpack or unpack
 
 local method_handlers = {}

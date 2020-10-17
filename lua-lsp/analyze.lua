@@ -2,7 +2,7 @@
 local parser       = require 'lua-lsp.lua-parser.parser'
 local log          = require 'lua-lsp.log'
 local rpc          = require 'lua-lsp.rpc'
-local json         = require 'cjson'
+local json         = require 'lua-lsp.json'
 local ok, luacheck = pcall(require, 'luacheck')
 if not ok then luacheck = nil end
 

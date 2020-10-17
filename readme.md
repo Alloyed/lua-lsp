@@ -42,6 +42,13 @@ If you have another package you'd like to see integrated, feel free to leave an
 issue/PR. Other plugins are always welcome, especially if they provide
 materially different results.
 
+if lua-cjson is installed, we will optionally use it for a speed boost. It is
+unfortunately not supported by all versions of lua at the moment, but as soon
+as it is we will switch to making it mandatory.
+```
+$ luarocks install lua-cjson
+```
+
 ### Configuration
 
 lua-lsp reads a few project-level configuration files to do its work.
