@@ -1,4 +1,5 @@
 local mock_loop = require 'spec.mock_loop'
+local json = require 'lua-lsp.json'
 
 describe("textDocument/diagnostics", function()
 	it("sends an empty array in response to no issues", function()
@@ -13,7 +14,10 @@ describe("textDocument/diagnostics", function()
 			})
 			assert.spy(s_rpc.notifyJson).was_called_with(
 			"textDocument/publishDiagnostics",
-			[[{"uri":"file:\/\/\/tmp\/emptyarray.lua","diagnostics":[]}]])
+			json.encode({
+				uri = "file:///tmp/emptyarray.lua",
+				diagnostics = json.array{},
+			}))
 		end)
 	end)
 	it("lists local variables", function()
