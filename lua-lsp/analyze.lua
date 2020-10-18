@@ -451,7 +451,7 @@ local function gen_scopes(len, ast, uri)
 			end
 			save_return(a, node)
 		elseif node.tag == "Local" then
-			local namelist,exprlist = node[1], node[2]
+			local namelist, exprlist = node[1], node[2]
 			if exprlist then
 				for _, expr in ipairs(exprlist) do
 					visit_expression(expr, a)
@@ -574,7 +574,7 @@ local function try_luacheck(document)
 	end
 	rpc.notify("textDocument/publishDiagnostics", {
 		uri = document.uri,
-		diagnostics = diagnostics,
+		diagnostics = json.array(diagnostics),
 	})
 end
 
@@ -636,8 +636,8 @@ function analyze.refresh(document)
 		assert(err.line)
 		return rpc.notify("textDocument/publishDiagnostics", {
 			uri = document.uri,
-			diagnostics = { {
-				code = "011", -- this is a luacheck code
+			diagnostics = json.array { {
+				code = "011", -- this is a luacheck code, 011 = syntax error
 				range = {
 					start   = {line = line-1, character = column-1},
 					-- the parser does not keep track of the end of the error

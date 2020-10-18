@@ -19,4 +19,8 @@ files["*.rockspec"].std = "rockspec"
 include_files = {"lua-lsp", "spec", "*.rockspec"}
 exclude_files = {"lua-lsp/data"}
 
-cache = true
+ignore = {
+	"2/_.*" -- ignore unused warnings on variables prefixed with _
+} 
+
+cache = true -- store results for unchanged files
