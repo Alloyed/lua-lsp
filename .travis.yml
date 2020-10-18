@@ -1,5 +1,4 @@
 language: python
-sudo: false
 
 env:
   - LUA="lua=5.3" FMT=""
