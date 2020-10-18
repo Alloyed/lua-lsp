@@ -2,6 +2,7 @@
 local ok, maybe_cjson = pcall(require, 'cjson')
 if ok then
 	local cjson = maybe_cjson
+	cjson.decode_array_with_array_mt(true)
 	function cjson.array(t)
 		setmetatable(t, cjson.array_mt)
 		return t
@@ -171,6 +172,7 @@ local function quotestring (value)
     value = fsub (value, "\239\187\191", escapeutf8)
     value = fsub (value, "\239\191[\176-\191]", escapeutf8)
   end
+  value = fsub (value, "/", "\\/") -- lua-lsp addition, escape forward slashes as cjson does
   return "\"" .. value .. "\""
 end
 json.quotestring = quotestring
