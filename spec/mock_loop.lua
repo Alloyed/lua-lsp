@@ -1,3 +1,4 @@
+local json = require 'lua-lsp.json'
 
 return function(fn, builtins)
 	local unpack  = table.unpack or unpack
@@ -20,10 +21,13 @@ return function(fn, builtins)
 	function s_rpc.respondError(id, errorMsg, _, _)
 		error(string.format("respondError %s: %s ", id, errorMsg))
 	end
-	function s_rpc.notify()
-		--error(string.format("%s"))
-		-- throw away notifications: TODO: add busted watcher
-		--error()
+	function s_rpc.notify(id, msgObject)
+		-- this method can be spied on to confirm notifications occurred
+		local msgJson = json.encode(msgObject)
+		s_rpc.notifyJson(id, msgJson)
+	end
+	function s_rpc.notifyJson(_id, _msgJson)
+		-- this method exists to be spied on
 	end
 	function s_rpc.request()
 		error()

@@ -1,14 +1,15 @@
 language: python
 
 env:
-  - LUA="lua=5.3" FMT=""
-  - LUA="lua=5.1" FMT="lcf"
-  - LUA="lua=5.1" FMT="formatter"
-  - LUA="lua=5.2" FMT=""
-  - LUA="lua=5.3" FMT=""
-  - LUA="lua=5.3" FMT="lcf"
-  - LUA="luajit=2.1" FMT=""
-  - LUA="lua=5.4" FMT=""
+  - LUA="lua=5.1" FMT="" JSON=""
+  - LUA="lua=5.1" FMT="lcf" JSON=""
+  - LUA="lua=5.1" FMT="formatter" JSON=""
+  - LUA="lua=5.2" FMT="" JSON=""
+  - LUA="lua=5.3" FMT="" JSON=""
+  - LUA="lua=5.3" FMT="lcf" JSON=""
+  - LUA="lua=5.4" FMT="" JSON=""
+  - LUA="luajit=2.1" FMT="" JSON=""
+  - LUA="luajit=2.1" FMT="" JSON="lua-cjson"
 
 cache:
     directories:
@@ -23,6 +24,7 @@ install:
   - luarocks install --only-deps spec/test-scm-0.rockspec
   - luarocks install --only-deps lua-lsp-scm-0.rockspec
   - luarocks install $FMT || true
+  - luarocks install $JSON || true
 
 script:
   - luacheck -ur .

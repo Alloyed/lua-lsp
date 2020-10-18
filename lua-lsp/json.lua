@@ -1,7 +1,16 @@
 -- wrapper for lua implementations
 local ok, maybe_cjson = pcall(require, 'cjson')
 if ok then
-	return maybe_cjson
+	local cjson = maybe_cjson
+	function cjson.array(t)
+		setmetatable(t, cjson.array_mt)
+		return t
+	end
+	function cjson.object(t)
+		-- cjson assumes objectness until proven otherwise
+		return t
+	end
+	return cjson
 end
 
 -- all lines below this come from dkjson 2.5, inlining to use in lua 5.4
@@ -718,4 +727,15 @@ if always_try_using_lpeg then
   pcall (json.use_lpeg)
 end
 
+-- lua-lsp addtion: methods to conveniently mark items as being arrays or objects
+local array_mt = { __jsontype = 'array' }
+function json.array(t)
+	setmetatable(t, array_mt)
+	return t
+end
+local object_mt = { __jsontype = 'object' }
+function json.object(t)
+	setmetatable(t, object_mt)
+	return t
+end
 return json

@@ -537,7 +537,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 		log.debug("document not valid")
 		return rpc.respond(id, {
 			isIncomplete = false,
-			items = {}
+			items = json.array {}
 		})
 	end
 	local line, char, pos = line_for(document, params.position)
@@ -553,7 +553,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 		log.debug("no scope or word, \nword: %_\nscope: %_", word, scope)
 		return rpc.respond(id, {
 			isIncomplete = false,
-			items = {}
+			items = json.array {}
 		})
 	end
 	log.debug("looking for %q in scope id %d", word, getmetatable(scope).id)
@@ -607,7 +607,7 @@ method_handlers["textDocument/completion"] = function(params, id)
 
 	return rpc.respond(id, {
 		isIncomplete = false,
-		items = items
+		items = json.array(items),
 	})
 end
 
@@ -682,14 +682,14 @@ method_handlers["textDocument/hover"] = function(params, id)
 		end
 
 		return rpc.respond(id, {
-			contents = contents
+			contents = json.array(contents)
 		})
 	end
 
 	-- This is the no result response, see:
 	-- https://github.com/Microsoft/language-server-protocol/issues/261
 	return rpc.respond(id,{
-		contents = {}
+		contents = json.array {}
 	})
 end
 
@@ -714,7 +714,7 @@ method_handlers["textDocument/documentSymbol"] = function(params, id)
 			end
 		end
 	end
-	return rpc.respond(id, symbols)
+	return rpc.respond(id, json.array(symbols))
 end
 
 method_handlers["textDocument/formatting"] = function(params, id)
