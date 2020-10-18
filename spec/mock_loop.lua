@@ -28,6 +28,9 @@ return function(fn, builtins)
 	end
 	function s_rpc.notifyJson(_id, _msgJson)
 		-- this method exists to be spied on
+		if _id == "textDocument/publishDiagnostics" then
+			print(_msgJson)
+		end
 	end
 	function s_rpc.request()
 		error()
