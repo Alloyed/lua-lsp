@@ -130,6 +130,11 @@ local completionKinds = {
 	Reference = 18,
 }
 
+local insertTextFormats = {
+	Plain = 1,
+	Snippet = 2,
+}
+
 local function merge_(a, b)
 	for k, v in pairs(b) do a[k] = v end
 end
@@ -147,7 +152,7 @@ end
 
 -- this is starting to get silly.
 local function make_completion_items(k, val, isField, isInvoke, isVariant)
-	local item = { label = k }
+	local item = { label = k, insertTextFormat = insertTextFormats.Plain }
 
 	if val then
 		if not isVariant and val.variants then
@@ -190,6 +195,13 @@ local function make_completion_items(k, val, isField, isInvoke, isVariant)
 			else
 				table.insert(sig, " ??? ")
 			end
+
+			-- Construct a snippet insertion format from signature
+			local snippet_args = {}
+			for idx,val in ipairs(sig) do
+				table.insert(snippet_args, string.format("${%d:%s}", idx, val))
+			end
+			local snippet = string.format("%s(%s)$0", k, table.concat(snippet_args, ", "))
 
 			-- we still do the work associated with getting a signature,
 			-- because that work informs whether or not an function is a
@@ -252,7 +264,8 @@ local function make_completion_items(k, val, isField, isInvoke, isVariant)
 				ret = string.format("-> %s", ret)
 			end
 
-			item.insertText = k
+			item.insertText = snippet
+			item.insertTextFormat = insertTextFormats.Snippet
 			item.label = ("%s(%s) %s"):format(k, sig, ret)
 			item.documentation = val.description
 			if isInvoke then

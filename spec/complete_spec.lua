@@ -21,6 +21,8 @@ local completionKinds = {
 	Reference = 18,
 }
 
+local insertTextFormats = { Plain = 1, Snippet = 2, }
+
 describe("textDocument/completion", function()
 	it("returns nothing with no symbols", function()
 		mock_loop(function(rpc)
@@ -66,7 +68,7 @@ describe("textDocument/completion", function()
 				assert.same({
 					isIncomplete = false,
 					items = {
-						{label = "mySymbol", kind = completionKinds.Variable}
+						{label = "mySymbol", kind = completionKinds.Variable, insertTextFormat = insertTextFormats.Plain }
 					}
 				}, out)
 				callme = true
@@ -89,8 +91,8 @@ describe("textDocument/completion", function()
 				assert.same({
 					isIncomplete = false,
 					items = {
-						{label = "symbolA", kind = completionKinds.Variable},
-						{label="symbolB", kind = completionKinds.Variable}
+						{label = "symbolA", kind = completionKinds.Variable, insertTextFormat = insertTextFormats.Plain},
+						{label="symbolB", kind = completionKinds.Variable, insertTextFormat = insertTextFormats.Plain}
 					}
 				}, out)
 				callme = true
@@ -113,7 +115,7 @@ describe("textDocument/completion", function()
 				assert.same({
 					isIncomplete = false,
 					items = {
-						{label = "symbolC", kind = completionKinds.Variable}
+						{label = "symbolC", kind = completionKinds.Variable, insertTextFormat = insertTextFormats.Plain}
 					}
 				}, out)
 				callme = true
@@ -149,6 +151,7 @@ return t
 					detail = '<table>',
 					label  = 'tbl',
 					kind = completionKinds.Variable,
+					insertTextFormat = insertTextFormats.Plain,
 				}, out.items[1])
 				callme = true
 			end)
@@ -172,6 +175,7 @@ return t
 					items = {{
 						detail = '"a"',
 						label = "string",
+						insertTextFormat = insertTextFormats.Plain,
 						kind = completionKinds.Field
 					}}
 				}, out)
@@ -191,6 +195,7 @@ return t
 					items = {{
 						detail = '"a"',
 						label = "string",
+						insertTextFormat = insertTextFormats.Plain,
 						kind = completionKinds.Field
 					}}
 				}, out)
@@ -225,6 +230,7 @@ return tbl.a
 				assert.same({
 					detail = 'M<mymod>',
 					label  = 'tbl',
+					insertTextFormat = insertTextFormats.Plain,
 					kind = completionKinds.Module,
 				}, out.items[1])
 				callme = true
@@ -259,6 +265,7 @@ return mystr.t
 					detail = 'True',
 					label  = 'test_example',
 					kind = completionKinds.Field,
+					insertTextFormat = insertTextFormats.Plain,
 				}, out.items[1])
 				callme = true
 			end)
@@ -291,6 +298,7 @@ return mytbl.j
 					detail = '1',
 					label  = 'jeff',
 					kind = completionKinds.Field,
+					insertTextFormat = insertTextFormats.Plain,
 				}, out.items[1])
 				callme = true
 			end)
@@ -358,7 +366,8 @@ return my_f
 				assert.same({
 					detail = '<function>',
 					label  = 'my_fun(...) -> <table>',
-					insertText = 'my_fun',
+					insertText = 'my_fun(${1:...})$0',
+					insertTextFormat = insertTextFormats.Snippet,
 					kind = completionKinds.Function,
 				}, out.items[1])
 				callme = true
@@ -396,6 +405,7 @@ return mytbl.f
 					detail = '"a"',
 					label  = 'field',
 					kind = completionKinds.Field,
+					insertTextFormat = insertTextFormats.Plain,
 				}, out.items[1])
 				callme = true
 			end)
