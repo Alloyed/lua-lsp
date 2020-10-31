@@ -36,6 +36,7 @@ build = {
       ["lua-lsp.data.luajit-2_0"] = "lua-lsp/data/luajit-2_0.lua",
       ["lua-lsp.data._test"] = "lua-lsp/data/_test.lua",
       ["lua-lsp.formatting"] = "lua-lsp/formatting.lua",
+      ["lua-lsp.json"] = "lua-lsp/json.lua",
       ["lua-lsp.log"] = "lua-lsp/log.lua",
       ["lua-lsp.loop"] = "lua-lsp/loop.lua",
       ["lua-lsp.lua-parser.parser"] = "lua-lsp/lua-parser/parser.lua",
