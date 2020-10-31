@@ -1,2 +1,4 @@
 test.lua
 .luacheckcache
+*.rock
+!rockspecs/*.rock
