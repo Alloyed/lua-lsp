@@ -511,6 +511,7 @@ end
 					detail = '"myField"',
 					label  = 'fieldName',
 					kind = completionKinds.Field,
+					insertTextFormat = insertTextFormats.Plain,
 				}, out.items[1])
 				callme = true
 			end)
