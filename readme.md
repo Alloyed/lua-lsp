@@ -1,3 +1,11 @@
+# WARNING
+
+this project and url is unmaintained. a copy has been moved to [https://codeberg.org/alloyed/lua-lsp](https://codeberg.org/alloyed/lua-lsp) for safe keeping, but consider the following alternatives:
+
+* https://github.com/LuaLS/lua-language-server
+
+
+
 # lua-lsp
 [![Build Status](https://travis-ci.org/Alloyed/lua-lsp.svg)](https://travis-ci.org/Alloyed/lua-lsp)
 
