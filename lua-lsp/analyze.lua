@@ -523,7 +523,8 @@ local function try_luacheck(document)
 	if luacheck then
 		local reports
 		if Config._useNativeLuacheck == false then
-			local tmp_path = "/tmp/check.lua"
+			local tmpdir = os.getenv("TMPDIR") or os.getenv("TMP") or "/tmp"
+			local tmp_path = tmpdir .. "/check.lua"
 			local tmp = assert(io.open(tmp_path, "w"))
 			tmp:write(document.text)
 			tmp:close()
